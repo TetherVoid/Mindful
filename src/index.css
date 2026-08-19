@@ -1,0 +1,33 @@
+:root {
+  --bg: #0b0b12;
+  --fg: #f4f4f8;
+  --muted: #9a9aab;
+  --card-bg: #14141f;
+  --card-border: #24243a;
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background: var(--bg);
+  color: var(--fg);
+  font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+a {
+  color: inherit;
+}
