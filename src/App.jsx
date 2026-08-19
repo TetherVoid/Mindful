@@ -1,67 +1,38 @@
-import Scene from './components/Scene'
+import { Routes, Route, Navigate } from 'react-router-dom'
+import { useAuth } from './context/AuthContext'
+import ProtectedRoute from './components/ProtectedRoute'
+import Login from './pages/Login'
+import Signup from './pages/Signup'
+import Dashboard from './pages/Dashboard'
+import Mood from './pages/Mood'
+import Habits from './pages/Habits'
+import ThoughtRecords from './pages/ThoughtRecords'
+import FAQ from './pages/FAQ'
 import './App.css'
 
-const projects = [
-  {
-    title: 'Project One',
-    description: 'A short description of this project goes here.',
-    link: '#',
-  },
-  {
-    title: 'Project Two',
-    description: 'A short description of this project goes here.',
-    link: '#',
-  },
-  {
-    title: 'Project Three',
-    description: 'A short description of this project goes here.',
-    link: '#',
-  },
-]
+function RootRedirect() {
+  const { user, loading } = useAuth()
+  if (loading) return <div className="page-loading">Loading…</div>
+  return <Navigate to={user ? '/dashboard' : '/login'} replace />
+}
 
 function App() {
   return (
-    <>
-      <section id="hero">
-        <div className="scene-wrap">
-          <Scene />
-        </div>
-        <div className="hero-overlay">
-          <h1>Your Name</h1>
-          <p className="tagline">Designer &amp; Developer — building things for the web</p>
-          <a className="scroll-hint" href="#about">
-            Scroll to explore ↓
-          </a>
-        </div>
-      </section>
+    <Routes>
+      <Route path="/" element={<RootRedirect />} />
+      <Route path="/login" element={<Login />} />
+      <Route path="/signup" element={<Signup />} />
 
-      <section id="about">
-        <h2>About</h2>
-        <p>
-          A short bio goes here. Talk about who you are, what you do, and what
-          you're interested in.
-        </p>
-      </section>
+      <Route element={<ProtectedRoute />}>
+        <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/mood" element={<Mood />} />
+        <Route path="/habits" element={<Habits />} />
+        <Route path="/thoughts" element={<ThoughtRecords />} />
+        <Route path="/faq" element={<FAQ />} />
+      </Route>
 
-      <section id="projects">
-        <h2>Projects</h2>
-        <div className="project-grid">
-          {projects.map((p) => (
-            <a className="project-card" href={p.link} key={p.title}>
-              <h3>{p.title}</h3>
-              <p>{p.description}</p>
-            </a>
-          ))}
-        </div>
-      </section>
-
-      <section id="contact">
-        <h2>Contact</h2>
-        <p>
-          Get in touch at <a href="mailto:you@example.com">you@example.com</a>
-        </p>
-      </section>
-    </>
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
   )
 }
 

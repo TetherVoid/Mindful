@@ -1,9 +1,32 @@
 :root {
-  --bg: #0b0b12;
-  --fg: #f4f4f8;
-  --muted: #9a9aab;
-  --card-bg: #14141f;
-  --card-border: #24243a;
+  --bg: #f5f8fa;
+  --surface: #ffffff;
+  --border: #e2e8ee;
+  --text: #1c2b36;
+  --muted: #62788a;
+  --accent: #2f6f8f;
+  --accent-hover: #275c77;
+  --accent-contrast: #ffffff;
+  --danger: #c0442f;
+  --danger-hover: #a3381f;
+  --success-bg: #e7f5ec;
+  --success-text: #1f6b3c;
+  color-scheme: light;
+}
+
+:root[data-theme='dark'] {
+  --bg: #0f151a;
+  --surface: #182029;
+  --border: #2a3540;
+  --text: #e8eef2;
+  --muted: #8fa3b3;
+  --accent: #7fc8e8;
+  --accent-hover: #9cd7f0;
+  --accent-contrast: #0f151a;
+  --danger: #e26a52;
+  --danger-hover: #ee8267;
+  --success-bg: #16301f;
+  --success-text: #7ed99a;
   color-scheme: dark;
 }
 
@@ -19,9 +42,10 @@ body {
 
 body {
   background: var(--bg);
-  color: var(--fg);
+  color: var(--text);
   font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
   -webkit-font-smoothing: antialiased;
+  transition: background 0.2s ease, color 0.2s ease;
 }
 
 #root {
@@ -30,4 +54,16 @@ body {
 
 a {
   color: inherit;
+}
+
+button {
+  font: inherit;
+}
+
+.page-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  color: var(--muted);
 }

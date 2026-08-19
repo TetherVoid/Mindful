@@ -1,0 +1,28 @@
+@media print {
+  .site-header,
+  .site-footer,
+  .scroll-progress-track,
+  .scroll-to-top,
+  .floating-contact-btn,
+  .cookie-banner,
+  .modal-backdrop,
+  .btn-primary,
+  .btn-ghost,
+  .btn-danger,
+  .record-actions,
+  .habit-form,
+  .mood-form,
+  .thought-form form {
+    display: none !important;
+  }
+
+  body {
+    background: #fff;
+    color: #000;
+  }
+
+  .card {
+    border: 1px solid #ccc;
+    break-inside: avoid;
+  }
+}
