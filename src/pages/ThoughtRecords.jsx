@@ -35,20 +35,30 @@ export default function ThoughtRecords() {
   const [pendingDelete, setPendingDelete] = useState(null)
   const [copiedId, setCopiedId] = useState(null)
   const [showSuccess, setShowSuccess] = useState(false)
+  const [error, setError] = useState(null)
+
+  async function loadRecords() {
+    setLoading(true)
+    setError(null)
+    const { data, error: loadError } = await supabase
+      .from('thought_records')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(100)
+
+    if (loadError) {
+      setError(loadError.message)
+      setLoading(false)
+      return
+    }
+
+    setRecords(data ?? [])
+    setLoading(false)
+  }
 
   useEffect(() => {
     loadRecords()
   }, [])
-
-  async function loadRecords() {
-    setLoading(true)
-    const { data } = await supabase
-      .from('thought_records')
-      .select('*')
-      .order('created_at', { ascending: false })
-    setRecords(data ?? [])
-    setLoading(false)
-  }
 
   function updateField(key, value) {
     setForm((f) => ({ ...f, [key]: value }))
@@ -56,17 +66,38 @@ export default function ThoughtRecords() {
 
   async function handleSubmit(e) {
     e.preventDefault()
-    await supabase.from('thought_records').insert({ user_id: user.id, ...form })
+    setError(null)
+    const { data, error: insertError } = await supabase
+      .from('thought_records')
+      .insert({ user_id: user.id, ...form })
+      .select()
+      .single()
+
+    if (insertError) {
+      setError(insertError.message)
+      return
+    }
+
+    setRecords((prev) => [data, ...prev])
     setForm(emptyForm)
     setShowSuccess(true)
     setTimeout(() => setShowSuccess(false), 2500)
-    loadRecords()
   }
 
   async function confirmDelete() {
-    await supabase.from('thought_records').delete().eq('id', pendingDelete.id)
+    const { error: deleteError } = await supabase
+      .from('thought_records')
+      .delete()
+      .eq('id', pendingDelete.id)
+
+    if (deleteError) {
+      setError(deleteError.message)
+      setPendingDelete(null)
+      return
+    }
+
+    setRecords((prev) => prev.filter((r) => r.id !== pendingDelete.id))
     setPendingDelete(null)
-    loadRecords()
   }
 
   async function copyRecord(record) {
@@ -82,6 +113,8 @@ export default function ThoughtRecords() {
         A CBT exercise: capture a situation, the automatic thought it triggered, and work toward
         a more balanced perspective.
       </p>
+
+      {error && <div className="form-error">{error}</div>}
 
       <form className="card thought-form" onSubmit={handleSubmit}>
         <div className="field">

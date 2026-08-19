@@ -12,7 +12,7 @@
   .record-actions,
   .habit-form,
   .mood-form,
-  .thought-form form {
+  .thought-form {
     display: none !important;
   }
 

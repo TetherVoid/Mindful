@@ -4,8 +4,15 @@ import { useAuth } from '../context/AuthContext'
 import ConfirmModal from '../components/ConfirmModal'
 import FormSuccess from '../components/FormSuccess'
 
+// Local calendar date, not UTC — using toISOString() directly shifts the
+// "today" a habit gets logged under for anyone west of UTC in the evening.
+function toLocalISODate(date) {
+  const offsetMs = date.getTimezoneOffset() * 60000
+  return new Date(date.getTime() - offsetMs).toISOString().slice(0, 10)
+}
+
 function todayISO() {
-  return new Date().toISOString().slice(0, 10)
+  return toLocalISODate(new Date())
 }
 
 function computeStreak(dates) {
@@ -17,7 +24,7 @@ function computeStreak(dates) {
   if (!set.has(todayISO())) {
     cursor.setDate(cursor.getDate() - 1)
   }
-  while (set.has(cursor.toISOString().slice(0, 10))) {
+  while (set.has(toLocalISODate(cursor))) {
     streak += 1
     cursor.setDate(cursor.getDate() - 1)
   }
@@ -32,22 +39,28 @@ export default function Habits() {
   const [newHabit, setNewHabit] = useState('')
   const [pendingDelete, setPendingDelete] = useState(null)
   const [showSuccess, setShowSuccess] = useState(false)
-
-  useEffect(() => {
-    loadHabits()
-  }, [])
+  const [error, setError] = useState(null)
+  const [pendingToggle, setPendingToggle] = useState(() => new Set())
 
   async function loadHabits() {
     setLoading(true)
-    const { data: habitRows } = await supabase
-      .from('habits')
-      .select('id, name, archived, created_at')
-      .eq('archived', false)
-      .order('created_at', { ascending: true })
+    setError(null)
 
-    const { data: logRows } = await supabase
-      .from('habit_logs')
-      .select('habit_id, date')
+    const [{ data: habitRows, error: habitsError }, { data: logRows, error: logsError }] =
+      await Promise.all([
+        supabase
+          .from('habits')
+          .select('id, name, archived, created_at')
+          .eq('archived', false)
+          .order('created_at', { ascending: true }),
+        supabase.from('habit_logs').select('habit_id, date'),
+      ])
+
+    if (habitsError || logsError) {
+      setError((habitsError ?? logsError).message)
+      setLoading(false)
+      return
+    }
 
     const grouped = {}
     for (const log of logRows ?? []) {
@@ -60,37 +73,87 @@ export default function Habits() {
     setLoading(false)
   }
 
+  useEffect(() => {
+    loadHabits()
+  }, [])
+
   async function addHabit(e) {
     e.preventDefault()
-    if (!newHabit.trim()) return
-    await supabase.from('habits').insert({ user_id: user.id, name: newHabit.trim() })
+    const name = newHabit.trim()
+    if (!name) return
+
+    setError(null)
+    const { data, error: insertError } = await supabase
+      .from('habits')
+      .insert({ user_id: user.id, name })
+      .select()
+      .single()
+
+    if (insertError) {
+      setError(insertError.message)
+      return
+    }
+
+    setHabits((prev) => [...prev, data])
     setNewHabit('')
     setShowSuccess(true)
     setTimeout(() => setShowSuccess(false), 2000)
-    loadHabits()
   }
 
   async function toggleToday(habit) {
+    if (pendingToggle.has(habit.id)) return
+
     const today = todayISO()
     const doneToday = (logsByHabit[habit.id] ?? []).includes(today)
 
-    if (doneToday) {
-      await supabase.from('habit_logs').delete().eq('habit_id', habit.id).eq('date', today)
-    } else {
-      await supabase.from('habit_logs').insert({ habit_id: habit.id, user_id: user.id, date: today })
+    setPendingToggle((prev) => new Set(prev).add(habit.id))
+    setError(null)
+
+    const { error: toggleError } = doneToday
+      ? await supabase.from('habit_logs').delete().eq('habit_id', habit.id).eq('date', today)
+      : await supabase.from('habit_logs').insert({ habit_id: habit.id, user_id: user.id, date: today })
+
+    setPendingToggle((prev) => {
+      const next = new Set(prev)
+      next.delete(habit.id)
+      return next
+    })
+
+    if (toggleError) {
+      setError(toggleError.message)
+      return
     }
-    loadHabits()
+
+    setLogsByHabit((prev) => {
+      const dates = prev[habit.id] ?? []
+      return {
+        ...prev,
+        [habit.id]: doneToday ? dates.filter((d) => d !== today) : [...dates, today],
+      }
+    })
   }
 
   async function confirmDelete() {
-    await supabase.from('habits').update({ archived: true }).eq('id', pendingDelete.id)
+    const { error: deleteError } = await supabase
+      .from('habits')
+      .update({ archived: true })
+      .eq('id', pendingDelete.id)
+
+    if (deleteError) {
+      setError(deleteError.message)
+      setPendingDelete(null)
+      return
+    }
+
+    setHabits((prev) => prev.filter((h) => h.id !== pendingDelete.id))
     setPendingDelete(null)
-    loadHabits()
   }
 
   return (
     <div className="page">
       <h1>Habits</h1>
+
+      {error && <div className="form-error">{error}</div>}
 
       <form className="card habit-form" onSubmit={addHabit}>
         <input
@@ -121,6 +184,7 @@ export default function Habits() {
                   type="button"
                   className={`habit-check ${doneToday ? 'checked' : ''}`}
                   onClick={() => toggleToday(habit)}
+                  disabled={pendingToggle.has(habit.id)}
                   aria-pressed={doneToday}
                   aria-label={`Mark ${habit.name} done today`}
                 >

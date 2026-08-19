@@ -1,8 +1,11 @@
+import { hasDeclined } from './consent'
+
 const STORAGE_KEY = 'utm_params'
 const UTM_KEYS = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content']
 
 export function captureUtmParams() {
   if (localStorage.getItem(STORAGE_KEY)) return
+  if (hasDeclined()) return
 
   const params = new URLSearchParams(window.location.search)
   const found = {}
@@ -19,6 +22,10 @@ export function captureUtmParams() {
   if (hasAny) {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(found))
   }
+}
+
+export function clearStoredUtm() {
+  localStorage.removeItem(STORAGE_KEY)
 }
 
 export function getStoredUtm() {

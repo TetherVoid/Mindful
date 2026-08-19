@@ -1,12 +1,15 @@
 import { useState } from 'react'
-
-const STORAGE_KEY = 'cookie_consent'
+import { getConsent, setConsent } from '../lib/consent'
+import { clearStoredUtm } from '../lib/utm'
 
 export default function CookieBanner() {
-  const [visible, setVisible] = useState(() => !localStorage.getItem(STORAGE_KEY))
+  const [visible, setVisible] = useState(() => !getConsent())
 
   function dismiss(choice) {
-    localStorage.setItem(STORAGE_KEY, choice)
+    setConsent(choice)
+    // UTM capture runs at app boot, before this banner can be dismissed, so
+    // declining here also undoes whatever it already wrote.
+    if (choice === 'declined') clearStoredUtm()
     setVisible(false)
   }
 

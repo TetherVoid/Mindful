@@ -22,21 +22,16 @@ export function AuthProvider({ children }) {
   }, [])
 
   async function signUp(email, password) {
-    const { data, error } = await supabase.auth.signUp({ email, password })
+    // UTM values ride along as auth user metadata; a DB trigger (see
+    // supabase/schema.sql) copies them into `profiles` server-side. Doing it
+    // there instead of a client-side insert avoids RLS rejecting the write
+    // when "Confirm email" is on and there's no session yet.
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: { data: getStoredUtm() },
+    })
     if (error) throw error
-
-    if (data.user) {
-      const utm = getStoredUtm()
-      await supabase.from('profiles').insert({
-        id: data.user.id,
-        first_utm_source: utm.utm_source ?? null,
-        first_utm_medium: utm.utm_medium ?? null,
-        first_utm_campaign: utm.utm_campaign ?? null,
-        first_utm_term: utm.utm_term ?? null,
-        first_utm_content: utm.utm_content ?? null,
-      })
-    }
-
     return data
   }
 

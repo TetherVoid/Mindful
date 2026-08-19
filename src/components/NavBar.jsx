@@ -16,6 +16,14 @@ export default function NavBar({ onSearchClick }) {
   const { theme, toggleTheme } = useTheme()
   const [menuOpen, setMenuOpen] = useState(false)
 
+  async function handleSignOut() {
+    try {
+      await signOut()
+    } catch (err) {
+      console.error('Sign out failed:', err.message)
+    }
+  }
+
   return (
     <header className="site-header">
       <div className="site-header-inner">
@@ -48,7 +56,7 @@ export default function NavBar({ onSearchClick }) {
           >
             {theme === 'dark' ? '☀' : '🌙'}
           </button>
-          <button type="button" className="btn-ghost" onClick={signOut}>
+          <button type="button" className="btn-ghost" onClick={handleSignOut}>
             Sign out
           </button>
           <button

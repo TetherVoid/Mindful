@@ -42,31 +42,54 @@ export default function Mood() {
   const [score, setScore] = useState(3)
   const [note, setNote] = useState('')
   const [showSuccess, setShowSuccess] = useState(false)
+  const [error, setError] = useState(null)
 
   const accent = theme === 'dark' ? '#7fc8e8' : '#2f6f8f'
+
+  async function loadLogs() {
+    setLoading(true)
+    setError(null)
+    // Most recent 30, newest first — then reverse to chronological order for
+    // the chart. Ordering ascending-with-limit here would instead fetch the
+    // 30 OLDEST entries and get permanently stuck once a user passes 30 logs.
+    const { data, error: loadError } = await supabase
+      .from('mood_logs')
+      .select('id, mood_score, note, created_at')
+      .order('created_at', { ascending: false })
+      .limit(30)
+
+    if (loadError) {
+      setError(loadError.message)
+      setLoading(false)
+      return
+    }
+
+    setLogs((data ?? []).slice().reverse())
+    setLoading(false)
+  }
 
   useEffect(() => {
     loadLogs()
   }, [])
 
-  async function loadLogs() {
-    setLoading(true)
-    const { data } = await supabase
-      .from('mood_logs')
-      .select('id, mood_score, note, created_at')
-      .order('created_at', { ascending: true })
-      .limit(30)
-    setLogs(data ?? [])
-    setLoading(false)
-  }
-
   async function handleSubmit(e) {
     e.preventDefault()
-    await supabase.from('mood_logs').insert({ user_id: user.id, mood_score: score, note })
+    setError(null)
+    const { data, error: insertError } = await supabase
+      .from('mood_logs')
+      .insert({ user_id: user.id, mood_score: score, note })
+      .select()
+      .single()
+
+    if (insertError) {
+      setError(insertError.message)
+      return
+    }
+
+    setLogs((prev) => [...prev, data].slice(-30))
     setNote('')
     setShowSuccess(true)
     setTimeout(() => setShowSuccess(false), 2500)
-    loadLogs()
   }
 
   const chartData = logs.map((l) => ({
@@ -77,6 +100,8 @@ export default function Mood() {
   return (
     <div className="page">
       <h1>Mood</h1>
+
+      {error && <div className="form-error">{error}</div>}
 
       <form className="card mood-form" onSubmit={handleSubmit}>
         <p>How are you feeling right now?</p>
