@@ -1,9 +1,11 @@
 import { createContext, useContext, useEffect, useState } from 'react'
-import { deriveAccentPalette } from '../lib/color'
+import { deriveFullPalette } from '../lib/color'
 
 const ThemeContext = createContext(null)
 const STORAGE_KEY = 'theme'
 const ACCENT_STORAGE_KEY = 'accentColor'
+const DENSITY_KEY = 'density'
+const MOTION_KEY = 'reduceMotion'
 
 export const DEFAULT_ACCENT = { light: '#2f6f8f', dark: '#7fc8e8' }
 
@@ -17,9 +19,19 @@ function getInitialAccent() {
   return localStorage.getItem(ACCENT_STORAGE_KEY) || null
 }
 
+function getInitialDensity() {
+  return localStorage.getItem(DENSITY_KEY) === 'compact' ? 'compact' : 'comfortable'
+}
+
+function getInitialReduceMotion() {
+  return localStorage.getItem(MOTION_KEY) === 'true'
+}
+
 export function ThemeProvider({ children }) {
   const [theme, setTheme] = useState(getInitialTheme)
   const [accentColor, setAccentColorState] = useState(getInitialAccent)
+  const [density, setDensityState] = useState(getInitialDensity)
+  const [reduceMotion, setReduceMotionState] = useState(getInitialReduceMotion)
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme)
@@ -29,18 +41,33 @@ export function ThemeProvider({ children }) {
   useEffect(() => {
     const root = document.documentElement.style
     if (accentColor) {
-      const { accent, accentHover, accentContrast } = deriveAccentPalette(accentColor)
-      root.setProperty('--accent', accent)
-      root.setProperty('--accent-hover', accentHover)
-      root.setProperty('--accent-contrast', accentContrast)
+      const palette = deriveFullPalette(accentColor, theme)
+      root.setProperty('--bg', palette.bg)
+      root.setProperty('--surface', palette.surface)
+      root.setProperty('--text', palette.text)
+      root.setProperty('--muted', palette.muted)
+      root.setProperty('--shadow-light', palette.shadowLight)
+      root.setProperty('--shadow-dark', palette.shadowDark)
+      root.setProperty('--shadow-dark-strong', palette.shadowDarkStrong)
+      root.setProperty('--accent', palette.accent)
+      root.setProperty('--accent-hover', palette.accentHover)
+      root.setProperty('--accent-contrast', palette.accentContrast)
       localStorage.setItem(ACCENT_STORAGE_KEY, accentColor)
     } else {
-      root.removeProperty('--accent')
-      root.removeProperty('--accent-hover')
-      root.removeProperty('--accent-contrast')
+      ;['--bg', '--surface', '--text', '--muted', '--shadow-light', '--shadow-dark', '--shadow-dark-strong', '--accent', '--accent-hover', '--accent-contrast'].forEach((prop) => root.removeProperty(prop))
       localStorage.removeItem(ACCENT_STORAGE_KEY)
     }
-  }, [accentColor])
+  }, [accentColor, theme])
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-density', density)
+    localStorage.setItem(DENSITY_KEY, density)
+  }, [density])
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-motion', reduceMotion ? 'reduced' : 'auto')
+    localStorage.setItem(MOTION_KEY, String(reduceMotion))
+  }, [reduceMotion])
 
   function toggleTheme() {
     setTheme((t) => (t === 'dark' ? 'light' : 'dark'))
@@ -54,9 +81,27 @@ export function ThemeProvider({ children }) {
     setAccentColorState(null)
   }
 
+  function setDensity(value) {
+    setDensityState(value === 'compact' ? 'compact' : 'comfortable')
+  }
+
+  function setReduceMotion(value) {
+    setReduceMotionState(Boolean(value))
+  }
+
   return (
     <ThemeContext.Provider
-      value={{ theme, toggleTheme, accentColor, setAccentColor, resetAccentColor }}
+      value={{
+        theme,
+        toggleTheme,
+        accentColor,
+        setAccentColor,
+        resetAccentColor,
+        density,
+        setDensity,
+        reduceMotion,
+        setReduceMotion,
+      }}
     >
       {children}
     </ThemeContext.Provider>

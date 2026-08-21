@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import PasswordInput from '../components/PasswordInput'
+import AuthHero from '../components/AuthHero'
 
 export default function Login() {
   const { signIn } = useAuth()
@@ -26,7 +27,7 @@ export default function Login() {
   }
 
   return (
-    <div className="auth-page">
+    <AuthHero>
       <form className="auth-card" onSubmit={handleSubmit}>
         <h1>Welcome back</h1>
         {error && <div className="form-error">{error}</div>}
@@ -49,6 +50,6 @@ export default function Login() {
           No account yet? <Link to="/signup">Sign up</Link>
         </p>
       </form>
-    </div>
+    </AuthHero>
   )
 }

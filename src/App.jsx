@@ -1,15 +1,21 @@
+import { Suspense, lazy } from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { useAuth } from './context/AuthContext'
 import ProtectedRoute from './components/ProtectedRoute'
 import AppLayout from './components/AppLayout'
 import Login from './pages/Login'
 import Signup from './pages/Signup'
-import Dashboard from './pages/Dashboard'
-import Mood from './pages/Mood'
-import Habits from './pages/Habits'
-import ThoughtRecords from './pages/ThoughtRecords'
 import FAQ from './pages/FAQ'
 import './App.css'
+
+// Lazy-loaded: these are the chart/data-heavy pages behind ProtectedRoute,
+// split into their own chunks so recharts etc. only load once someone's
+// actually logged in and viewing them, not on the initial (public) bundle.
+const Dashboard = lazy(() => import('./pages/Dashboard'))
+const Mood = lazy(() => import('./pages/Mood'))
+const Habits = lazy(() => import('./pages/Habits'))
+const ThoughtRecords = lazy(() => import('./pages/ThoughtRecords'))
+const Settings = lazy(() => import('./pages/Settings'))
 
 function RootRedirect() {
   const { user, loading } = useAuth()
@@ -22,6 +28,14 @@ function PublicOnly({ children }) {
   if (loading) return <div className="page-loading">Loading…</div>
   if (user) return <Navigate to="/dashboard" replace />
   return children
+}
+
+function withSuspense(Component) {
+  return (
+    <Suspense fallback={<div className="page-loading">Loading…</div>}>
+      <Component />
+    </Suspense>
+  )
 }
 
 function FaqRoute() {
@@ -64,10 +78,11 @@ function App() {
       <Route path="/faq" element={<FaqRoute />} />
 
       <Route element={<ProtectedRoute />}>
-        <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/mood" element={<Mood />} />
-        <Route path="/habits" element={<Habits />} />
-        <Route path="/thoughts" element={<ThoughtRecords />} />
+        <Route path="/dashboard" element={withSuspense(Dashboard)} />
+        <Route path="/mood" element={withSuspense(Mood)} />
+        <Route path="/habits" element={withSuspense(Habits)} />
+        <Route path="/thoughts" element={withSuspense(ThoughtRecords)} />
+        <Route path="/settings" element={withSuspense(Settings)} />
       </Route>
 
       <Route path="*" element={<Navigate to="/" replace />} />

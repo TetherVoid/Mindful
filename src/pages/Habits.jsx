@@ -1,19 +1,10 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
 import { useAuth } from '../context/AuthContext'
+import { toLocalISODate, todayISO } from '../lib/date'
 import ConfirmModal from '../components/ConfirmModal'
 import FormSuccess from '../components/FormSuccess'
-
-// Local calendar date, not UTC — using toISOString() directly shifts the
-// "today" a habit gets logged under for anyone west of UTC in the evening.
-function toLocalISODate(date) {
-  const offsetMs = date.getTimezoneOffset() * 60000
-  return new Date(date.getTime() - offsetMs).toISOString().slice(0, 10)
-}
-
-function todayISO() {
-  return toLocalISODate(new Date())
-}
+import HabitHeatmap from '../components/HabitHeatmap'
 
 function computeStreak(dates) {
   const set = new Set(dates)
@@ -192,7 +183,15 @@ export default function Habits() {
                 </button>
                 <div className="habit-info">
                   <span className="habit-name">{habit.name}</span>
-                  <span className="habit-streak">{streak} day streak</span>
+                  <button
+                    type="button"
+                    className="habit-streak habit-streak-link"
+                    onClick={() =>
+                      document.getElementById('habit-heatmap')?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+                    }
+                  >
+                    {streak} day streak
+                  </button>
                 </div>
                 <button
                   type="button"
@@ -206,6 +205,8 @@ export default function Habits() {
           })}
         </div>
       )}
+
+      {!loading && <HabitHeatmap habits={habits} logsByHabit={logsByHabit} id="habit-heatmap" />}
 
       <ConfirmModal
         open={!!pendingDelete}

@@ -1,3 +1,5 @@
+import { clearStoredUtm } from './utm'
+
 const CONSENT_KEY = 'cookie_consent'
 
 export function getConsent() {
@@ -10,4 +12,11 @@ export function setConsent(choice) {
 
 export function hasDeclined() {
   return getConsent() === 'declined'
+}
+
+// Declining also undoes any UTM capture already written at app boot, before
+// the choice could be made.
+export function applyConsentChoice(choice) {
+  setConsent(choice)
+  if (choice === 'declined') clearStoredUtm()
 }

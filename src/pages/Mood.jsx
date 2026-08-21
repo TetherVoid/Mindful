@@ -1,16 +1,19 @@
 import { useEffect, useState } from 'react'
 import {
   ResponsiveContainer,
-  LineChart,
+  ComposedChart,
+  Area,
   Line,
   XAxis,
   YAxis,
   CartesianGrid,
   Tooltip,
+  Brush,
 } from 'recharts'
 import { supabase } from '../lib/supabaseClient'
 import { useAuth } from '../context/AuthContext'
-import { useTheme } from '../context/ThemeContext'
+import useLiveAccentColor from '../hooks/useLiveAccentColor'
+import { getMoodHistoryLength } from '../lib/preferences'
 import FormSuccess from '../components/FormSuccess'
 
 const MOODS = [
@@ -20,6 +23,8 @@ const MOODS = [
   { score: 4, emoji: '🙂', label: 'Good' },
   { score: 5, emoji: '😄', label: 'Great' },
 ]
+
+const BRUSH_THRESHOLD = 14
 
 function CustomTooltip({ active, payload, label }) {
   if (!active || !payload?.length) return null
@@ -36,27 +41,28 @@ function CustomTooltip({ active, payload, label }) {
 
 export default function Mood() {
   const { user } = useAuth()
-  const { theme } = useTheme()
+  const accent = useLiveAccentColor()
   const [logs, setLogs] = useState([])
   const [loading, setLoading] = useState(true)
   const [score, setScore] = useState(3)
   const [note, setNote] = useState('')
   const [showSuccess, setShowSuccess] = useState(false)
   const [error, setError] = useState(null)
+  const [selectedLog, setSelectedLog] = useState(null)
 
-  const accent = theme === 'dark' ? '#7fc8e8' : '#2f6f8f'
+  const historyLength = getMoodHistoryLength()
 
   async function loadLogs() {
     setLoading(true)
     setError(null)
-    // Most recent 30, newest first — then reverse to chronological order for
+    // Most recent N, newest first — then reverse to chronological order for
     // the chart. Ordering ascending-with-limit here would instead fetch the
-    // 30 OLDEST entries and get permanently stuck once a user passes 30 logs.
+    // N OLDEST entries and get permanently stuck once a user passes N logs.
     const { data, error: loadError } = await supabase
       .from('mood_logs')
       .select('id, mood_score, note, created_at')
       .order('created_at', { ascending: false })
-      .limit(30)
+      .limit(historyLength)
 
     if (loadError) {
       setError(loadError.message)
@@ -86,16 +92,33 @@ export default function Mood() {
       return
     }
 
-    setLogs((prev) => [...prev, data].slice(-30))
+    setLogs((prev) => [...prev, data].slice(-historyLength))
     setNote('')
     setShowSuccess(true)
     setTimeout(() => setShowSuccess(false), 2500)
   }
 
   const chartData = logs.map((l) => ({
+    id: l.id,
     date: new Date(l.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }),
     mood: l.mood_score,
+    note: l.note,
   }))
+
+  function renderDot(props) {
+    const { key, cx, cy, payload } = props
+    return (
+      <circle
+        key={key}
+        cx={cx}
+        cy={cy}
+        r={3}
+        fill={accent}
+        style={{ cursor: 'pointer' }}
+        onClick={() => setSelectedLog(payload)}
+      />
+    )
+  }
 
   return (
     <div className="page">
@@ -139,22 +162,43 @@ export default function Mood() {
         ) : chartData.length === 0 ? (
           <p className="empty-state">No entries yet — log your first mood above.</p>
         ) : (
-          <ResponsiveContainer width="100%" height={260}>
-            <LineChart data={chartData} margin={{ top: 8, right: 16, left: 0, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
-              <XAxis dataKey="date" stroke="var(--muted)" tick={{ fontSize: 12 }} />
-              <YAxis domain={[1, 5]} ticks={[1, 2, 3, 4, 5]} stroke="var(--muted)" tick={{ fontSize: 12 }} width={24} />
-              <Tooltip content={<CustomTooltip />} />
-              <Line
-                type="monotone"
-                dataKey="mood"
-                stroke={accent}
-                strokeWidth={2}
-                dot={{ r: 3, fill: accent }}
-                activeDot={{ r: 5 }}
-              />
-            </LineChart>
-          </ResponsiveContainer>
+          <>
+            <ResponsiveContainer width="100%" height={260}>
+              <ComposedChart data={chartData} margin={{ top: 8, right: 16, left: 0, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="moodGradient" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor={accent} stopOpacity={0.35} />
+                    <stop offset="100%" stopColor={accent} stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
+                <XAxis dataKey="date" stroke="var(--muted)" tick={{ fontSize: 12 }} />
+                <YAxis domain={[1, 5]} ticks={[1, 2, 3, 4, 5]} stroke="var(--muted)" tick={{ fontSize: 12 }} width={24} />
+                <Tooltip content={<CustomTooltip />} />
+                <Area type="monotone" dataKey="mood" stroke="none" fill="url(#moodGradient)" />
+                <Line
+                  type="monotone"
+                  dataKey="mood"
+                  stroke={accent}
+                  strokeWidth={2}
+                  dot={renderDot}
+                  activeDot={{ r: 5, onClick: (_e, item) => setSelectedLog(item.payload) }}
+                />
+                {chartData.length > BRUSH_THRESHOLD && (
+                  <Brush dataKey="date" height={22} stroke={accent} travellerWidth={8} />
+                )}
+              </ComposedChart>
+            </ResponsiveContainer>
+            {selectedLog && (
+              <p className="chart-selected-note">
+                <strong>{selectedLog.date}:</strong>{' '}
+                {selectedLog.note || 'No note for this entry.'}{' '}
+                <button type="button" className="chart-selected-dismiss" onClick={() => setSelectedLog(null)}>
+                  ×
+                </button>
+              </p>
+            )}
+          </>
         )}
       </div>
     </div>

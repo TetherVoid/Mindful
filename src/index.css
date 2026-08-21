@@ -85,6 +85,50 @@ body {
   min-height: 100vh;
 }
 
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+:root[data-motion='reduced'] *,
+:root[data-motion='reduced'] *::before,
+:root[data-motion='reduced'] *::after {
+  animation-duration: 0.001ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.001ms !important;
+  scroll-behavior: auto !important;
+}
+
+:root[data-density='compact'] .card {
+  padding: 1rem;
+  margin-bottom: 0.85rem;
+}
+
+:root[data-density='compact'] .page {
+  padding: 1.25rem 1.25rem 4rem;
+}
+
+:root[data-density='compact'] .btn-primary,
+:root[data-density='compact'] .btn-ghost,
+:root[data-density='compact'] .btn-danger {
+  padding: 0.5rem 0.9rem;
+}
+
+:root[data-density='compact'] input,
+:root[data-density='compact'] textarea {
+  padding: 0.5rem 0.65rem;
+}
+
+:root[data-density='compact'] .field {
+  margin-bottom: 0.75rem;
+}
+
 a {
   color: inherit;
 }

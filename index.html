@@ -3,6 +3,10 @@
   <head>
     <meta charset="UTF-8" />
     <script>
+      // Mirrors src/lib/color.js's deriveFullPalette/deriveAccentForTheme —
+      // keep the two in sync. Duplicated here (rather than imported) so the
+      // palette can apply before first paint, avoiding a flash of default
+      // colors while React/the module bundle loads.
       (function () {
         try {
           var stored = localStorage.getItem('theme');
@@ -13,28 +17,116 @@
                 ? 'dark'
                 : 'light';
           document.documentElement.setAttribute('data-theme', theme);
+          document.documentElement.setAttribute(
+            'data-density',
+            localStorage.getItem('density') === 'compact' ? 'compact' : 'comfortable'
+          );
+          document.documentElement.setAttribute(
+            'data-motion',
+            localStorage.getItem('reduceMotion') === 'true' ? 'reduced' : 'auto'
+          );
 
           var accent = localStorage.getItem('accentColor');
           if (accent) {
-            var hex = accent.replace('#', '');
-            if (hex.length === 3) hex = hex.split('').map(function (c) { return c + c; }).join('');
-            var num = parseInt(hex, 16);
-            var r = (num >> 16) & 255, g = (num >> 8) & 255, b = num & 255;
-            var srgb = [r, g, b].map(function (v) {
-              var s = v / 255;
-              return s <= 0.03928 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4);
-            });
-            var luminance = 0.2126 * srgb[0] + 0.7152 * srgb[1] + 0.0722 * srgb[2];
-            var isLight = luminance > 0.45;
-            var contrast = isLight ? '#182029' : '#ffffff';
-            var target = isLight ? 0 : 255;
-            var hoverHex = '#' + [r, g, b].map(function (v) {
-              return Math.round(v + (target - v) * 0.16).toString(16).padStart(2, '0');
+            var DEFAULT_HUE = 210;
+
+            var hexToRgb = function (hex) {
+              var clean = hex.replace('#', '');
+              if (clean.length === 3) clean = clean.split('').map(function (c) { return c + c; }).join('');
+              var num = parseInt(clean, 16);
+              return { r: (num >> 16) & 255, g: (num >> 8) & 255, b: num & 255 };
+            };
+
+            var rgbToHex = function (rgb) {
+              return '#' + ['r', 'g', 'b'].map(function (k) {
+                return Math.round(Math.max(0, Math.min(255, rgb[k]))).toString(16).padStart(2, '0');
+              }).join('');
+            };
+
+            var rgbToHsl = function (rgb) {
+              var rn = rgb.r / 255, gn = rgb.g / 255, bn = rgb.b / 255;
+              var max = Math.max(rn, gn, bn), min = Math.min(rn, gn, bn);
+              var delta = max - min, l = (max + min) / 2;
+              if (delta < 0.001) return { h: DEFAULT_HUE, s: 0, l: l * 100 };
+              var s = delta / (1 - Math.abs(2 * l - 1));
+              var h;
+              if (max === rn) h = ((gn - bn) / delta) % 6;
+              else if (max === gn) h = (bn - rn) / delta + 2;
+              else h = (rn - gn) / delta + 4;
+              h *= 60;
+              if (h < 0) h += 360;
+              return { h: h, s: s * 100, l: l * 100 };
+            };
+
+            var hslToRgb = function (hsl) {
+              var sn = hsl.s / 100, ln = hsl.l / 100;
+              var c = (1 - Math.abs(2 * ln - 1)) * sn;
+              var x = c * (1 - Math.abs(((hsl.h / 60) % 2) - 1));
+              var m = ln - c / 2;
+              var rgb;
+              if (hsl.h < 60) rgb = [c, x, 0];
+              else if (hsl.h < 120) rgb = [x, c, 0];
+              else if (hsl.h < 180) rgb = [0, c, x];
+              else if (hsl.h < 240) rgb = [0, x, c];
+              else if (hsl.h < 300) rgb = [x, 0, c];
+              else rgb = [c, 0, x];
+              return { r: (rgb[0] + m) * 255, g: (rgb[1] + m) * 255, b: (rgb[2] + m) * 255 };
+            };
+
+            var hslToHex = function (hsl) { return rgbToHex(hslToRgb(hsl)); };
+
+            var relativeLuminance = function (rgb) {
+              var srgb = [rgb.r, rgb.g, rgb.b].map(function (v) {
+                var s = v / 255;
+                return s <= 0.03928 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4);
+              });
+              return 0.2126 * srgb[0] + 0.7152 * srgb[1] + 0.0722 * srgb[2];
+            };
+
+            var baseHsl = rgbToHsl(hexToRgb(accent));
+            var h = baseHsl.h;
+
+            var accentTarget =
+              theme === 'dark'
+                ? { h: h, s: Math.max(baseHsl.s, 60), l: 70 }
+                : { h: h, s: Math.min(Math.max(baseHsl.s, 45), 55), l: 37 };
+            var accentHex = hslToHex(accentTarget);
+            var accentRgb = hexToRgb(accentHex);
+            var accentIsLight = relativeLuminance(accentRgb) > 0.45;
+            var accentContrast = accentIsLight ? '#182029' : '#ffffff';
+            var hoverTarget = accentIsLight ? 0 : 255;
+            var accentHover = '#' + ['r', 'g', 'b'].map(function (k) {
+              return Math.round(accentRgb[k] + (hoverTarget - accentRgb[k]) * 0.16).toString(16).padStart(2, '0');
             }).join('');
+
+            var roles = theme === 'dark'
+              ? {
+                  bg: { s: 21, l: 21 }, text: { s: 28, l: 93 }, muted: { s: 21, l: 65 },
+                  shadowLight: { s: 21, l: 25.5 }, shadowDark: { s: 22, l: 14 }, shadowDarkStrong: { s: 22, l: 10 },
+                }
+              : {
+                  bg: { s: 25, l: 92 }, text: { s: 28, l: 28 }, muted: { s: 16, l: 51 },
+                  shadowDark: { s: 20, l: 77 }, shadowDarkStrong: { s: 19, l: 71 },
+                };
+
+            var bgHex = hslToHex({ h: h, s: roles.bg.s, l: roles.bg.l });
+            var textHex = hslToHex({ h: h, s: roles.text.s, l: roles.text.l });
+            var mutedHex = hslToHex({ h: h, s: roles.muted.s, l: roles.muted.l });
+            var shadowLightHex = theme === 'dark' ? hslToHex({ h: h, s: roles.shadowLight.s, l: roles.shadowLight.l }) : '#ffffff';
+            var shadowDarkHex = hslToHex({ h: h, s: roles.shadowDark.s, l: roles.shadowDark.l });
+            var shadowDarkStrongHex = hslToHex({ h: h, s: roles.shadowDarkStrong.s, l: roles.shadowDarkStrong.l });
+
             var root = document.documentElement.style;
-            root.setProperty('--accent', accent);
-            root.setProperty('--accent-hover', hoverHex);
-            root.setProperty('--accent-contrast', contrast);
+            root.setProperty('--bg', bgHex);
+            root.setProperty('--surface', bgHex);
+            root.setProperty('--text', textHex);
+            root.setProperty('--muted', mutedHex);
+            root.setProperty('--shadow-light', shadowLightHex);
+            root.setProperty('--shadow-dark', shadowDarkHex);
+            root.setProperty('--shadow-dark-strong', shadowDarkStrongHex);
+            root.setProperty('--accent', accentHex);
+            root.setProperty('--accent-hover', accentHover);
+            root.setProperty('--accent-contrast', accentContrast);
           }
         } catch (e) {}
       })();

@@ -132,6 +132,10 @@
   border-radius: var(--radius-sm);
   line-height: 1;
   box-shadow: none;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   transition: box-shadow 0.15s ease;
 }
 
@@ -370,7 +374,8 @@ label {
 }
 
 input,
-textarea {
+textarea,
+select {
   background: var(--bg);
   border: none;
   border-radius: var(--radius-sm);
@@ -382,14 +387,20 @@ textarea {
 }
 
 input:hover,
-textarea:hover {
+textarea:hover,
+select:hover {
   box-shadow: var(--shadow-inset);
 }
 
 input:focus-visible,
-textarea:focus-visible {
+textarea:focus-visible,
+select:focus-visible {
   outline: none;
   box-shadow: var(--shadow-accent-inset);
+}
+
+select {
+  cursor: pointer;
 }
 
 .password-field {
@@ -455,6 +466,8 @@ textarea:focus-visible {
 /* ---------- Auth pages ---------- */
 
 .auth-page {
+  position: relative;
+  overflow: hidden;
   min-height: 100vh;
   display: flex;
   align-items: center;
@@ -462,7 +475,17 @@ textarea:focus-visible {
   padding: 1.5rem;
 }
 
+.ambient-scene-wrapper {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.9;
+}
+
 .auth-card {
+  position: relative;
+  z-index: 1;
   background: var(--surface);
   border: none;
   border-radius: var(--radius);
@@ -569,6 +592,35 @@ textarea:focus-visible {
   transform: scale(0.97);
 }
 
+.chart-selected-note {
+  background: var(--bg);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-inset-sm);
+  padding: 0.75rem 1rem;
+  margin: 1rem 0 0;
+  font-size: 0.9rem;
+  color: var(--text);
+  position: relative;
+  padding-right: 2.5rem;
+}
+
+.chart-selected-dismiss {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.6rem;
+  background: none;
+  border: none;
+  color: var(--muted);
+  font-size: 1.1rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0.2rem 0.4rem;
+}
+
+.chart-selected-dismiss:hover {
+  color: var(--text);
+}
+
 .chart-tooltip {
   background: var(--surface);
   border: none;
@@ -638,6 +690,108 @@ textarea:focus-visible {
 .habit-streak {
   font-size: 0.85rem;
   color: var(--muted);
+}
+
+.habit-streak-link {
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  color: var(--muted);
+  cursor: pointer;
+  text-align: left;
+  width: fit-content;
+}
+
+.habit-streak-link:hover,
+.habit-streak-link:focus-visible {
+  color: var(--accent);
+  text-decoration: underline;
+}
+
+/* ---------- Habit heatmap ---------- */
+
+.habit-heatmap {
+  display: flex;
+  gap: 0.4rem;
+  overflow-x: auto;
+  padding-bottom: 0.25rem;
+}
+
+.habit-heatmap-day-labels {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  flex-shrink: 0;
+}
+
+.habit-heatmap-day-label {
+  height: 12px;
+  font-size: 0.65rem;
+  color: var(--muted);
+  line-height: 12px;
+}
+
+.habit-heatmap-grid {
+  display: flex;
+  gap: 3px;
+}
+
+.habit-heatmap-week {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.habit-heatmap-cell {
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+  background: var(--bg);
+  box-shadow: var(--shadow-inset-sm);
+}
+
+.habit-heatmap-cell[data-level='1'] {
+  background: color-mix(in srgb, var(--accent) 25%, var(--bg));
+  box-shadow: none;
+}
+
+.habit-heatmap-cell[data-level='2'] {
+  background: color-mix(in srgb, var(--accent) 50%, var(--bg));
+  box-shadow: none;
+}
+
+.habit-heatmap-cell[data-level='3'] {
+  background: color-mix(in srgb, var(--accent) 75%, var(--bg));
+  box-shadow: none;
+}
+
+.habit-heatmap-cell[data-level='4'] {
+  background: var(--accent);
+  box-shadow: none;
+}
+
+.habit-heatmap-cell[data-future='true'] {
+  background: transparent;
+  box-shadow: none;
+}
+
+.habit-heatmap-cell:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.habit-heatmap-legend {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  margin-top: 0.75rem;
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+.habit-heatmap-legend .habit-heatmap-cell {
+  cursor: default;
 }
 
 /* ---------- Thought records ---------- */
@@ -932,4 +1086,42 @@ textarea:focus-visible {
   100% {
     background-position: -200% 0;
   }
+}
+
+/* ---------- Settings ---------- */
+
+.settings-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1.5rem;
+  padding: 1rem 0;
+  border-top: 1px solid color-mix(in srgb, var(--shadow-dark) 60%, transparent);
+}
+
+.settings-row:first-of-type {
+  border-top: none;
+  padding-top: 0;
+}
+
+.settings-row-column {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.9rem;
+}
+
+.settings-row-desc {
+  margin: 0.2rem 0 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.settings-toggle-group {
+  display: flex;
+  gap: 0.6rem;
+}
+
+.settings-subform {
+  padding: 1rem 0;
+  border-top: 1px solid color-mix(in srgb, var(--shadow-dark) 60%, transparent);
 }

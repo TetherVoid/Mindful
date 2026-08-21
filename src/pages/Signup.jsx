@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import PasswordInput from '../components/PasswordInput'
+import AuthHero from '../components/AuthHero'
 
 export default function Signup() {
   const { signUp } = useAuth()
@@ -32,7 +33,7 @@ export default function Signup() {
 
   if (success) {
     return (
-      <div className="auth-page">
+      <AuthHero>
         <div className="auth-card form-success">
           <h1>You're in</h1>
           <p>
@@ -43,12 +44,12 @@ export default function Signup() {
             Go to sign in
           </Link>
         </div>
-      </div>
+      </AuthHero>
     )
   }
 
   return (
-    <div className="auth-page">
+    <AuthHero>
       <form className="auth-card" onSubmit={handleSubmit}>
         <h1>Create your account</h1>
         {error && <div className="form-error">{error}</div>}
@@ -71,6 +72,6 @@ export default function Signup() {
           Already have an account? <Link to="/login">Sign in</Link>
         </p>
       </form>
-    </div>
+    </AuthHero>
   )
 }
