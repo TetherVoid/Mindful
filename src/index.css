@@ -1,9 +1,9 @@
 :root {
-  --bg: #f5f8fa;
-  --surface: #ffffff;
-  --border: #e2e8ee;
-  --text: #1c2b36;
-  --muted: #62788a;
+  --bg: #e6ebf0;
+  --surface: #e6ebf0;
+  --border: #d1d9e0;
+  --text: #33465a;
+  --muted: #6f8296;
   --accent: #2f6f8f;
   --accent-hover: #275c77;
   --accent-contrast: #ffffff;
@@ -11,22 +11,55 @@
   --danger-hover: #a3381f;
   --success-bg: #e7f5ec;
   --success-text: #1f6b3c;
+
+  /* neomorphic shadow pair: light source top-left */
+  --shadow-light: #ffffff;
+  --shadow-dark: #b8c3d0;
+  --shadow-dark-strong: #a8b4c4;
+
+  --shadow-raised: 6px 6px 14px var(--shadow-dark), -6px -6px 14px var(--shadow-light);
+  --shadow-raised-sm: 3px 3px 8px var(--shadow-dark), -3px -3px 8px var(--shadow-light);
+  --shadow-raised-lg: 10px 10px 22px var(--shadow-dark-strong), -10px -10px 22px var(--shadow-light);
+  --shadow-inset: inset 3px 3px 7px var(--shadow-dark), inset -3px -3px 7px var(--shadow-light);
+  --shadow-inset-sm: inset 2px 2px 5px var(--shadow-dark), inset -2px -2px 5px var(--shadow-light);
+  --shadow-accent-raised: 6px 6px 14px color-mix(in srgb, var(--accent) 35%, transparent),
+    -6px -6px 14px var(--shadow-light);
+  --shadow-accent-inset: inset 3px 3px 7px color-mix(in srgb, var(--accent) 45%, transparent),
+    inset -3px -3px 7px var(--shadow-light);
+
+  --radius: 18px;
+  --radius-sm: 12px;
   color-scheme: light;
 }
 
 :root[data-theme='dark'] {
-  --bg: #0f151a;
-  --surface: #182029;
-  --border: #2a3540;
+  --bg: #2a3441;
+  --surface: #2a3441;
+  --border: #384253;
   --text: #e8eef2;
-  --muted: #8fa3b3;
+  --muted: #93a4b8;
   --accent: #7fc8e8;
   --accent-hover: #9cd7f0;
-  --accent-contrast: #0f151a;
+  --accent-contrast: #10202a;
   --danger: #e26a52;
   --danger-hover: #ee8267;
   --success-bg: #16301f;
   --success-text: #7ed99a;
+
+  --shadow-light: #333f4f;
+  --shadow-dark: #1c232c;
+  --shadow-dark-strong: #14191f;
+
+  --shadow-raised: 6px 6px 14px var(--shadow-dark), -6px -6px 14px var(--shadow-light);
+  --shadow-raised-sm: 3px 3px 8px var(--shadow-dark), -3px -3px 8px var(--shadow-light);
+  --shadow-raised-lg: 10px 10px 22px var(--shadow-dark-strong), -10px -10px 22px var(--shadow-light);
+  --shadow-inset: inset 3px 3px 7px var(--shadow-dark), inset -3px -3px 7px var(--shadow-light);
+  --shadow-inset-sm: inset 2px 2px 5px var(--shadow-dark), inset -2px -2px 5px var(--shadow-light);
+  --shadow-accent-raised: 6px 6px 14px color-mix(in srgb, var(--accent) 20%, transparent),
+    -6px -6px 14px var(--shadow-light);
+  --shadow-accent-inset: inset 3px 3px 7px color-mix(in srgb, var(--accent) 30%, transparent),
+    inset -3px -3px 7px var(--shadow-light);
+
   color-scheme: dark;
 }
 

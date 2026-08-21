@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { NavLink } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useTheme } from '../context/ThemeContext'
+import ColorPicker from './ColorPicker'
 
 const links = [
   { to: '/dashboard', label: 'Dashboard' },
@@ -56,6 +57,7 @@ export default function NavBar({ onSearchClick }) {
           >
             {theme === 'dark' ? '☀' : '🌙'}
           </button>
+          <ColorPicker />
           <button type="button" className="btn-ghost" onClick={handleSignOut}>
             Sign out
           </button>

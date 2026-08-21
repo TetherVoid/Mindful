@@ -13,6 +13,29 @@
                 ? 'dark'
                 : 'light';
           document.documentElement.setAttribute('data-theme', theme);
+
+          var accent = localStorage.getItem('accentColor');
+          if (accent) {
+            var hex = accent.replace('#', '');
+            if (hex.length === 3) hex = hex.split('').map(function (c) { return c + c; }).join('');
+            var num = parseInt(hex, 16);
+            var r = (num >> 16) & 255, g = (num >> 8) & 255, b = num & 255;
+            var srgb = [r, g, b].map(function (v) {
+              var s = v / 255;
+              return s <= 0.03928 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4);
+            });
+            var luminance = 0.2126 * srgb[0] + 0.7152 * srgb[1] + 0.0722 * srgb[2];
+            var isLight = luminance > 0.45;
+            var contrast = isLight ? '#182029' : '#ffffff';
+            var target = isLight ? 0 : 255;
+            var hoverHex = '#' + [r, g, b].map(function (v) {
+              return Math.round(v + (target - v) * 0.16).toString(16).padStart(2, '0');
+            }).join('');
+            var root = document.documentElement.style;
+            root.setProperty('--accent', accent);
+            root.setProperty('--accent-hover', hoverHex);
+            root.setProperty('--accent-contrast', contrast);
+          }
         } catch (e) {}
       })();
     </script>
