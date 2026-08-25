@@ -1,5 +1,6 @@
 import { lazy, Suspense, useState } from 'react'
 import SilentErrorBoundary from './SilentErrorBoundary'
+import AuroraBackground from './AuroraBackground'
 
 const AmbientScene = lazy(() => import('./AmbientScene'))
 const MOBILE_BREAKPOINT = 640
@@ -16,6 +17,7 @@ export default function AuthHero({ children }) {
 
   return (
     <div className="auth-page">
+      <AuroraBackground variant="auth" />
       {showScene && (
         <div className="ambient-scene-wrapper" aria-hidden="true">
           <SilentErrorBoundary>
@@ -25,6 +27,11 @@ export default function AuthHero({ children }) {
           </SilentErrorBoundary>
         </div>
       )}
+      <div className="auth-hero-copy">
+        <span className="auth-hero-kicker">Mindful</span>
+        <h1>A calmer way to check in with yourself.</h1>
+        <p>Track your mood, build habits that stick, and work through your thoughts — all in one quiet place.</p>
+      </div>
       {children}
     </div>
   )

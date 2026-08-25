@@ -2,11 +2,19 @@ import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts'
 import { supabase } from '../lib/supabaseClient'
+import { useAuth } from '../context/AuthContext'
 import useLiveAccentColor from '../hooks/useLiveAccentColor'
 
 const MOOD_EMOJI = { 1: '😞', 2: '🙁', 3: '😐', 4: '🙂', 5: '😄' }
 const MOOD_SCORES = [1, 2, 3, 4, 5]
 const DISTRIBUTION_SAMPLE_SIZE = 90
+
+function greetingForHour(hour) {
+  if (hour < 5) return 'Good night'
+  if (hour < 12) return 'Good morning'
+  if (hour < 18) return 'Good afternoon'
+  return 'Good evening'
+}
 
 function DistributionTooltip({ active, payload }) {
   if (!active || !payload?.length) return null
@@ -23,7 +31,9 @@ function DistributionTooltip({ active, payload }) {
 
 export default function Dashboard() {
   const navigate = useNavigate()
+  const { user } = useAuth()
   const accent = useLiveAccentColor()
+  const firstName = user?.email?.split('@')[0]
   const [loading, setLoading] = useState(true)
   const [recentMoods, setRecentMoods] = useState([])
   const [habitCount, setHabitCount] = useState(0)
@@ -74,13 +84,17 @@ export default function Dashboard() {
   }
 
   const hasMoodData = moodDistribution.some((d) => d.count > 0)
+  const greeting = greetingForHour(new Date().getHours())
 
   return (
     <div className="page">
-      <h1>Dashboard</h1>
+      <header className="dashboard-hero">
+        <p className="dashboard-hero-eyebrow">{greeting}{firstName ? `, ${firstName}` : ''}</p>
+        <h1>Here's how things are going.</h1>
+      </header>
 
       <div className="dashboard-grid">
-        <Link to="/mood" className="card dashboard-tile">
+        <Link to="/mood" className="card dashboard-tile" data-variant="mood">
           <h2>Recent mood</h2>
           {recentMoods.length === 0 ? (
             <p className="empty-state">No mood entries yet.</p>
@@ -95,13 +109,13 @@ export default function Dashboard() {
           )}
         </Link>
 
-        <Link to="/habits" className="card dashboard-tile">
+        <Link to="/habits" className="card dashboard-tile" data-variant="habits">
           <h2>Habits</h2>
           <p className="stat-number">{habitCount}</p>
           <p>active habit{habitCount === 1 ? '' : 's'}</p>
         </Link>
 
-        <Link to="/thoughts" className="card dashboard-tile">
+        <Link to="/thoughts" className="card dashboard-tile" data-variant="thoughts">
           <h2>Thought records</h2>
           {recentThoughts.length === 0 ? (
             <p className="empty-state">None yet.</p>

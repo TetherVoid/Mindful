@@ -1,64 +1,86 @@
 :root {
-  --bg: #e6ebf0;
-  --surface: #e6ebf0;
-  --border: #d1d9e0;
-  --text: #33465a;
-  --muted: #6f8296;
-  --accent: #2f6f8f;
-  --accent-hover: #275c77;
+  --bg: #f5f5f7;
+  --surface: #f5f5f7;
+  --border: #d2d2d7;
+  --text: #1d1d1f;
+  --muted: #6e6e73;
+  --accent: #0071e3;
+  --accent-hover: #0077ed;
   --accent-contrast: #ffffff;
+  --accent-2: #a855f7;
   --danger: #c0442f;
   --danger-hover: #a3381f;
   --success-bg: #e7f5ec;
   --success-text: #1f6b3c;
 
-  /* neomorphic shadow pair: light source top-left */
   --shadow-light: #ffffff;
-  --shadow-dark: #b8c3d0;
-  --shadow-dark-strong: #a8b4c4;
+  --shadow-dark: #c7c7cc;
+  --shadow-dark-strong: #b6b6bb;
 
-  --shadow-raised: 6px 6px 14px var(--shadow-dark), -6px -6px 14px var(--shadow-light);
-  --shadow-raised-sm: 3px 3px 8px var(--shadow-dark), -3px -3px 8px var(--shadow-light);
-  --shadow-raised-lg: 10px 10px 22px var(--shadow-dark-strong), -10px -10px 22px var(--shadow-light);
-  --shadow-inset: inset 3px 3px 7px var(--shadow-dark), inset -3px -3px 7px var(--shadow-light);
-  --shadow-inset-sm: inset 2px 2px 5px var(--shadow-dark), inset -2px -2px 5px var(--shadow-light);
-  --shadow-accent-raised: 6px 6px 14px color-mix(in srgb, var(--accent) 35%, transparent),
-    -6px -6px 14px var(--shadow-light);
-  --shadow-accent-inset: inset 3px 3px 7px color-mix(in srgb, var(--accent) 45%, transparent),
-    inset -3px -3px 7px var(--shadow-light);
+  --shadow-raised: 0 1px 2px color-mix(in srgb, var(--shadow-dark-strong) 55%, transparent),
+    0 14px 28px -10px color-mix(in srgb, var(--shadow-dark-strong) 45%, transparent),
+    inset 0 1px 0 color-mix(in srgb, var(--shadow-light) 70%, transparent);
+  --shadow-raised-sm: 0 1px 1px color-mix(in srgb, var(--shadow-dark-strong) 45%, transparent),
+    0 5px 12px -6px color-mix(in srgb, var(--shadow-dark-strong) 40%, transparent);
+  --shadow-raised-lg: 0 2px 6px color-mix(in srgb, var(--shadow-dark-strong) 45%, transparent),
+    0 32px 64px -16px color-mix(in srgb, var(--shadow-dark-strong) 50%, transparent),
+    inset 0 1px 0 color-mix(in srgb, var(--shadow-light) 65%, transparent);
+  --shadow-inset: inset 0 1px 3px color-mix(in srgb, var(--shadow-dark-strong) 40%, transparent),
+    inset 0 0 0 1px var(--border);
+  --shadow-inset-sm: inset 0 1px 2px color-mix(in srgb, var(--shadow-dark-strong) 32%, transparent),
+    inset 0 0 0 1px var(--border);
+  --shadow-accent-raised: 0 1px 2px color-mix(in srgb, var(--accent) 40%, transparent),
+    0 14px 24px -8px color-mix(in srgb, var(--accent) 50%, transparent);
+  --shadow-accent-inset: inset 0 1px 3px color-mix(in srgb, var(--accent) 55%, transparent),
+    inset 0 0 0 1px color-mix(in srgb, var(--accent) 55%, transparent);
 
-  --radius: 18px;
+  --radius: 20px;
   --radius-sm: 12px;
+  --radius-lg: 28px;
+  --radius-pill: 980px;
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --font-display: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', system-ui,
+    'Segoe UI', Roboto, sans-serif;
   color-scheme: light;
 }
 
 :root[data-theme='dark'] {
-  --bg: #2a3441;
-  --surface: #2a3441;
-  --border: #384253;
-  --text: #e8eef2;
-  --muted: #93a4b8;
-  --accent: #7fc8e8;
-  --accent-hover: #9cd7f0;
-  --accent-contrast: #10202a;
+  --bg: #000000;
+  --surface: #000000;
+  --border: #38383a;
+  --text: #f5f5f7;
+  --muted: #86868b;
+  --accent: #2997ff;
+  --accent-hover: #4fa8ff;
+  --accent-contrast: #001b33;
+  --accent-2: #bf5af2;
   --danger: #e26a52;
   --danger-hover: #ee8267;
   --success-bg: #16301f;
   --success-text: #7ed99a;
 
-  --shadow-light: #333f4f;
-  --shadow-dark: #1c232c;
-  --shadow-dark-strong: #14191f;
+  --shadow-light: #3a3a3c;
+  --shadow-dark: #000000;
+  --shadow-dark-strong: #000000;
 
-  --shadow-raised: 6px 6px 14px var(--shadow-dark), -6px -6px 14px var(--shadow-light);
-  --shadow-raised-sm: 3px 3px 8px var(--shadow-dark), -3px -3px 8px var(--shadow-light);
-  --shadow-raised-lg: 10px 10px 22px var(--shadow-dark-strong), -10px -10px 22px var(--shadow-light);
-  --shadow-inset: inset 3px 3px 7px var(--shadow-dark), inset -3px -3px 7px var(--shadow-light);
-  --shadow-inset-sm: inset 2px 2px 5px var(--shadow-dark), inset -2px -2px 5px var(--shadow-light);
-  --shadow-accent-raised: 6px 6px 14px color-mix(in srgb, var(--accent) 20%, transparent),
-    -6px -6px 14px var(--shadow-light);
-  --shadow-accent-inset: inset 3px 3px 7px color-mix(in srgb, var(--accent) 30%, transparent),
-    inset -3px -3px 7px var(--shadow-light);
+  --shadow-raised: 0 1px 2px color-mix(in srgb, var(--shadow-dark-strong) 70%, transparent),
+    0 14px 28px -10px color-mix(in srgb, var(--shadow-dark-strong) 75%, transparent),
+    inset 0 1px 0 color-mix(in srgb, var(--shadow-light) 55%, transparent),
+    inset 0 0 0 1px color-mix(in srgb, var(--shadow-light) 35%, transparent);
+  --shadow-raised-sm: 0 1px 1px color-mix(in srgb, var(--shadow-dark-strong) 60%, transparent),
+    inset 0 0 0 1px color-mix(in srgb, var(--shadow-light) 30%, transparent);
+  --shadow-raised-lg: 0 2px 6px color-mix(in srgb, var(--shadow-dark-strong) 70%, transparent),
+    0 32px 64px -16px color-mix(in srgb, var(--shadow-dark-strong) 80%, transparent),
+    inset 0 1px 0 color-mix(in srgb, var(--shadow-light) 50%, transparent),
+    inset 0 0 0 1px color-mix(in srgb, var(--shadow-light) 35%, transparent);
+  --shadow-inset: inset 0 1px 3px color-mix(in srgb, black 60%, transparent),
+    inset 0 0 0 1px var(--border);
+  --shadow-inset-sm: inset 0 1px 2px color-mix(in srgb, black 50%, transparent),
+    inset 0 0 0 1px var(--border);
+  --shadow-accent-raised: 0 1px 2px color-mix(in srgb, var(--accent) 45%, transparent),
+    0 14px 28px -8px color-mix(in srgb, var(--accent) 55%, transparent);
+  --shadow-accent-inset: inset 0 1px 3px color-mix(in srgb, var(--accent) 60%, transparent),
+    inset 0 0 0 1px color-mix(in srgb, var(--accent) 60%, transparent);
 
   color-scheme: dark;
 }
@@ -73,16 +95,63 @@ body {
   padding: 0;
 }
 
+html {
+  scroll-behavior: smooth;
+}
+
 body {
   background: var(--bg);
   color: var(--text);
-  font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  font-family: var(--font-display);
   -webkit-font-smoothing: antialiased;
-  transition: background 0.2s ease, color 0.2s ease;
+  transition: background 0.3s var(--ease), color 0.3s var(--ease);
 }
 
 #root {
   min-height: 100vh;
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--font-display);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+}
+
+::selection {
+  background: var(--accent);
+  color: var(--accent-contrast);
+}
+
+/* ---------- Scroll reveal ---------- */
+/* Progressive enhancement: fades/slides content in as it enters the
+   viewport, driven purely by CSS scroll-linked animation. Browsers without
+   support simply skip this block and content renders normally (no @supports
+   match means no animation is ever applied, so nothing is hidden). Reduced
+   motion is handled for free by the global `*, *::before, *::after` rule
+   above, which zeroes animation-duration. */
+@keyframes reveal-up {
+  from {
+    opacity: 0;
+    transform: translateY(28px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@supports (animation-timeline: view()) {
+  .card,
+  .auth-card,
+  .dashboard-hero,
+  .auth-hero-copy {
+    animation: reveal-up linear both;
+    animation-timeline: view();
+    animation-range: entry 0% cover 35%;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
