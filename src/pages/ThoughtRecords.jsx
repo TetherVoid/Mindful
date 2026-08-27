@@ -3,6 +3,8 @@ import { supabase } from '../lib/supabaseClient'
 import { useAuth } from '../context/AuthContext'
 import ConfirmModal from '../components/ConfirmModal'
 import FormSuccess from '../components/FormSuccess'
+import Reveal from '../components/Reveal'
+import { StaggerGroup, StaggerItem } from '../components/Stagger'
 
 const emptyForm = {
   situation: '',
@@ -116,7 +118,7 @@ export default function ThoughtRecords() {
 
       {error && <div className="form-error">{error}</div>}
 
-      <form className="card thought-form" onSubmit={handleSubmit}>
+      <Reveal as="form" className="card thought-form" onSubmit={handleSubmit}>
         <div className="field">
           <label htmlFor="situation">Situation</label>
           <textarea
@@ -191,7 +193,7 @@ export default function ThoughtRecords() {
           Save record
         </button>
         <FormSuccess visible={showSuccess} message="Thought record saved." />
-      </form>
+      </Reveal>
 
       <h2>Past records</h2>
       {loading ? (
@@ -199,9 +201,9 @@ export default function ThoughtRecords() {
       ) : records.length === 0 ? (
         <p className="empty-state">No thought records yet.</p>
       ) : (
-        <div className="record-list">
+        <StaggerGroup className="record-list">
           {records.map((r) => (
-            <div className="card record-card" key={r.id}>
+            <StaggerItem className="card record-card" key={r.id}>
               <div className="record-header">
                 <strong>{r.situation}</strong>
                 <span className="record-date">
@@ -220,9 +222,9 @@ export default function ThoughtRecords() {
                   Delete
                 </button>
               </div>
-            </div>
+            </StaggerItem>
           ))}
-        </div>
+        </StaggerGroup>
       )}
 
       <ConfirmModal

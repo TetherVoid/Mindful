@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import PasswordInput from '../components/PasswordInput'
 import AuthHero from '../components/AuthHero'
+import Reveal from '../components/Reveal'
 
 export default function Login() {
   const { signIn } = useAuth()
@@ -28,7 +29,7 @@ export default function Login() {
 
   return (
     <AuthHero>
-      <form className="auth-card" onSubmit={handleSubmit}>
+      <Reveal as="form" className="auth-card" delay={0.15} y={16} onSubmit={handleSubmit}>
         <h1>Welcome back</h1>
         {error && <div className="form-error">{error}</div>}
         <div className="field">
@@ -49,7 +50,7 @@ export default function Login() {
         <p className="auth-switch">
           No account yet? <Link to="/signup">Sign up</Link>
         </p>
-      </form>
+      </Reveal>
     </AuthHero>
   )
 }

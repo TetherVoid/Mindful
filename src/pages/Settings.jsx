@@ -8,6 +8,7 @@ import ThemeColorSwatches from '../components/ThemeColorSwatches'
 import PasswordInput from '../components/PasswordInput'
 import FormSuccess from '../components/FormSuccess'
 import ConfirmModal from '../components/ConfirmModal'
+import { StaggerGroup, StaggerItem } from '../components/Stagger'
 
 function todayStamp() {
   return new Date().toISOString().slice(0, 10)
@@ -127,7 +128,8 @@ export default function Settings() {
       <h1>Settings</h1>
       <p className="page-intro">Appearance, account, data, and privacy — all in one place.</p>
 
-      <div className="card">
+      <StaggerGroup>
+      <StaggerItem className="card">
         <h2>Appearance</h2>
 
         <div className="settings-row">
@@ -176,9 +178,9 @@ export default function Settings() {
           </div>
           <ThemeColorSwatches />
         </div>
-      </div>
+      </StaggerItem>
 
-      <div className="card">
+      <StaggerItem className="card">
         <h2>Account</h2>
         <div className="settings-row">
           <div>
@@ -210,9 +212,9 @@ export default function Settings() {
             Sign out
           </button>
         </div>
-      </div>
+      </StaggerItem>
 
-      <div className="card">
+      <StaggerItem className="card">
         <h2>Data</h2>
 
         <div className="settings-row">
@@ -253,9 +255,9 @@ export default function Settings() {
         </div>
         {deleteError && <div className="form-error">{deleteError}</div>}
         <FormSuccess visible={dataDeleted} message="All data deleted." />
-      </div>
+      </StaggerItem>
 
-      <div className="card">
+      <StaggerItem className="card">
         <h2>Privacy</h2>
         <div className="settings-row">
           <div>
@@ -273,7 +275,8 @@ export default function Settings() {
             </button>
           </div>
         </div>
-      </div>
+      </StaggerItem>
+      </StaggerGroup>
 
       <ConfirmModal
         open={pendingDeleteData}

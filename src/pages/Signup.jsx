@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import PasswordInput from '../components/PasswordInput'
 import AuthHero from '../components/AuthHero'
+import Reveal from '../components/Reveal'
 
 export default function Signup() {
   const { signUp } = useAuth()
@@ -34,7 +35,7 @@ export default function Signup() {
   if (success) {
     return (
       <AuthHero>
-        <div className="auth-card form-success">
+        <Reveal className="auth-card form-success" delay={0.15} y={16}>
           <h1>You're in</h1>
           <p>
             Account created for <strong>{email}</strong>. If email confirmation is enabled on
@@ -43,14 +44,14 @@ export default function Signup() {
           <Link className="btn-primary" to="/login">
             Go to sign in
           </Link>
-        </div>
+        </Reveal>
       </AuthHero>
     )
   }
 
   return (
     <AuthHero>
-      <form className="auth-card" onSubmit={handleSubmit}>
+      <Reveal as="form" className="auth-card" delay={0.15} y={16} onSubmit={handleSubmit}>
         <h1>Create your account</h1>
         {error && <div className="form-error">{error}</div>}
         <div className="field">
@@ -71,7 +72,7 @@ export default function Signup() {
         <p className="auth-switch">
           Already have an account? <Link to="/login">Sign in</Link>
         </p>
-      </form>
+      </Reveal>
     </AuthHero>
   )
 }

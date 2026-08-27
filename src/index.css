@@ -125,34 +125,10 @@ h3 {
   color: var(--accent-contrast);
 }
 
-/* ---------- Scroll reveal ---------- */
-/* Progressive enhancement: fades/slides content in as it enters the
-   viewport, driven purely by CSS scroll-linked animation. Browsers without
-   support simply skip this block and content renders normally (no @supports
-   match means no animation is ever applied, so nothing is hidden). Reduced
-   motion is handled for free by the global `*, *::before, *::after` rule
-   above, which zeroes animation-duration. */
-@keyframes reveal-up {
-  from {
-    opacity: 0;
-    transform: translateY(28px) scale(0.98);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-}
-
-@supports (animation-timeline: view()) {
-  .card,
-  .auth-card,
-  .dashboard-hero,
-  .auth-hero-copy {
-    animation: reveal-up linear both;
-    animation-timeline: view();
-    animation-range: entry 0% cover 35%;
-  }
-}
+/* Scroll-triggered reveals are handled by motion/react (see
+   components/Reveal.jsx, components/Stagger.jsx) rather than CSS
+   scroll-linked animations, for consistent cross-browser behavior and so
+   they can respect the app's own reduce-motion setting. */
 
 @media (prefers-reduced-motion: reduce) {
   *,

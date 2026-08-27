@@ -15,6 +15,7 @@ import { useAuth } from '../context/AuthContext'
 import useLiveAccentColor from '../hooks/useLiveAccentColor'
 import { getMoodHistoryLength } from '../lib/preferences'
 import FormSuccess from '../components/FormSuccess'
+import Reveal from '../components/Reveal'
 
 const MOODS = [
   { score: 1, emoji: '😞', label: 'Awful' },
@@ -126,7 +127,7 @@ export default function Mood() {
 
       {error && <div className="form-error">{error}</div>}
 
-      <form className="card mood-form" onSubmit={handleSubmit}>
+      <Reveal as="form" className="card mood-form" onSubmit={handleSubmit}>
         <p>How are you feeling right now?</p>
         <div className="mood-picker" role="radiogroup" aria-label="Mood score">
           {MOODS.map((m) => (
@@ -153,9 +154,9 @@ export default function Mood() {
           Log mood
         </button>
         <FormSuccess visible={showSuccess} message="Mood logged." />
-      </form>
+      </Reveal>
 
-      <div className="card">
+      <Reveal className="card" delay={0.1}>
         <h2>Trend</h2>
         {loading ? (
           <div className="skeleton skeleton-chart" />
@@ -200,7 +201,7 @@ export default function Mood() {
             )}
           </>
         )}
-      </div>
+      </Reveal>
     </div>
   )
 }

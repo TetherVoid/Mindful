@@ -4,6 +4,8 @@ import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Toolti
 import { supabase } from '../lib/supabaseClient'
 import { useAuth } from '../context/AuthContext'
 import useLiveAccentColor from '../hooks/useLiveAccentColor'
+import Reveal from '../components/Reveal'
+import { StaggerGroup, StaggerItem } from '../components/Stagger'
 
 const MOOD_EMOJI = { 1: '😞', 2: '🙁', 3: '😐', 4: '🙂', 5: '😄' }
 const MOOD_SCORES = [1, 2, 3, 4, 5]
@@ -88,49 +90,55 @@ export default function Dashboard() {
 
   return (
     <div className="page">
-      <header className="dashboard-hero">
+      <Reveal as="header" className="dashboard-hero" y={16}>
         <p className="dashboard-hero-eyebrow">{greeting}{firstName ? `, ${firstName}` : ''}</p>
         <h1>Here's how things are going.</h1>
-      </header>
+      </Reveal>
 
-      <div className="dashboard-grid">
-        <Link to="/mood" className="card dashboard-tile" data-variant="mood">
-          <h2>Recent mood</h2>
-          {recentMoods.length === 0 ? (
-            <p className="empty-state">No mood entries yet.</p>
-          ) : (
-            <div className="mood-strip">
-              {[...recentMoods].reverse().map((m, i) => (
-                <span key={i} title={new Date(m.created_at).toLocaleDateString()}>
-                  {MOOD_EMOJI[m.mood_score]}
-                </span>
-              ))}
-            </div>
-          )}
-        </Link>
+      <StaggerGroup className="dashboard-grid">
+        <StaggerItem>
+          <Link to="/mood" className="card dashboard-tile" data-variant="mood">
+            <h2>Recent mood</h2>
+            {recentMoods.length === 0 ? (
+              <p className="empty-state">No mood entries yet.</p>
+            ) : (
+              <div className="mood-strip">
+                {[...recentMoods].reverse().map((m, i) => (
+                  <span key={i} title={new Date(m.created_at).toLocaleDateString()}>
+                    {MOOD_EMOJI[m.mood_score]}
+                  </span>
+                ))}
+              </div>
+            )}
+          </Link>
+        </StaggerItem>
 
-        <Link to="/habits" className="card dashboard-tile" data-variant="habits">
-          <h2>Habits</h2>
-          <p className="stat-number">{habitCount}</p>
-          <p>active habit{habitCount === 1 ? '' : 's'}</p>
-        </Link>
+        <StaggerItem>
+          <Link to="/habits" className="card dashboard-tile" data-variant="habits">
+            <h2>Habits</h2>
+            <p className="stat-number">{habitCount}</p>
+            <p>active habit{habitCount === 1 ? '' : 's'}</p>
+          </Link>
+        </StaggerItem>
 
-        <Link to="/thoughts" className="card dashboard-tile" data-variant="thoughts">
-          <h2>Thought records</h2>
-          {recentThoughts.length === 0 ? (
-            <p className="empty-state">None yet.</p>
-          ) : (
-            <ul className="dashboard-list">
-              {recentThoughts.map((t) => (
-                <li key={t.id}>{t.situation}</li>
-              ))}
-            </ul>
-          )}
-        </Link>
-      </div>
+        <StaggerItem>
+          <Link to="/thoughts" className="card dashboard-tile" data-variant="thoughts">
+            <h2>Thought records</h2>
+            {recentThoughts.length === 0 ? (
+              <p className="empty-state">None yet.</p>
+            ) : (
+              <ul className="dashboard-list">
+                {recentThoughts.map((t) => (
+                  <li key={t.id}>{t.situation}</li>
+                ))}
+              </ul>
+            )}
+          </Link>
+        </StaggerItem>
+      </StaggerGroup>
 
       {hasMoodData && (
-        <div className="card">
+        <Reveal className="card">
           <h2>Mood distribution</h2>
           <p className="page-intro" style={{ marginTop: 0 }}>
             Last {DISTRIBUTION_SAMPLE_SIZE} entries. Click a bar to see those days.
@@ -150,7 +158,7 @@ export default function Dashboard() {
               />
             </BarChart>
           </ResponsiveContainer>
-        </div>
+        </Reveal>
       )}
     </div>
   )

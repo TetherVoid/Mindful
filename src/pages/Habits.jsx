@@ -5,6 +5,8 @@ import { toLocalISODate, todayISO } from '../lib/date'
 import ConfirmModal from '../components/ConfirmModal'
 import FormSuccess from '../components/FormSuccess'
 import HabitHeatmap from '../components/HabitHeatmap'
+import Reveal from '../components/Reveal'
+import { StaggerGroup, StaggerItem } from '../components/Stagger'
 
 function computeStreak(dates) {
   const set = new Set(dates)
@@ -146,7 +148,7 @@ export default function Habits() {
 
       {error && <div className="form-error">{error}</div>}
 
-      <form className="card habit-form" onSubmit={addHabit}>
+      <Reveal as="form" className="card habit-form" onSubmit={addHabit}>
         <input
           type="text"
           placeholder="New habit, e.g. 10 minutes of meditation"
@@ -156,7 +158,7 @@ export default function Habits() {
         <button type="submit" className="btn-primary">
           Add
         </button>
-      </form>
+      </Reveal>
       <FormSuccess visible={showSuccess} message="Habit added." />
 
       {loading ? (
@@ -164,13 +166,13 @@ export default function Habits() {
       ) : habits.length === 0 ? (
         <p className="empty-state">No habits yet — add one above.</p>
       ) : (
-        <div className="habit-list">
+        <StaggerGroup className="habit-list">
           {habits.map((habit) => {
             const dates = logsByHabit[habit.id] ?? []
             const doneToday = dates.includes(todayISO())
             const streak = computeStreak(dates)
             return (
-              <div className="card habit-row" key={habit.id}>
+              <StaggerItem className="card habit-row" key={habit.id}>
                 <button
                   type="button"
                   className={`habit-check ${doneToday ? 'checked' : ''}`}
@@ -200,13 +202,17 @@ export default function Habits() {
                 >
                   Remove
                 </button>
-              </div>
+              </StaggerItem>
             )
           })}
-        </div>
+        </StaggerGroup>
       )}
 
-      {!loading && <HabitHeatmap habits={habits} logsByHabit={logsByHabit} id="habit-heatmap" />}
+      {!loading && (
+        <Reveal>
+          <HabitHeatmap habits={habits} logsByHabit={logsByHabit} id="habit-heatmap" />
+        </Reveal>
+      )}
 
       <ConfirmModal
         open={!!pendingDelete}
