@@ -150,7 +150,7 @@ export default function Habits() {
 
   return (
     <div className="folio">
-      <Reveal as="header" className="folio-head" y={14}>
+      <Reveal as="header" className="folio-head" y={14} index={0}>
         <div>
           <p className="folio-kicker">Section 03</p>
           <h1 className="folio-title">
@@ -174,7 +174,7 @@ export default function Habits() {
 
       <FormError message={error} label="Register" />
 
-      <Reveal as="form" className="inline-form" onSubmit={addHabit}>
+      <Reveal as="form" className="inline-form" index={1} onSubmit={addHabit}>
         <label className="mono" htmlFor="new-habit" style={{ position: 'absolute', left: -9999 }}>
           New habit
         </label>
@@ -197,13 +197,13 @@ export default function Habits() {
       ) : habits.length === 0 ? (
         <p className="empty-state">The register is empty — write the first line above.</p>
       ) : (
-        <StaggerGroup className="register">
-          {habits.map((habit) => {
+        <StaggerGroup className="register" base={0.06}>
+          {habits.map((habit, i) => {
             const dates = logsByHabit[habit.id] ?? []
             const doneToday = dates.includes(todayISO())
             const streak = computeStreak(dates)
             return (
-              <StaggerItem className={`register-row ${doneToday ? 'done' : ''}`} key={habit.id}>
+              <StaggerItem className={`register-row ${doneToday ? 'done' : ''}`} index={i} key={habit.id}>
                 <button
                   type="button"
                   className={`tick-box ${doneToday ? 'checked' : ''}`}
@@ -248,7 +248,7 @@ export default function Habits() {
       )}
 
       {!loading && (
-        <Reveal>
+        <Reveal index={Math.min(habits.length, 6)}>
           <HabitHeatmap habits={habits} logsByHabit={logsByHabit} id="habit-heatmap" />
         </Reveal>
       )}

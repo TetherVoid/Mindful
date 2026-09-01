@@ -44,7 +44,7 @@ export default function Frontispiece({ children }) {
           <span>Vol. I — The Almanac</span>
         </div>
 
-        <Reveal className="frontispiece-copy" y={18}>
+        <Reveal className="frontispiece-copy" y={18} index={0}>
           <h1 className="frontispiece-title">
             Keep a quiet <em>record</em> of yourself.
           </h1>

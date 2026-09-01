@@ -280,9 +280,10 @@
   gap: 1rem;
   padding: 0 var(--gutter);
   min-height: 52px;
-  background: color-mix(in srgb, var(--bg) 90%, transparent);
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
+  /* Opaque, not translucent: a long case-note heading scrolling underneath
+     was legible straight through the 10% gap, which read as a rendering
+     fault. The running head has to occlude. */
+  background: var(--bg);
   border-bottom: var(--hair) solid var(--rule);
 }
 
@@ -318,7 +319,7 @@
   gap: 0.4rem;
 }
 
-.menu-toggle {
+.masthead .menu-toggle {
   display: none;
 }
 
@@ -424,30 +425,23 @@
   margin-bottom: 1.5rem;
 }
 
-/* Crop marks: two hairline ticks in the top-left and bottom-right, like
-   registration marks on a printer's proof. */
-.panel::before,
-.panel::after {
+/* A registration mark, once per page on the folio head rather than twice on
+   every panel. Repeated on each panel it stopped reading as a printer's proof
+   and started reading as decoration on a data table. */
+.folio-head::after {
   content: '';
   position: absolute;
-  width: 9px;
-  height: 9px;
-  border: var(--hair) solid var(--accent);
-  opacity: 0.75;
-}
-
-.panel::before {
-  top: -1px;
-  left: -1px;
-  border-right: 0;
-  border-bottom: 0;
-}
-
-.panel::after {
-  right: -1px;
+  right: 0;
   bottom: -1px;
+  width: 11px;
+  height: 11px;
+  border: var(--hair) solid var(--accent);
   border-left: 0;
   border-top: 0;
+}
+
+.folio-head {
+  position: relative;
 }
 
 .panel-head {
@@ -476,8 +470,8 @@
 
 .panel-head-note {
   font-family: var(--font-mono);
-  font-size: 0.6rem;
-  letter-spacing: 0.14em;
+  font-size: 0.58rem;
+  letter-spacing: 0.07em;
   text-transform: uppercase;
   color: var(--muted);
 }
@@ -987,17 +981,26 @@ input[type='number'] {
 /* ═══ 10. DASHBOARD — THE DAY SHEET ══════════════════════════════════════ */
 
 /* Three index entries, set as a numbered contents table. Each is a link. */
+/* The folio head already closes with a heavy rule; a second one 36px below it
+   reads as a printing mistake rather than as structure. Tables that follow the
+   head directly inherit it instead of drawing their own. */
 .index-table {
   border-top: var(--stroke) solid var(--text);
   margin-bottom: 2.5rem;
 }
 
+.folio-head + .index-table,
+.folio-head + .marginalia,
+.folio-head + .register {
+  border-top: 0;
+}
+
 .index-entry {
   display: grid;
-  grid-template-columns: 4.5rem minmax(0, 1fr) minmax(0, 1.15fr) 2rem;
+  grid-template-columns: 4rem minmax(0, 1fr) minmax(0, 1.15fr) 2rem;
   align-items: center;
   gap: 1.25rem;
-  padding: 1.5rem 0.75rem 1.5rem 0.25rem;
+  padding: 1.15rem 0.75rem 1.15rem 0.25rem;
   text-decoration: none;
   color: inherit;
   border-bottom: var(--hair) solid var(--rule);
@@ -1035,10 +1038,10 @@ input[type='number'] {
 }
 
 .index-entry-label p {
-  margin: 0.25rem 0 0;
+  margin: 0.3rem 0 0;
   font-family: var(--font-mono);
   font-size: 0.6rem;
-  letter-spacing: 0.16em;
+  letter-spacing: 0.07em;
   text-transform: uppercase;
   color: var(--muted);
 }
@@ -1069,7 +1072,7 @@ input[type='number'] {
 
 .figure-num {
   font-family: var(--font-mono);
-  font-size: 2.4rem;
+  font-size: 2.6rem;
   font-weight: 700;
   line-height: 0.9;
   letter-spacing: -0.05em;
@@ -1080,7 +1083,7 @@ input[type='number'] {
 .figure-unit {
   font-family: var(--font-mono);
   font-size: 0.6rem;
-  letter-spacing: 0.16em;
+  letter-spacing: 0.07em;
   text-transform: uppercase;
   color: var(--muted);
 }
@@ -1277,7 +1280,7 @@ input[type='number'] {
   grid-template-columns: auto minmax(0, 1fr) auto auto;
   align-items: center;
   gap: 1rem;
-  padding: 0.9rem 0.5rem 0.9rem 0.25rem;
+  padding: 0.7rem 0.5rem 0.7rem 0.25rem;
   border-bottom: var(--hair) solid var(--rule);
   transition: background var(--tick) var(--ease);
 }
@@ -1351,8 +1354,8 @@ input[type='number'] {
   border-bottom: var(--hair) solid transparent;
   cursor: pointer;
   font-family: var(--font-mono);
-  font-size: 0.62rem;
-  letter-spacing: 0.14em;
+  font-size: 0.6rem;
+  letter-spacing: 0.07em;
   text-transform: uppercase;
   color: var(--muted);
   white-space: nowrap;
@@ -1528,7 +1531,7 @@ input[type='number'] {
   font-family: var(--font-mono);
   font-size: 0.57rem;
   font-weight: 500;
-  letter-spacing: 0.16em;
+  letter-spacing: 0.07em;
   text-transform: uppercase;
   color: var(--muted);
 }
@@ -2131,7 +2134,7 @@ input[type='number'] {
     display: block;
   }
 
-  .menu-toggle {
+  .masthead .menu-toggle {
     display: inline-flex;
   }
 

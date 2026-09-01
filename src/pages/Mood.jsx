@@ -133,7 +133,7 @@ export default function Mood() {
 
   return (
     <div className="folio">
-      <Reveal as="header" className="folio-head" y={14}>
+      <Reveal as="header" className="folio-head" y={14} index={0}>
         <div>
           <p className="folio-kicker">Section 02</p>
           <h1 className="folio-title">
@@ -157,7 +157,7 @@ export default function Mood() {
 
       <FormError message={error} label="Mood" />
 
-      <Reveal as="form" className="panel" onSubmit={handleSubmit}>
+      <Reveal as="form" className="panel" index={1} onSubmit={handleSubmit}>
         <div className="panel-head">
           <span className="panel-head-num">§ 01</span>
           <h2>Today's mark</h2>
@@ -203,7 +203,7 @@ export default function Mood() {
         <FormSuccess visible={showSuccess} message="Today's mark is on the page." />
       </Reveal>
 
-      <Reveal as="section" className="panel" delay={0.08}>
+      <Reveal as="section" className="panel" index={2}>
         <div className="panel-head">
           <span className="panel-head-num">§ 02</span>
           <h2>The trend line</h2>

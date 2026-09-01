@@ -30,7 +30,7 @@ export default function Login() {
 
   return (
     <Frontispiece>
-      <Reveal as="form" className="plate" delay={0.12} y={18} onSubmit={handleSubmit}>
+      <Reveal as="form" className="plate" index={1} y={18} onSubmit={handleSubmit}>
         <div className="plate-head">
           <p className="mono" style={{ color: 'var(--accent)', margin: '0 0 0.5rem' }}>
             Returning reader

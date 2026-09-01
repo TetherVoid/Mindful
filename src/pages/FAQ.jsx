@@ -13,7 +13,7 @@ export default function FAQ() {
 
   return (
     <div className="folio">
-      <Reveal as="header" className="folio-head" y={14}>
+      <Reveal as="header" className="folio-head" y={14} index={0}>
         <div>
           <p className="folio-kicker">Section 05</p>
           <h1 className="folio-title">
@@ -30,11 +30,11 @@ export default function FAQ() {
         </div>
       </Reveal>
 
-      <StaggerGroup className="marginalia">
+      <StaggerGroup className="marginalia" base={0.05}>
         {faqItems.map((item, i) => {
           const open = openIndex === i
           return (
-            <StaggerItem className={`marginalia-item ${open ? 'open' : ''}`} key={item.question}>
+            <StaggerItem className={`marginalia-item ${open ? 'open' : ''}`} index={i} key={item.question}>
               <button
                 type="button"
                 className="marginalia-q"

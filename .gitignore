@@ -22,3 +22,8 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# local fixture builds (see .env.example)
+dist-fixtures
+dist-empty
+dist-heavy

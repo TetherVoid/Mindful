@@ -148,7 +148,7 @@ export default function Settings() {
 
   return (
     <div className="folio">
-      <Reveal as="header" className="folio-head" y={14}>
+      <Reveal as="header" className="folio-head" y={14} index={0}>
         <div>
           <p className="folio-kicker">Section 06</p>
           <h1 className="folio-title">
@@ -165,8 +165,8 @@ export default function Settings() {
         </div>
       </Reveal>
 
-      <StaggerGroup>
-        <StaggerItem className="panel">
+      <StaggerGroup base={0.05}>
+        <StaggerItem className="panel" index={0}>
           <div className="panel-head">
             <span className="panel-head-num">§ 01</span>
             <h2>Setting &amp; impression</h2>
@@ -236,7 +236,7 @@ export default function Settings() {
           </div>
         </StaggerItem>
 
-        <StaggerItem className="panel">
+        <StaggerItem className="panel" index={1}>
           <div className="panel-head">
             <span className="panel-head-num">§ 02</span>
             <h2>Your account</h2>
@@ -271,7 +271,7 @@ export default function Settings() {
           </div>
         </StaggerItem>
 
-        <StaggerItem className="panel">
+        <StaggerItem className="panel" index={2}>
           <div className="panel-head">
             <span className="panel-head-num">§ 03</span>
             <h2>What's on file</h2>
@@ -330,7 +330,7 @@ export default function Settings() {
           <FormSuccess visible={dataDeleted} message="Everything has been cleared." />
         </StaggerItem>
 
-        <StaggerItem className="panel">
+        <StaggerItem className="panel" index={3}>
           <div className="panel-head">
             <span className="panel-head-num">§ 04</span>
             <h2>Privacy</h2>

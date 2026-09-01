@@ -36,7 +36,7 @@ export default function Signup() {
   if (success) {
     return (
       <Frontispiece>
-        <Reveal className="plate" delay={0.12} y={18}>
+        <Reveal className="plate" index={1} y={18}>
           <div className="plate-head">
             <p className="mono" style={{ color: 'var(--accent)', margin: '0 0 0.5rem' }}>
               Page one
@@ -57,7 +57,7 @@ export default function Signup() {
 
   return (
     <Frontispiece>
-      <Reveal as="form" className="plate" delay={0.12} y={18} onSubmit={handleSubmit}>
+      <Reveal as="form" className="plate" index={1} y={18} onSubmit={handleSubmit}>
         <div className="plate-head">
           <p className="mono" style={{ color: 'var(--accent)', margin: '0 0 0.5rem' }}>
             New volume

@@ -87,25 +87,47 @@ export default function Dashboard() {
   const greeting = greetingForHour(today.getHours())
   const dateLine = today.toLocaleDateString(undefined, { day: '2-digit', month: 'short', year: 'numeric' })
 
+  // Day one: nothing has been written yet, so the page can't describe a
+  // history. It introduces the book and points at the one action worth
+  // taking first, rather than listing three kinds of emptiness.
+  const isNewBook =
+    !loading && recentMoods.length === 0 && habitCount === 0 && thoughtCount === 0
+
   const header = (
-    <Reveal as="header" className="folio-head" y={14}>
+    <Reveal as="header" className="folio-head" y={14} index={0}>
       <div>
         <p className="folio-kicker">
           {greeting}
           {firstName ? `, ${firstName}` : ''}
         </p>
         <h1 className="folio-title">
-          The day <em>sheet</em>
+          {isNewBook ? (
+            <>
+              A blank <em>book</em>
+            </>
+          ) : (
+            <>
+              The day <em>sheet</em>
+            </>
+          )}
         </h1>
         <p className="folio-standfirst">
-          Everything you've written down lately, on one page. Pick a line to open it.
+          {isNewBook
+            ? 'Nothing written down yet. A mood takes about five seconds and is the easiest place to start.'
+            : "Everything you've written down lately, on one page. Pick a line to open it."}
         </p>
+        {isNewBook && (
+          <Link to="/mood" className="btn btn--solid" style={{ marginTop: '1.4rem' }}>
+            <Icon name="plus" size={15} />
+            Log your first mood
+          </Link>
+        )}
       </div>
       <div className="folio-meta">
         <span>
           <b>{dateLine}</b>
         </span>
-        <span>Folio 01</span>
+        <span>{isNewBook ? 'Page one' : 'Folio 01'}</span>
       </div>
     </Reveal>
   )
@@ -126,8 +148,8 @@ export default function Dashboard() {
     <div className="folio">
       {header}
 
-      <StaggerGroup className="index-table">
-        <StaggerItem>
+      <StaggerGroup className="index-table" base={0.05}>
+        <StaggerItem index={0}>
           <Link to="/mood" className="index-entry">
             <span className="index-entry-num">01</span>
             <span className="index-entry-label">
@@ -157,7 +179,7 @@ export default function Dashboard() {
           </Link>
         </StaggerItem>
 
-        <StaggerItem>
+        <StaggerItem index={1}>
           <Link to="/habits" className="index-entry">
             <span className="index-entry-num">02</span>
             <span className="index-entry-label">
@@ -176,7 +198,7 @@ export default function Dashboard() {
           </Link>
         </StaggerItem>
 
-        <StaggerItem>
+        <StaggerItem index={2}>
           <Link to="/thoughts" className="index-entry">
             <span className="index-entry-num">03</span>
             <span className="index-entry-label">
@@ -202,7 +224,7 @@ export default function Dashboard() {
       </StaggerGroup>
 
       {hasMoodData && (
-        <Reveal as="section" className="panel">
+        <Reveal as="section" className="panel" index={4}>
           <div className="panel-head">
             <span className="panel-head-num">§ 01</span>
             <h2>Where your moods have landed</h2>

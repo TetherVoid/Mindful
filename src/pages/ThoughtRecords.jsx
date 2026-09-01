@@ -127,7 +127,7 @@ export default function ThoughtRecords() {
 
   return (
     <div className="folio">
-      <Reveal as="header" className="folio-head" y={14}>
+      <Reveal as="header" className="folio-head" y={14} index={0}>
         <div>
           <p className="folio-kicker">Section 04</p>
           <h1 className="folio-title">
@@ -148,7 +148,7 @@ export default function ThoughtRecords() {
 
       <FormError message={error} label="Case notes" />
 
-      <Reveal as="form" className="panel" onSubmit={handleSubmit}>
+      <Reveal as="form" className="panel" index={1} onSubmit={handleSubmit}>
         <div className="panel-head">
           <span className="panel-head-num">§ 01</span>
           <h2>New record</h2>
@@ -257,7 +257,7 @@ export default function ThoughtRecords() {
         <FormSuccess visible={showSuccess} message="Filed." />
       </Reveal>
 
-      <Reveal as="section" delay={0.08}>
+      <Reveal as="section" index={2}>
         <div className="panel-head" style={{ borderBottomColor: 'var(--text)' }}>
           <span className="panel-head-num">§ 02</span>
           <h2>On file</h2>
@@ -269,9 +269,9 @@ export default function ThoughtRecords() {
         ) : records.length === 0 ? (
           <p className="empty-state">No records filed yet.</p>
         ) : (
-          <StaggerGroup className="note-list">
-            {records.map((r) => (
-              <StaggerItem className="note" key={r.id}>
+          <StaggerGroup className="note-list" base={0.04}>
+            {records.map((r, i) => (
+              <StaggerItem className="note" index={i} key={r.id}>
                 <div className="note-head">
                   <h3>{r.situation}</h3>
                   <span className="note-date">
