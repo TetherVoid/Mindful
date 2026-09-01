@@ -1,56 +1,78 @@
 import { useState } from 'react'
-import Sidebar from './Sidebar'
-import Footer from './Footer'
+import { Link } from 'react-router-dom'
+import IndexRail from './IndexRail'
+import Colophon from './Colophon'
 import SkipToContent from './SkipToContent'
 import ScrollProgressBar from './ScrollProgressBar'
-import ScrollToTopButton from './ScrollToTopButton'
+import Dock from './Dock'
 import CookieBanner from './CookieBanner'
-import FloatingContactButton from './FloatingContactButton'
 import SearchOverlay from './SearchOverlay'
-import AuroraBackground from './AuroraBackground'
+import GridField from './GridField'
+import Icon from './Icon'
+
+// The running head printed at the top of every page: today's date on the
+// left, the volume on the right, tools at the end.
+function runningHead() {
+  return new Date().toLocaleDateString(undefined, {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  })
+}
 
 export default function AppLayout({ children }) {
   const [searchOpen, setSearchOpen] = useState(false)
-  const [mobileNavOpen, setMobileNavOpen] = useState(false)
+  const [railOpen, setRailOpen] = useState(false)
 
   return (
     <>
       <SkipToContent />
       <ScrollProgressBar />
-      <AuroraBackground />
-      <div className="app-shell">
-        <Sidebar
+      <GridField />
+
+      <div className="almanac">
+        <IndexRail
           onSearchClick={() => setSearchOpen(true)}
-          mobileOpen={mobileNavOpen}
-          onMobileClose={() => setMobileNavOpen(false)}
+          mobileOpen={railOpen}
+          onMobileClose={() => setRailOpen(false)}
         />
-        <div className="content-area">
-          <div className="content-topbar">
+
+        <div className="content">
+          <header className="masthead">
             <button
               type="button"
-              className="menu-toggle"
-              onClick={() => setMobileNavOpen(true)}
-              aria-label="Open menu"
+              className="icon-btn menu-toggle"
+              onClick={() => setRailOpen(true)}
+              aria-label="Open index"
             >
-              ☰
+              <Icon name="menu" size={17} />
             </button>
-            <span className="brand">Mindful</span>
-            <button
-              type="button"
-              className="icon-btn"
-              onClick={() => setSearchOpen(true)}
-              aria-label="Search"
-            >
-              🔍
-            </button>
-          </div>
+            <Link to="/dashboard" className="masthead-mark">
+              Mindful
+            </Link>
+            <p className="masthead-slug">
+              <b>{runningHead()}</b> · Vol. I
+            </p>
+            <div className="masthead-tools">
+              <button
+                type="button"
+                className="icon-btn"
+                onClick={() => setSearchOpen(true)}
+                aria-label="Search"
+              >
+                <Icon name="search" size={16} />
+              </button>
+            </div>
+          </header>
+
           <main id="main-content">{children}</main>
-          <Footer />
+          <Colophon />
         </div>
       </div>
-      <ScrollToTopButton />
+
+      <Dock />
       <CookieBanner />
-      <FloatingContactButton />
       <SearchOverlay open={searchOpen} onClose={() => setSearchOpen(false)} />
     </>
   )

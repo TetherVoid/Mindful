@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react'
 
+// A single accent rule that fills across the top of the page as you read
+// down it — the almanac's page-position indicator.
 export default function ScrollProgressBar() {
   const [progress, setProgress] = useState(0)
 
@@ -19,8 +21,8 @@ export default function ScrollProgressBar() {
   }, [])
 
   return (
-    <div className="scroll-progress-track" aria-hidden="true">
-      <div className="scroll-progress-bar" style={{ width: `${progress}%` }} />
+    <div className="rule-progress" aria-hidden="true">
+      <i style={{ width: `${progress}%` }} />
     </div>
   )
 }

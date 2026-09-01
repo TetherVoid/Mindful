@@ -6,16 +6,17 @@ import { useAuth } from '../context/AuthContext'
 import useLiveAccentColor from '../hooks/useLiveAccentColor'
 import Reveal from '../components/Reveal'
 import { StaggerGroup, StaggerItem } from '../components/Stagger'
+import Icon, { MoodFace } from '../components/Icon'
 
-const MOOD_EMOJI = { 1: '😞', 2: '🙁', 3: '😐', 4: '🙂', 5: '😄' }
+const MOOD_LABELS = { 1: 'Awful', 2: 'Low', 3: 'Even', 4: 'Good', 5: 'Bright' }
 const MOOD_SCORES = [1, 2, 3, 4, 5]
 const DISTRIBUTION_SAMPLE_SIZE = 90
 
 function greetingForHour(hour) {
-  if (hour < 5) return 'Good night'
-  if (hour < 12) return 'Good morning'
-  if (hour < 18) return 'Good afternoon'
-  return 'Good evening'
+  if (hour < 5) return 'Late night'
+  if (hour < 12) return 'Morning'
+  if (hour < 18) return 'Afternoon'
+  return 'Evening'
 }
 
 function DistributionTooltip({ active, payload }) {
@@ -23,10 +24,8 @@ function DistributionTooltip({ active, payload }) {
   const { score, count } = payload[0].payload
   return (
     <div className="chart-tooltip">
-      <strong>
-        {MOOD_EMOJI[score]} {count}
-      </strong>{' '}
-      {count === 1 ? 'entry' : 'entries'}
+      <b>{MOOD_LABELS[score]}</b>
+      {count} {count === 1 ? 'entry' : 'entries'}
     </div>
   )
 }
@@ -40,124 +39,213 @@ export default function Dashboard() {
   const [recentMoods, setRecentMoods] = useState([])
   const [habitCount, setHabitCount] = useState(0)
   const [recentThoughts, setRecentThoughts] = useState([])
+  const [thoughtCount, setThoughtCount] = useState(0)
   const [moodDistribution, setMoodDistribution] = useState([])
 
   useEffect(() => {
     async function load() {
-      const [{ data: moods }, { count }, { data: thoughts }, { data: distributionRows }] =
-        await Promise.all([
-          supabase
-            .from('mood_logs')
-            .select('mood_score, created_at')
-            .order('created_at', { ascending: false })
-            .limit(7),
-          supabase.from('habits').select('id', { count: 'exact', head: true }).eq('archived', false),
-          supabase
-            .from('thought_records')
-            .select('id, situation, created_at')
-            .order('created_at', { ascending: false })
-            .limit(3),
-          supabase
-            .from('mood_logs')
-            .select('mood_score')
-            .order('created_at', { ascending: false })
-            .limit(DISTRIBUTION_SAMPLE_SIZE),
-        ])
+      const [
+        { data: moods },
+        { count },
+        { data: thoughts, count: thoughtTotal },
+        { data: distributionRows },
+      ] = await Promise.all([
+        supabase
+          .from('mood_logs')
+          .select('mood_score, created_at')
+          .order('created_at', { ascending: false })
+          .limit(7),
+        supabase.from('habits').select('id', { count: 'exact', head: true }).eq('archived', false),
+        supabase
+          .from('thought_records')
+          .select('id, situation, created_at', { count: 'exact' })
+          .order('created_at', { ascending: false })
+          .limit(3),
+        supabase
+          .from('mood_logs')
+          .select('mood_score')
+          .order('created_at', { ascending: false })
+          .limit(DISTRIBUTION_SAMPLE_SIZE),
+      ])
       setRecentMoods(moods ?? [])
       setHabitCount(count ?? 0)
       setRecentThoughts(thoughts ?? [])
+      setThoughtCount(thoughtTotal ?? 0)
 
       const counts = Object.fromEntries(MOOD_SCORES.map((s) => [s, 0]))
       for (const row of distributionRows ?? []) counts[row.mood_score] += 1
-      setMoodDistribution(MOOD_SCORES.map((score) => ({ score, emoji: MOOD_EMOJI[score], count: counts[score] })))
+      setMoodDistribution(
+        MOOD_SCORES.map((score) => ({ score, label: MOOD_LABELS[score], count: counts[score] }))
+      )
 
       setLoading(false)
     }
     load()
   }, [])
 
+  const today = new Date()
+  const greeting = greetingForHour(today.getHours())
+  const dateLine = today.toLocaleDateString(undefined, { day: '2-digit', month: 'short', year: 'numeric' })
+
+  const header = (
+    <Reveal as="header" className="folio-head" y={14}>
+      <div>
+        <p className="folio-kicker">
+          {greeting}
+          {firstName ? `, ${firstName}` : ''}
+        </p>
+        <h1 className="folio-title">
+          The day <em>sheet</em>
+        </h1>
+        <p className="folio-standfirst">
+          Everything you've written down lately, on one page. Pick a line to open it.
+        </p>
+      </div>
+      <div className="folio-meta">
+        <span>
+          <b>{dateLine}</b>
+        </span>
+        <span>Folio 01</span>
+      </div>
+    </Reveal>
+  )
+
   if (loading) {
     return (
-      <div className="page">
-        <h1>Dashboard</h1>
-        <div className="skeleton skeleton-list" />
+      <div className="folio">
+        {header}
+        <div className="ruled-skeleton ruled-skeleton--list" />
       </div>
     )
   }
 
   const hasMoodData = moodDistribution.some((d) => d.count > 0)
-  const greeting = greetingForHour(new Date().getHours())
+  const latestMood = recentMoods[0]?.mood_score
 
   return (
-    <div className="page">
-      <Reveal as="header" className="dashboard-hero" y={16}>
-        <p className="dashboard-hero-eyebrow">{greeting}{firstName ? `, ${firstName}` : ''}</p>
-        <h1>Here's how things are going.</h1>
-      </Reveal>
+    <div className="folio">
+      {header}
 
-      <StaggerGroup className="dashboard-grid">
+      <StaggerGroup className="index-table">
         <StaggerItem>
-          <Link to="/mood" className="card dashboard-tile" data-variant="mood">
-            <h2>Recent mood</h2>
-            {recentMoods.length === 0 ? (
-              <p className="empty-state">No mood entries yet.</p>
-            ) : (
-              <div className="mood-strip">
-                {[...recentMoods].reverse().map((m, i) => (
-                  <span key={i} title={new Date(m.created_at).toLocaleDateString()}>
-                    {MOOD_EMOJI[m.mood_score]}
-                  </span>
-                ))}
-              </div>
-            )}
+          <Link to="/mood" className="index-entry">
+            <span className="index-entry-num">01</span>
+            <span className="index-entry-label">
+              <h2>Mood</h2>
+              <p>
+                {latestMood ? `Last logged · ${MOOD_LABELS[latestMood]}` : 'Nothing logged yet'}
+              </p>
+            </span>
+            <span className="index-entry-value">
+              {recentMoods.length === 0 ? (
+                <span className="mono">Awaiting first entry</span>
+              ) : (
+                <span className="mark-strip">
+                  {[...recentMoods].reverse().map((m, i) => (
+                    <span
+                      className="mark-cell"
+                      key={i}
+                      title={`${new Date(m.created_at).toLocaleDateString()} · ${MOOD_LABELS[m.mood_score]}`}
+                    >
+                      <i style={{ height: `${m.mood_score * 20}%` }} />
+                    </span>
+                  ))}
+                </span>
+              )}
+            </span>
+            <Icon name="arrowRight" size={18} className="index-entry-arrow" />
           </Link>
         </StaggerItem>
 
         <StaggerItem>
-          <Link to="/habits" className="card dashboard-tile" data-variant="habits">
-            <h2>Habits</h2>
-            <p className="stat-number">{habitCount}</p>
-            <p>active habit{habitCount === 1 ? '' : 's'}</p>
+          <Link to="/habits" className="index-entry">
+            <span className="index-entry-num">02</span>
+            <span className="index-entry-label">
+              <h2>Register</h2>
+              <p>Habits currently kept</p>
+            </span>
+            <span className="index-entry-value">
+              <span className="figure">
+                <span className="figure-num">{String(habitCount).padStart(2, '0')}</span>
+                <span className="figure-unit">
+                  active habit{habitCount === 1 ? '' : 's'}
+                </span>
+              </span>
+            </span>
+            <Icon name="arrowRight" size={18} className="index-entry-arrow" />
           </Link>
         </StaggerItem>
 
         <StaggerItem>
-          <Link to="/thoughts" className="card dashboard-tile" data-variant="thoughts">
-            <h2>Thought records</h2>
-            {recentThoughts.length === 0 ? (
-              <p className="empty-state">None yet.</p>
-            ) : (
-              <ul className="dashboard-list">
-                {recentThoughts.map((t) => (
-                  <li key={t.id}>{t.situation}</li>
-                ))}
-              </ul>
-            )}
+          <Link to="/thoughts" className="index-entry">
+            <span className="index-entry-num">03</span>
+            <span className="index-entry-label">
+              <h2>Case notes</h2>
+              <p>
+                {thoughtCount} record{thoughtCount === 1 ? '' : 's'} on file
+              </p>
+            </span>
+            <span className="index-entry-value">
+              {recentThoughts.length === 0 ? (
+                <span className="mono">No records yet</span>
+              ) : (
+                <ul className="excerpt-list">
+                  {recentThoughts.map((t) => (
+                    <li key={t.id}>{t.situation}</li>
+                  ))}
+                </ul>
+              )}
+            </span>
+            <Icon name="arrowRight" size={18} className="index-entry-arrow" />
           </Link>
         </StaggerItem>
       </StaggerGroup>
 
       {hasMoodData && (
-        <Reveal className="card">
-          <h2>Mood distribution</h2>
-          <p className="page-intro" style={{ marginTop: 0 }}>
-            Last {DISTRIBUTION_SAMPLE_SIZE} entries. Click a bar to see those days.
-          </p>
-          <ResponsiveContainer width="100%" height={200}>
-            <BarChart data={moodDistribution} margin={{ top: 8, right: 16, left: 0, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
-              <XAxis dataKey="emoji" stroke="var(--muted)" tick={{ fontSize: 16 }} />
-              <YAxis allowDecimals={false} stroke="var(--muted)" tick={{ fontSize: 12 }} width={24} />
-              <Tooltip content={<DistributionTooltip />} cursor={{ fill: 'var(--shadow-dark)', opacity: 0.4 }} />
-              <Bar
-                dataKey="count"
-                fill={accent}
-                radius={[6, 6, 0, 0]}
-                onClick={() => navigate('/mood')}
-                style={{ cursor: 'pointer' }}
-              />
-            </BarChart>
-          </ResponsiveContainer>
+        <Reveal as="section" className="panel">
+          <div className="panel-head">
+            <span className="panel-head-num">§ 01</span>
+            <h2>Where your moods have landed</h2>
+            <span className="panel-head-note">Last {DISTRIBUTION_SAMPLE_SIZE} entries</span>
+          </div>
+          <div className="chart-frame">
+            <ResponsiveContainer width="100%" height={210}>
+              <BarChart data={moodDistribution} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
+                <CartesianGrid stroke="var(--border)" vertical={false} />
+                <XAxis
+                  dataKey="label"
+                  stroke="var(--rule)"
+                  tickLine={false}
+                  tick={{ fontSize: 10 }}
+                />
+                <YAxis
+                  allowDecimals={false}
+                  stroke="var(--rule)"
+                  tickLine={false}
+                  tick={{ fontSize: 10 }}
+                  width={26}
+                />
+                <Tooltip
+                  content={<DistributionTooltip />}
+                  cursor={{ fill: 'var(--text)', opacity: 0.06 }}
+                />
+                <Bar
+                  dataKey="count"
+                  fill={accent}
+                  onClick={() => navigate('/mood')}
+                  style={{ cursor: 'pointer' }}
+                />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+          <div className="heat-legend" style={{ justifyContent: 'space-between' }}>
+            <span>Click a column to open the mood page</span>
+            <span aria-hidden="true" style={{ display: 'flex', gap: '0.4rem', color: 'var(--rule)' }}>
+              {MOOD_SCORES.map((s) => (
+                <MoodFace key={s} score={s} size={16} />
+              ))}
+            </span>
+          </div>
         </Reveal>
       )}
     </div>

@@ -7,7 +7,7 @@ const ACCENT_STORAGE_KEY = 'accentColor'
 const DENSITY_KEY = 'density'
 const MOTION_KEY = 'reduceMotion'
 
-export const DEFAULT_ACCENT = { light: '#2f6f8f', dark: '#7fc8e8' }
+export const DEFAULT_ACCENT = { light: '#9a3b1f', dark: '#e0714f' }
 
 function getInitialTheme() {
   const stored = localStorage.getItem(STORAGE_KEY)
@@ -46,15 +46,14 @@ export function ThemeProvider({ children }) {
       root.setProperty('--surface', palette.surface)
       root.setProperty('--text', palette.text)
       root.setProperty('--muted', palette.muted)
-      root.setProperty('--shadow-light', palette.shadowLight)
-      root.setProperty('--shadow-dark', palette.shadowDark)
-      root.setProperty('--shadow-dark-strong', palette.shadowDarkStrong)
+      root.setProperty('--border', palette.border)
+      root.setProperty('--rule', palette.rule)
       root.setProperty('--accent', palette.accent)
       root.setProperty('--accent-hover', palette.accentHover)
       root.setProperty('--accent-contrast', palette.accentContrast)
       localStorage.setItem(ACCENT_STORAGE_KEY, accentColor)
     } else {
-      ;['--bg', '--surface', '--text', '--muted', '--shadow-light', '--shadow-dark', '--shadow-dark-strong', '--accent', '--accent-hover', '--accent-contrast'].forEach((prop) => root.removeProperty(prop))
+      ;['--bg', '--surface', '--text', '--muted', '--border', '--rule', '--accent', '--accent-hover', '--accent-contrast'].forEach((prop) => root.removeProperty(prop))
       localStorage.removeItem(ACCENT_STORAGE_KEY)
     }
   }, [accentColor, theme])

@@ -3,10 +3,10 @@
   <head>
     <meta charset="UTF-8" />
     <script>
-      // Mirrors src/lib/color.js's deriveFullPalette/deriveAccentForTheme —
-      // keep the two in sync. Duplicated here (rather than imported) so the
-      // palette can apply before first paint, avoiding a flash of default
-      // colors while React/the module bundle loads.
+      // Mirrors src/lib/color.js's deriveFullPalette — keep the two in sync.
+      // Duplicated here (rather than imported) so the palette can apply before
+      // first paint, avoiding a flash of default colors while React/the module
+      // bundle loads.
       (function () {
         try {
           var stored = localStorage.getItem('theme');
@@ -28,7 +28,7 @@
 
           var accent = localStorage.getItem('accentColor');
           if (accent) {
-            var DEFAULT_HUE = 210;
+            var DEFAULT_HUE = 32;
 
             var hexToRgb = function (hex) {
               var clean = hex.replace('#', '');
@@ -88,42 +88,35 @@
 
             var accentTarget =
               theme === 'dark'
-                ? { h: h, s: Math.max(baseHsl.s, 60), l: 70 }
-                : { h: h, s: Math.min(Math.max(baseHsl.s, 45), 55), l: 37 };
+                ? { h: h, s: Math.max(baseHsl.s, 62), l: 64 }
+                : { h: h, s: Math.min(Math.max(baseHsl.s, 52), 72), l: 36 };
             var accentHex = hslToHex(accentTarget);
             var accentRgb = hexToRgb(accentHex);
             var accentIsLight = relativeLuminance(accentRgb) > 0.45;
-            var accentContrast = accentIsLight ? '#182029' : '#ffffff';
+            var accentContrast = accentIsLight ? '#141310' : '#fbf9f3';
             var hoverTarget = accentIsLight ? 0 : 255;
             var accentHover = '#' + ['r', 'g', 'b'].map(function (k) {
-              return Math.round(accentRgb[k] + (hoverTarget - accentRgb[k]) * 0.16).toString(16).padStart(2, '0');
+              return Math.round(accentRgb[k] + (hoverTarget - accentRgb[k]) * 0.18).toString(16).padStart(2, '0');
             }).join('');
 
+            // Paper/ink role targets — only hue comes from the picked color.
             var roles = theme === 'dark'
               ? {
-                  bg: { s: 21, l: 21 }, text: { s: 28, l: 93 }, muted: { s: 21, l: 65 },
-                  shadowLight: { s: 21, l: 25.5 }, shadowDark: { s: 22, l: 14 }, shadowDarkStrong: { s: 22, l: 10 },
+                  bg: { s: 12, l: 6 }, surface: { s: 11, l: 10 }, text: { s: 16, l: 93 },
+                  muted: { s: 9, l: 58 }, border: { s: 10, l: 24 }, rule: { s: 12, l: 34 },
                 }
               : {
-                  bg: { s: 25, l: 92 }, text: { s: 28, l: 28 }, muted: { s: 16, l: 51 },
-                  shadowDark: { s: 20, l: 77 }, shadowDarkStrong: { s: 19, l: 71 },
+                  bg: { s: 20, l: 94 }, surface: { s: 30, l: 97.5 }, text: { s: 24, l: 9 },
+                  muted: { s: 10, l: 40 }, border: { s: 14, l: 79 }, rule: { s: 14, l: 66 },
                 };
 
-            var bgHex = hslToHex({ h: h, s: roles.bg.s, l: roles.bg.l });
-            var textHex = hslToHex({ h: h, s: roles.text.s, l: roles.text.l });
-            var mutedHex = hslToHex({ h: h, s: roles.muted.s, l: roles.muted.l });
-            var shadowLightHex = theme === 'dark' ? hslToHex({ h: h, s: roles.shadowLight.s, l: roles.shadowLight.l }) : '#ffffff';
-            var shadowDarkHex = hslToHex({ h: h, s: roles.shadowDark.s, l: roles.shadowDark.l });
-            var shadowDarkStrongHex = hslToHex({ h: h, s: roles.shadowDarkStrong.s, l: roles.shadowDarkStrong.l });
-
             var root = document.documentElement.style;
-            root.setProperty('--bg', bgHex);
-            root.setProperty('--surface', bgHex);
-            root.setProperty('--text', textHex);
-            root.setProperty('--muted', mutedHex);
-            root.setProperty('--shadow-light', shadowLightHex);
-            root.setProperty('--shadow-dark', shadowDarkHex);
-            root.setProperty('--shadow-dark-strong', shadowDarkStrongHex);
+            root.setProperty('--bg', hslToHex({ h: h, s: roles.bg.s, l: roles.bg.l }));
+            root.setProperty('--surface', hslToHex({ h: h, s: roles.surface.s, l: roles.surface.l }));
+            root.setProperty('--text', hslToHex({ h: h, s: roles.text.s, l: roles.text.l }));
+            root.setProperty('--muted', hslToHex({ h: h, s: roles.muted.s, l: roles.muted.l }));
+            root.setProperty('--border', hslToHex({ h: h, s: roles.border.s, l: roles.border.l }));
+            root.setProperty('--rule', hslToHex({ h: h, s: roles.rule.s, l: roles.rule.l }));
             root.setProperty('--accent', accentHex);
             root.setProperty('--accent-hover', accentHover);
             root.setProperty('--accent-contrast', accentContrast);
@@ -133,7 +126,17 @@
     </script>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Portfolio</title>
+    <meta
+      name="description"
+      content="Mindful — a paper-quiet logbook for mood, habits, and thought records."
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,300;1,6..72,400&family=JetBrains+Mono:wght@400;500;700&display=swap"
+      rel="stylesheet"
+    />
+    <title>Mindful — The Almanac</title>
   </head>
   <body>
     <div id="root"></div>

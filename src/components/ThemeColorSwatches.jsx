@@ -1,42 +1,45 @@
 import { useTheme, DEFAULT_ACCENT } from '../context/ThemeContext'
 
-const PRESETS = [
-  { name: 'Ocean', value: '#2f6f8f' },
-  { name: 'Forest', value: '#3f7d52' },
-  { name: 'Plum', value: '#7a4f9e' },
-  { name: 'Rose', value: '#b5566f' },
-  { name: 'Amber', value: '#c1812f' },
-  { name: 'Slate', value: '#5b6b7a' },
+// Named after the inks they imitate — the whole page is re-derived from the
+// chosen hue, so these are stock, not just a button color.
+const INKS = [
+  { name: 'Vermillion', value: '#9a3b1f' },
+  { name: 'Iron gall', value: '#2f4a6b' },
+  { name: 'Verdigris', value: '#3f7d52' },
+  { name: 'Aubergine', value: '#6b3f7d' },
+  { name: 'Ochre', value: '#a8762a' },
+  { name: 'Graphite', value: '#5b5a52' },
 ]
 
 export default function ThemeColorSwatches() {
   const { theme, accentColor, setAccentColor, resetAccentColor } = useTheme()
 
   return (
-    <div className="theme-swatches">
-      <div className="color-swatch-row">
-        {PRESETS.map((preset) => (
+    <div>
+      <div className="swatch-row">
+        {INKS.map((ink) => (
           <button
-            key={preset.value}
+            key={ink.value}
             type="button"
-            className={`color-swatch ${accentColor === preset.value ? 'selected' : ''}`}
-            style={{ background: preset.value }}
-            onClick={() => setAccentColor(preset.value)}
-            aria-label={preset.name}
-            title={preset.name}
+            className={`swatch ${accentColor === ink.value ? 'selected' : ''}`}
+            style={{ background: ink.value }}
+            onClick={() => setAccentColor(ink.value)}
+            aria-label={ink.name}
+            aria-pressed={accentColor === ink.value}
+            title={ink.name}
           />
         ))}
-        <label className="color-swatch color-swatch-custom" title="Custom color">
+        <label className="swatch swatch-custom" title="Mix your own">
           <input
             type="color"
             value={accentColor || DEFAULT_ACCENT[theme]}
             onChange={(e) => setAccentColor(e.target.value)}
-            aria-label="Pick a custom theme color"
+            aria-label="Mix a custom ink"
           />
         </label>
       </div>
-      <button type="button" className="btn-ghost color-picker-reset" onClick={resetAccentColor}>
-        Reset to default
+      <button type="button" className="btn btn--quiet btn--sm" onClick={resetAccentColor}>
+        Reset to house ink
       </button>
     </div>
   )

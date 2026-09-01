@@ -15,14 +15,16 @@ import { useAuth } from '../context/AuthContext'
 import useLiveAccentColor from '../hooks/useLiveAccentColor'
 import { getMoodHistoryLength } from '../lib/preferences'
 import FormSuccess from '../components/FormSuccess'
+import FormError from '../components/FormError'
 import Reveal from '../components/Reveal'
+import Icon, { MoodFace } from '../components/Icon'
 
 const MOODS = [
-  { score: 1, emoji: '😞', label: 'Awful' },
-  { score: 2, emoji: '🙁', label: 'Low' },
-  { score: 3, emoji: '😐', label: 'Okay' },
-  { score: 4, emoji: '🙂', label: 'Good' },
-  { score: 5, emoji: '😄', label: 'Great' },
+  { score: 1, label: 'Awful' },
+  { score: 2, label: 'Low' },
+  { score: 3, label: 'Even' },
+  { score: 4, label: 'Good' },
+  { score: 5, label: 'Bright' },
 ]
 
 const BRUSH_THRESHOLD = 14
@@ -32,12 +34,17 @@ function CustomTooltip({ active, payload, label }) {
   const mood = MOODS.find((m) => m.score === payload[0].value)
   return (
     <div className="chart-tooltip">
-      <strong>{label}</strong>
-      <div>
-        {mood?.emoji} {mood?.label}
-      </div>
+      <b>{label}</b>
+      {mood?.label}
     </div>
   )
+}
+
+// Mean of the visible run, printed as a single figure — the almanac's
+// summary line for the chart underneath it.
+function average(values) {
+  if (!values.length) return null
+  return values.reduce((sum, v) => sum + v, 0) / values.length
 }
 
 export default function Mood() {
@@ -106,14 +113,17 @@ export default function Mood() {
     note: l.note,
   }))
 
+  const mean = average(logs.map((l) => l.mood_score))
+
   function renderDot(props) {
     const { key, cx, cy, payload } = props
     return (
-      <circle
+      <rect
         key={key}
-        cx={cx}
-        cy={cy}
-        r={3}
+        x={cx - 3}
+        y={cy - 3}
+        width={6}
+        height={6}
         fill={accent}
         style={{ cursor: 'pointer' }}
         onClick={() => setSelectedLog(payload)}
@@ -122,82 +132,149 @@ export default function Mood() {
   }
 
   return (
-    <div className="page">
-      <h1>Mood</h1>
+    <div className="folio">
+      <Reveal as="header" className="folio-head" y={14}>
+        <div>
+          <p className="folio-kicker">Section 02</p>
+          <h1 className="folio-title">
+            How it's <em>going</em>
+          </h1>
+          <p className="folio-standfirst">
+            One mark a day is enough. The line underneath does the remembering for you.
+          </p>
+        </div>
+        <div className="folio-meta">
+          <span>
+            <b>{logs.length}</b> entries held
+          </span>
+          {mean !== null && (
+            <span>
+              Mean <b>{mean.toFixed(1)}</b> / 5
+            </span>
+          )}
+        </div>
+      </Reveal>
 
-      {error && <div className="form-error">{error}</div>}
+      <FormError message={error} label="Mood" />
 
-      <Reveal as="form" className="card mood-form" onSubmit={handleSubmit}>
-        <p>How are you feeling right now?</p>
-        <div className="mood-picker" role="radiogroup" aria-label="Mood score">
+      <Reveal as="form" className="panel" onSubmit={handleSubmit}>
+        <div className="panel-head">
+          <span className="panel-head-num">§ 01</span>
+          <h2>Today's mark</h2>
+          <span className="panel-head-note">Takes five seconds</span>
+        </div>
+
+        <div className="gauge" role="radiogroup" aria-label="Mood score">
           {MOODS.map((m) => (
             <button
               type="button"
               key={m.score}
-              className={`mood-option ${score === m.score ? 'selected' : ''}`}
+              className={`gauge-step ${score === m.score ? 'selected' : ''}`}
               onClick={() => setScore(m.score)}
               role="radio"
               aria-checked={score === m.score}
-              aria-label={m.label}
             >
-              <span aria-hidden="true">{m.emoji}</span>
+              <MoodFace score={m.score} size={30} className="gauge-face" />
+              <span className="gauge-label">{m.label}</span>
+              <span className="gauge-score" aria-hidden="true">
+                {m.score}/5
+              </span>
             </button>
           ))}
         </div>
-        <textarea
-          placeholder="Anything on your mind? (optional)"
-          value={note}
-          onChange={(e) => setNote(e.target.value)}
-          rows={3}
-        />
-        <button type="submit" className="btn-primary">
-          Log mood
+
+        <div className="field">
+          <label htmlFor="mood-note">
+            <span className="field-num">01</span> Anything worth noting
+          </label>
+          <textarea
+            id="mood-note"
+            placeholder="Optional. A sentence is plenty."
+            value={note}
+            onChange={(e) => setNote(e.target.value)}
+            rows={3}
+          />
+        </div>
+
+        <button type="submit" className="btn btn--solid">
+          <Icon name="plus" size={15} />
+          Log this mood
         </button>
-        <FormSuccess visible={showSuccess} message="Mood logged." />
+        <FormSuccess visible={showSuccess} message="Today's mark is on the page." />
       </Reveal>
 
-      <Reveal className="card" delay={0.1}>
-        <h2>Trend</h2>
+      <Reveal as="section" className="panel" delay={0.08}>
+        <div className="panel-head">
+          <span className="panel-head-num">§ 02</span>
+          <h2>The trend line</h2>
+          <span className="panel-head-note">Last {historyLength}</span>
+        </div>
+
         {loading ? (
-          <div className="skeleton skeleton-chart" />
+          <div className="ruled-skeleton ruled-skeleton--chart" />
         ) : chartData.length === 0 ? (
-          <p className="empty-state">No entries yet — log your first mood above.</p>
+          <p className="empty-state">Nothing plotted yet — log your first mood above.</p>
         ) : (
           <>
-            <ResponsiveContainer width="100%" height={260}>
-              <ComposedChart data={chartData} margin={{ top: 8, right: 16, left: 0, bottom: 0 }}>
-                <defs>
-                  <linearGradient id="moodGradient" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor={accent} stopOpacity={0.35} />
-                    <stop offset="100%" stopColor={accent} stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
-                <XAxis dataKey="date" stroke="var(--muted)" tick={{ fontSize: 12 }} />
-                <YAxis domain={[1, 5]} ticks={[1, 2, 3, 4, 5]} stroke="var(--muted)" tick={{ fontSize: 12 }} width={24} />
-                <Tooltip content={<CustomTooltip />} />
-                <Area type="monotone" dataKey="mood" stroke="none" fill="url(#moodGradient)" />
-                <Line
-                  type="monotone"
-                  dataKey="mood"
-                  stroke={accent}
-                  strokeWidth={2}
-                  dot={renderDot}
-                  activeDot={{ r: 5, onClick: (_e, item) => setSelectedLog(item.payload) }}
-                />
-                {chartData.length > BRUSH_THRESHOLD && (
-                  <Brush dataKey="date" height={22} stroke={accent} travellerWidth={8} />
-                )}
-              </ComposedChart>
-            </ResponsiveContainer>
-            {selectedLog && (
-              <p className="chart-selected-note">
-                <strong>{selectedLog.date}:</strong>{' '}
-                {selectedLog.note || 'No note for this entry.'}{' '}
-                <button type="button" className="chart-selected-dismiss" onClick={() => setSelectedLog(null)}>
-                  ×
+            <div className="chart-frame">
+              <ResponsiveContainer width="100%" height={260}>
+                <ComposedChart data={chartData} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="moodFill" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor={accent} stopOpacity={0.22} />
+                      <stop offset="100%" stopColor={accent} stopOpacity={0.02} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid stroke="var(--border)" vertical={false} />
+                  <XAxis dataKey="date" stroke="var(--rule)" tickLine={false} tick={{ fontSize: 10 }} />
+                  <YAxis
+                    domain={[1, 5]}
+                    ticks={[1, 2, 3, 4, 5]}
+                    stroke="var(--rule)"
+                    tickLine={false}
+                    tick={{ fontSize: 10 }}
+                    width={26}
+                  />
+                  <Tooltip content={<CustomTooltip />} cursor={{ stroke: 'var(--rule)' }} />
+                  <Area type="linear" dataKey="mood" stroke="none" fill="url(#moodFill)" />
+                  <Line
+                    type="linear"
+                    dataKey="mood"
+                    stroke={accent}
+                    strokeWidth={1.5}
+                    dot={renderDot}
+                    activeDot={{ r: 5, onClick: (_e, item) => setSelectedLog(item.payload) }}
+                  />
+                  {chartData.length > BRUSH_THRESHOLD && (
+                    <Brush
+                      dataKey="date"
+                      height={22}
+                      stroke={accent}
+                      fill="transparent"
+                      travellerWidth={8}
+                    />
+                  )}
+                </ComposedChart>
+              </ResponsiveContainer>
+            </div>
+
+            {selectedLog ? (
+              <p className="chart-annotation">
+                <strong>{selectedLog.date}</strong>
+                {selectedLog.note || 'No note was written for this entry.'}
+                <button
+                  type="button"
+                  className="chart-annotation-dismiss"
+                  onClick={() => setSelectedLog(null)}
+                  aria-label="Dismiss note"
+                >
+                  <Icon name="close" size={13} />
                 </button>
               </p>
+            ) : (
+              <div className="heat-legend">
+                <span>Select any point to read its note</span>
+              </div>
             )}
           </>
         )}

@@ -1,28 +1,60 @@
+/* The app already looks like a printed page; printing should just remove the
+   furniture and let the ink through. */
 @media print {
-  .site-header,
-  .site-footer,
-  .scroll-progress-track,
-  .scroll-to-top,
-  .floating-contact-btn,
-  .cookie-banner,
-  .modal-backdrop,
-  .btn-primary,
-  .btn-ghost,
-  .btn-danger,
-  .record-actions,
-  .habit-form,
-  .mood-form,
-  .thought-form {
+  .rail,
+  .rail-backdrop,
+  .masthead,
+  .rule-progress,
+  .dock,
+  .cookie-notice,
+  .overlay,
+  .grid-field,
+  .skip-to-content,
+  .btn,
+  .icon-btn,
+  .switch,
+  .note-actions,
+  .inline-form,
+  .gauge,
+  .swatch-row,
+  form {
     display: none !important;
+  }
+
+  .almanac {
+    display: block;
+  }
+
+  .content {
+    border-left: 0;
+    margin-left: 0;
   }
 
   body {
     background: #fff;
     color: #000;
+    font-size: 11pt;
   }
 
-  .card {
-    border: 1px solid #ccc;
+  .folio {
+    max-width: none;
+    padding: 0;
+  }
+
+  .panel,
+  .note,
+  .index-entry {
+    border-color: #999;
+    box-shadow: none;
     break-inside: avoid;
+  }
+
+  .panel::before,
+  .panel::after {
+    display: none;
+  }
+
+  a {
+    text-decoration: none;
   }
 }

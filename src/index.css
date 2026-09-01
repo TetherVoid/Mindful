@@ -1,91 +1,84 @@
+/* ============================================================================
+   MINDFUL — "THE ALMANAC"
+   A paper-and-ink design system: printed logbook, not a dashboard.
+
+   Rules, not shadows. Square corners, not pills. Serif for language,
+   monospace for measurement. Everything sits on a visible grid the way
+   entries sit on a ruled page.
+   ========================================================================== */
+
 :root {
-  --bg: #f5f5f7;
-  --surface: #f5f5f7;
-  --border: #d2d2d7;
-  --text: #1d1d1f;
-  --muted: #6e6e73;
-  --accent: #0071e3;
-  --accent-hover: #0077ed;
-  --accent-contrast: #ffffff;
-  --accent-2: #a855f7;
-  --danger: #c0442f;
-  --danger-hover: #a3381f;
-  --success-bg: #e7f5ec;
-  --success-text: #1f6b3c;
+  /* --- Ground -------------------------------------------------------- */
+  --bg: #efece2; /* paper */
+  --surface: #f8f6ef; /* panel — one shade brighter than the page */
+  --text: #17150f; /* ink */
+  --muted: #6b6557; /* pencil */
+  --border: #d8d1bf; /* hairline inside panels */
+  --rule: #a9a08a; /* structural divider */
 
-  --shadow-light: #ffffff;
-  --shadow-dark: #c7c7cc;
-  --shadow-dark-strong: #b6b6bb;
+  /* --- Marks --------------------------------------------------------- */
+  --accent: #9a3b1f; /* the red pencil */
+  --accent-hover: #7d2f18;
+  --accent-contrast: #fbf9f3;
+  --accent-2: #3c5a4a; /* the green pencil, for secondary marks */
 
-  --shadow-raised: 0 1px 2px color-mix(in srgb, var(--shadow-dark-strong) 55%, transparent),
-    0 14px 28px -10px color-mix(in srgb, var(--shadow-dark-strong) 45%, transparent),
-    inset 0 1px 0 color-mix(in srgb, var(--shadow-light) 70%, transparent);
-  --shadow-raised-sm: 0 1px 1px color-mix(in srgb, var(--shadow-dark-strong) 45%, transparent),
-    0 5px 12px -6px color-mix(in srgb, var(--shadow-dark-strong) 40%, transparent);
-  --shadow-raised-lg: 0 2px 6px color-mix(in srgb, var(--shadow-dark-strong) 45%, transparent),
-    0 32px 64px -16px color-mix(in srgb, var(--shadow-dark-strong) 50%, transparent),
-    inset 0 1px 0 color-mix(in srgb, var(--shadow-light) 65%, transparent);
-  --shadow-inset: inset 0 1px 3px color-mix(in srgb, var(--shadow-dark-strong) 40%, transparent),
-    inset 0 0 0 1px var(--border);
-  --shadow-inset-sm: inset 0 1px 2px color-mix(in srgb, var(--shadow-dark-strong) 32%, transparent),
-    inset 0 0 0 1px var(--border);
-  --shadow-accent-raised: 0 1px 2px color-mix(in srgb, var(--accent) 40%, transparent),
-    0 14px 24px -8px color-mix(in srgb, var(--accent) 50%, transparent);
-  --shadow-accent-inset: inset 0 1px 3px color-mix(in srgb, var(--accent) 55%, transparent),
-    inset 0 0 0 1px color-mix(in srgb, var(--accent) 55%, transparent);
+  --danger: #a32f1c;
+  --danger-hover: #832415;
+  --success-bg: #e6ece2;
+  --success-text: #35563c;
 
-  --radius: 20px;
-  --radius-sm: 12px;
-  --radius-lg: 28px;
-  --radius-pill: 980px;
-  --ease: cubic-bezier(0.22, 1, 0.36, 1);
-  --font-display: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', system-ui,
-    'Segoe UI', Roboto, sans-serif;
+  /* --- Structure ----------------------------------------------------- */
+  --hair: 1px; /* hairline */
+  --stroke: 2px; /* structural stroke */
+  --offset: 5px; /* hard drop-block offset for pressables */
+  --radius: 0;
+
+  /* The stamp: a hard, printed offset block. No blur, ever. */
+  --stamp: var(--offset) var(--offset) 0 var(--text);
+  --stamp-sm: 3px 3px 0 var(--text);
+  --stamp-accent: var(--offset) var(--offset) 0 var(--accent);
+
+  --ease: cubic-bezier(0.2, 0.9, 0.3, 1);
+  --tick: 140ms; /* everything is fast and mechanical */
+
+  /* --- Type ---------------------------------------------------------- */
+  --font-display: 'Newsreader', 'Iowan Old Style', Georgia, 'Times New Roman', serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+
+  /* --- Measure ------------------------------------------------------- */
+  --rail: 232px;
+  --folio: 1080px;
+  --gutter: clamp(1.25rem, 4vw, 3.5rem);
+
   color-scheme: light;
 }
 
 :root[data-theme='dark'] {
-  --bg: #000000;
-  --surface: #000000;
-  --border: #38383a;
-  --text: #f5f5f7;
-  --muted: #86868b;
-  --accent: #2997ff;
-  --accent-hover: #4fa8ff;
-  --accent-contrast: #001b33;
-  --accent-2: #bf5af2;
-  --danger: #e26a52;
-  --danger-hover: #ee8267;
-  --success-bg: #16301f;
-  --success-text: #7ed99a;
+  --bg: #0e0d0b; /* ink field */
+  --surface: #171613; /* the plate */
+  --text: #efece2;
+  --muted: #97907f;
+  --border: #333029;
+  --rule: #55503f;
 
-  --shadow-light: #3a3a3c;
-  --shadow-dark: #000000;
-  --shadow-dark-strong: #000000;
+  --accent: #e0714f;
+  --accent-hover: #ec8f73;
+  --accent-contrast: #141310;
+  --accent-2: #86b39a;
 
-  --shadow-raised: 0 1px 2px color-mix(in srgb, var(--shadow-dark-strong) 70%, transparent),
-    0 14px 28px -10px color-mix(in srgb, var(--shadow-dark-strong) 75%, transparent),
-    inset 0 1px 0 color-mix(in srgb, var(--shadow-light) 55%, transparent),
-    inset 0 0 0 1px color-mix(in srgb, var(--shadow-light) 35%, transparent);
-  --shadow-raised-sm: 0 1px 1px color-mix(in srgb, var(--shadow-dark-strong) 60%, transparent),
-    inset 0 0 0 1px color-mix(in srgb, var(--shadow-light) 30%, transparent);
-  --shadow-raised-lg: 0 2px 6px color-mix(in srgb, var(--shadow-dark-strong) 70%, transparent),
-    0 32px 64px -16px color-mix(in srgb, var(--shadow-dark-strong) 80%, transparent),
-    inset 0 1px 0 color-mix(in srgb, var(--shadow-light) 50%, transparent),
-    inset 0 0 0 1px color-mix(in srgb, var(--shadow-light) 35%, transparent);
-  --shadow-inset: inset 0 1px 3px color-mix(in srgb, black 60%, transparent),
-    inset 0 0 0 1px var(--border);
-  --shadow-inset-sm: inset 0 1px 2px color-mix(in srgb, black 50%, transparent),
-    inset 0 0 0 1px var(--border);
-  --shadow-accent-raised: 0 1px 2px color-mix(in srgb, var(--accent) 45%, transparent),
-    0 14px 28px -8px color-mix(in srgb, var(--accent) 55%, transparent);
-  --shadow-accent-inset: inset 0 1px 3px color-mix(in srgb, var(--accent) 60%, transparent),
-    inset 0 0 0 1px color-mix(in srgb, var(--accent) 60%, transparent);
+  --danger: #e0705a;
+  --danger-hover: #ec8b78;
+  --success-bg: #16231a;
+  --success-text: #8fc79c;
 
   color-scheme: dark;
 }
 
-* {
+/* ---------- Reset ---------- */
+
+*,
+*::before,
+*::after {
   box-sizing: border-box;
 }
 
@@ -97,14 +90,18 @@ body {
 
 html {
   scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
 }
 
 body {
   background: var(--bg);
   color: var(--text);
   font-family: var(--font-display);
+  font-size: 17px;
+  line-height: 1.55;
   -webkit-font-smoothing: antialiased;
-  transition: background 0.3s var(--ease), color 0.3s var(--ease);
+  text-rendering: optimizeLegibility;
+  transition: background var(--tick) var(--ease), color var(--tick) var(--ease);
 }
 
 #root {
@@ -113,11 +110,29 @@ body {
 
 h1,
 h2,
-h3 {
+h3,
+h4 {
   font-family: var(--font-display);
-  font-weight: 700;
-  letter-spacing: -0.02em;
-  line-height: 1.1;
+  font-weight: 400;
+  letter-spacing: -0.015em;
+  line-height: 1.05;
+  margin: 0;
+  text-wrap: balance;
+}
+
+p {
+  text-wrap: pretty;
+}
+
+a {
+  color: inherit;
+  text-decoration-thickness: var(--hair);
+  text-underline-offset: 0.22em;
+}
+
+button {
+  font: inherit;
+  color: inherit;
 }
 
 ::selection {
@@ -125,10 +140,36 @@ h3 {
   color: var(--accent-contrast);
 }
 
-/* Scroll-triggered reveals are handled by motion/react (see
-   components/Reveal.jsx, components/Stagger.jsx) rather than CSS
-   scroll-linked animations, for consistent cross-browser behavior and so
-   they can respect the app's own reduce-motion setting. */
+/* One focus treatment everywhere: a printed double-rule, never removed. */
+:where(a, button, input, textarea, select, [tabindex]):focus-visible {
+  outline: var(--stroke) solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* ---------- Typographic primitives ---------- */
+
+/* Small caps mono label — the workhorse of this system. Dates, section
+   numbers, field names, button text, nav. Anything that measures. */
+.mono {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.mono-num {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+}
+
+.ital {
+  font-style: italic;
+  font-weight: 300;
+}
+
+/* ---------- Motion policy ---------- */
 
 @media (prefers-reduced-motion: reduce) {
   *,
@@ -150,42 +191,57 @@ h3 {
   scroll-behavior: auto !important;
 }
 
-:root[data-density='compact'] .card {
-  padding: 1rem;
-  margin-bottom: 0.85rem;
+/* ---------- Density ---------- */
+
+:root[data-density='compact'] {
+  --gutter: clamp(1rem, 3vw, 2.25rem);
+  --offset: 4px;
 }
 
-:root[data-density='compact'] .page {
-  padding: 1.25rem 1.25rem 4rem;
+:root[data-density='compact'] .panel {
+  padding: 1rem 1.1rem;
 }
 
-:root[data-density='compact'] .btn-primary,
-:root[data-density='compact'] .btn-ghost,
-:root[data-density='compact'] .btn-danger {
-  padding: 0.5rem 0.9rem;
+:root[data-density='compact'] .folio {
+  padding-block: 1.75rem 4rem;
 }
 
+:root[data-density='compact'] .btn,
 :root[data-density='compact'] input,
-:root[data-density='compact'] textarea {
-  padding: 0.5rem 0.65rem;
+:root[data-density='compact'] textarea,
+:root[data-density='compact'] select {
+  padding: 0.5rem 0.8rem;
 }
 
 :root[data-density='compact'] .field {
-  margin-bottom: 0.75rem;
+  margin-bottom: 0.85rem;
 }
 
-a {
-  color: inherit;
-}
-
-button {
-  font: inherit;
-}
+/* ---------- Boot state ---------- */
 
 .page-loading {
   display: flex;
   align-items: center;
   justify-content: center;
+  gap: 0.75rem;
   min-height: 100vh;
   color: var(--muted);
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+}
+
+.page-loading::before {
+  content: '';
+  width: 10px;
+  height: 10px;
+  background: var(--accent);
+  animation: blink 1s steps(2, end) infinite;
+}
+
+@keyframes blink {
+  50% {
+    opacity: 0;
+  }
 }

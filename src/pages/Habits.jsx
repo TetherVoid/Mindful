@@ -4,9 +4,13 @@ import { useAuth } from '../context/AuthContext'
 import { toLocalISODate, todayISO } from '../lib/date'
 import ConfirmModal from '../components/ConfirmModal'
 import FormSuccess from '../components/FormSuccess'
+import FormError from '../components/FormError'
 import HabitHeatmap from '../components/HabitHeatmap'
 import Reveal from '../components/Reveal'
 import { StaggerGroup, StaggerItem } from '../components/Stagger'
+import Icon from '../components/Icon'
+
+const HOT_STREAK = 7
 
 function computeStreak(dates) {
   const set = new Set(dates)
@@ -142,66 +146,101 @@ export default function Habits() {
     setPendingDelete(null)
   }
 
+  const doneCount = habits.filter((h) => (logsByHabit[h.id] ?? []).includes(todayISO())).length
+
   return (
-    <div className="page">
-      <h1>Habits</h1>
+    <div className="folio">
+      <Reveal as="header" className="folio-head" y={14}>
+        <div>
+          <p className="folio-kicker">Section 03</p>
+          <h1 className="folio-title">
+            The <em>register</em>
+          </h1>
+          <p className="folio-standfirst">
+            Small things, ticked off daily. The point isn't a perfect column — it's noticing the
+            gaps.
+          </p>
+        </div>
+        <div className="folio-meta">
+          <span>
+            <b>
+              {doneCount}/{habits.length}
+            </b>{' '}
+            done today
+          </span>
+          <span>{new Date().toLocaleDateString(undefined, { day: '2-digit', month: 'short' })}</span>
+        </div>
+      </Reveal>
 
-      {error && <div className="form-error">{error}</div>}
+      <FormError message={error} label="Register" />
 
-      <Reveal as="form" className="card habit-form" onSubmit={addHabit}>
+      <Reveal as="form" className="inline-form" onSubmit={addHabit}>
+        <label className="mono" htmlFor="new-habit" style={{ position: 'absolute', left: -9999 }}>
+          New habit
+        </label>
         <input
+          id="new-habit"
           type="text"
-          placeholder="New habit, e.g. 10 minutes of meditation"
+          placeholder="Add a habit — e.g. ten minutes of quiet"
           value={newHabit}
           onChange={(e) => setNewHabit(e.target.value)}
         />
-        <button type="submit" className="btn-primary">
-          Add
+        <button type="submit" className="btn btn--ink">
+          <Icon name="plus" size={15} />
+          Enter
         </button>
       </Reveal>
-      <FormSuccess visible={showSuccess} message="Habit added." />
+      <FormSuccess visible={showSuccess} message="Added to the register." />
 
       {loading ? (
-        <div className="skeleton skeleton-list" />
+        <div className="ruled-skeleton ruled-skeleton--list" />
       ) : habits.length === 0 ? (
-        <p className="empty-state">No habits yet — add one above.</p>
+        <p className="empty-state">The register is empty — write the first line above.</p>
       ) : (
-        <StaggerGroup className="habit-list">
+        <StaggerGroup className="register">
           {habits.map((habit) => {
             const dates = logsByHabit[habit.id] ?? []
             const doneToday = dates.includes(todayISO())
             const streak = computeStreak(dates)
             return (
-              <StaggerItem className="card habit-row" key={habit.id}>
+              <StaggerItem className={`register-row ${doneToday ? 'done' : ''}`} key={habit.id}>
                 <button
                   type="button"
-                  className={`habit-check ${doneToday ? 'checked' : ''}`}
+                  className={`tick-box ${doneToday ? 'checked' : ''}`}
                   onClick={() => toggleToday(habit)}
                   disabled={pendingToggle.has(habit.id)}
                   aria-pressed={doneToday}
-                  aria-label={`Mark ${habit.name} done today`}
+                  aria-label={`Mark "${habit.name}" done today`}
                 >
-                  {doneToday ? '✓' : ''}
+                  <Icon name="check" size={17} stroke={2} />
                 </button>
-                <div className="habit-info">
-                  <span className="habit-name">{habit.name}</span>
-                  <button
-                    type="button"
-                    className="habit-streak habit-streak-link"
-                    onClick={() =>
-                      document.getElementById('habit-heatmap')?.scrollIntoView({ behavior: 'smooth', block: 'center' })
-                    }
-                  >
-                    {streak} day streak
-                  </button>
-                </div>
+
+                <span className="register-name">{habit.name}</span>
+
                 <button
                   type="button"
-                  className="btn-ghost"
-                  onClick={() => setPendingDelete(habit)}
+                  className={`streak ${streak >= HOT_STREAK ? 'hot' : ''}`}
+                  onClick={() =>
+                    document
+                      .getElementById('habit-heatmap')
+                      ?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+                  }
+                  aria-label={`${streak} day streak — show on the calendar`}
                 >
-                  Remove
+                  <b>{String(streak).padStart(2, '0')}</b>
+                  <span>day{streak === 1 ? '' : 's'}</span>
                 </button>
+
+                <span className="register-actions">
+                  <button
+                    type="button"
+                    className="icon-btn"
+                    onClick={() => setPendingDelete(habit)}
+                    aria-label={`Remove "${habit.name}"`}
+                  >
+                    <Icon name="trash" size={15} />
+                  </button>
+                </span>
               </StaggerItem>
             )
           })}
@@ -216,9 +255,10 @@ export default function Habits() {
 
       <ConfirmModal
         open={!!pendingDelete}
-        title="Remove habit?"
-        message={`This will archive "${pendingDelete?.name}". Its history is kept.`}
-        confirmLabel="Remove"
+        slug="Strike from the register"
+        title="Remove this habit?"
+        message={`"${pendingDelete?.name}" will be struck from the register. Its history stays on the calendar.`}
+        confirmLabel="Strike it"
         onConfirm={confirmDelete}
         onCancel={() => setPendingDelete(null)}
       />

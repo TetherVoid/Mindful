@@ -12,17 +12,20 @@ export default function CookieBanner() {
   if (!visible) return null
 
   return (
-    <div className="cookie-banner" role="dialog" aria-label="Cookie notice">
+    <div className="cookie-notice" role="dialog" aria-label="Storage notice">
+      <p className="mono" style={{ color: 'var(--accent)', margin: 0 }}>
+        Notice — local storage
+      </p>
       <p>
-        This site stores a few things locally (like your theme and login session) to make the
-        app work.
+        This book keeps a few things on your device — your theme, your density, and your signed-in
+        session. Nothing is sold, shared, or used to follow you elsewhere.
       </p>
       <div className="cookie-actions">
-        <button type="button" className="btn-ghost" onClick={() => dismiss('declined')}>
+        <button type="button" className="btn btn--quiet btn--sm" onClick={() => dismiss('declined')}>
           Decline
         </button>
-        <button type="button" className="btn-primary" onClick={() => dismiss('accepted')}>
-          Got it
+        <button type="button" className="btn btn--ink btn--sm" onClick={() => dismiss('accepted')}>
+          Understood
         </button>
       </div>
     </div>

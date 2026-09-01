@@ -60,13 +60,25 @@ export default function SearchOverlay({ open, onClose }) {
       )
     : []
 
+  const total = thoughtResults.length + faqResults.length
+
   return (
-    <div className="modal-backdrop" onClick={onClose}>
-      <div className="search-overlay" onClick={(e) => e.stopPropagation()}>
+    <div className="overlay overlay--top" onClick={onClose}>
+      <div
+        className="sheet search-sheet"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Search the almanac"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="sheet-head">
+          <span>Concordance</span>
+          <span>{query.trim() ? `${total} found` : 'Esc to close'}</span>
+        </div>
         <input
           autoFocus
           type="search"
-          placeholder="Search thought records and FAQ…"
+          placeholder="Search case notes and marginalia…"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
         />
@@ -74,9 +86,9 @@ export default function SearchOverlay({ open, onClose }) {
           {query.trim() === '' && <p className="search-hint">Start typing to search.</p>}
 
           {thoughtResults.length > 0 && (
-            <div className="search-group">
-              <h3>Thought records</h3>
-              {thoughtResults.map((r) => (
+            <div>
+              <p className="search-group-label">Case notes</p>
+              {thoughtResults.map((r, i) => (
                 <button
                   key={r.id}
                   type="button"
@@ -86,16 +98,17 @@ export default function SearchOverlay({ open, onClose }) {
                     onClose()
                   }}
                 >
-                  {r.situation}
+                  <span>{String(i + 1).padStart(2, '0')}</span>
+                  <span>{r.situation}</span>
                 </button>
               ))}
             </div>
           )}
 
           {faqResults.length > 0 && (
-            <div className="search-group">
-              <h3>FAQ</h3>
-              {faqResults.map((f) => (
+            <div>
+              <p className="search-group-label">Marginalia</p>
+              {faqResults.map((f, i) => (
                 <button
                   key={f.question}
                   type="button"
@@ -105,15 +118,14 @@ export default function SearchOverlay({ open, onClose }) {
                     onClose()
                   }}
                 >
-                  {f.question}
+                  <span>{String(i + 1).padStart(2, '0')}</span>
+                  <span>{f.question}</span>
                 </button>
               ))}
             </div>
           )}
 
-          {query.trim() && thoughtResults.length === 0 && faqResults.length === 0 && (
-            <p className="search-hint">No results.</p>
-          )}
+          {query.trim() && total === 0 && <p className="search-hint">Nothing found.</p>}
         </div>
       </div>
     </div>

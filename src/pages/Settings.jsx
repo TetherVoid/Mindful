@@ -7,11 +7,34 @@ import { getMoodHistoryLength, setMoodHistoryLength } from '../lib/preferences'
 import ThemeColorSwatches from '../components/ThemeColorSwatches'
 import PasswordInput from '../components/PasswordInput'
 import FormSuccess from '../components/FormSuccess'
+import FormError from '../components/FormError'
 import ConfirmModal from '../components/ConfirmModal'
+import Reveal from '../components/Reveal'
 import { StaggerGroup, StaggerItem } from '../components/Stagger'
+import Icon from '../components/Icon'
 
 function todayStamp() {
   return new Date().toISOString().slice(0, 10)
+}
+
+// A two-state printed switch. Both states stay visible so the setting reads
+// as a choice between two named options rather than an on/off you have to
+// toggle to discover.
+function Switch({ label, options, value, onChange }) {
+  return (
+    <div className="switch" role="group" aria-label={label}>
+      {options.map((option) => (
+        <button
+          key={option.value}
+          type="button"
+          aria-pressed={value === option.value}
+          onClick={() => onChange(option.value)}
+        >
+          {option.label}
+        </button>
+      ))}
+    </div>
+  )
 }
 
 export default function Settings() {
@@ -124,165 +147,232 @@ export default function Settings() {
   }
 
   return (
-    <div className="page">
-      <h1>Settings</h1>
-      <p className="page-intro">Appearance, account, data, and privacy — all in one place.</p>
+    <div className="folio">
+      <Reveal as="header" className="folio-head" y={14}>
+        <div>
+          <p className="folio-kicker">Section 06</p>
+          <h1 className="folio-title">
+            House <em>rules</em>
+          </h1>
+          <p className="folio-standfirst">
+            How the book is set, who you are to it, and what happens to everything you've written.
+          </p>
+        </div>
+        <div className="folio-meta">
+          <span>
+            Signed in as <b>{user?.email}</b>
+          </span>
+        </div>
+      </Reveal>
 
       <StaggerGroup>
-      <StaggerItem className="card">
-        <h2>Appearance</h2>
-
-        <div className="settings-row">
-          <div>
-            <strong>Theme</strong>
-            <p className="settings-row-desc">Switch between light and dark mode.</p>
+        <StaggerItem className="panel">
+          <div className="panel-head">
+            <span className="panel-head-num">§ 01</span>
+            <h2>Setting &amp; impression</h2>
           </div>
-          <button type="button" className="btn-ghost" onClick={toggleTheme}>
-            {theme === 'dark' ? 'Dark' : 'Light'}
-          </button>
-        </div>
 
-        <div className="settings-row">
-          <div>
-            <strong>Layout density</strong>
-            <p className="settings-row-desc">Tighter spacing and smaller padding throughout.</p>
+          <div className="ledger">
+            <div className="ledger-row">
+              <div className="ledger-label">
+                <strong>Stock</strong>
+                <p>Print on warm paper, or reverse the whole book out onto black.</p>
+              </div>
+              <Switch
+                label="Paper stock"
+                value={theme}
+                onChange={(v) => (v === theme ? null : toggleTheme())}
+                options={[
+                  { value: 'light', label: 'Paper' },
+                  { value: 'dark', label: 'Ink' },
+                ]}
+              />
+            </div>
+
+            <div className="ledger-row">
+              <div className="ledger-label">
+                <strong>Leading</strong>
+                <p>Tighter spacing throughout — more on the page, less air between it.</p>
+              </div>
+              <Switch
+                label="Layout density"
+                value={density}
+                onChange={setDensity}
+                options={[
+                  { value: 'comfortable', label: 'Open' },
+                  { value: 'compact', label: 'Tight' },
+                ]}
+              />
+            </div>
+
+            <div className="ledger-row">
+              <div className="ledger-label">
+                <strong>Motion</strong>
+                <p>
+                  Stop everything from animating, independently of your system setting.
+                </p>
+              </div>
+              <Switch
+                label="Reduce motion"
+                value={reduceMotion ? 'on' : 'off'}
+                onChange={(v) => setReduceMotion(v === 'on')}
+                options={[
+                  { value: 'off', label: 'Allowed' },
+                  { value: 'on', label: 'Stilled' },
+                ]}
+              />
+            </div>
+
+            <div className="ledger-row ledger-row-stacked">
+              <div className="ledger-label">
+                <strong>Ink</strong>
+                <p>
+                  Pick a color and the whole book is re-derived from its hue — paper, rules, text,
+                  and every mark on it.
+                </p>
+              </div>
+              <ThemeColorSwatches />
+            </div>
           </div>
-          <button
-            type="button"
-            className="btn-ghost"
-            onClick={() => setDensity(density === 'compact' ? 'comfortable' : 'compact')}
-          >
-            {density === 'compact' ? 'Compact' : 'Comfortable'}
-          </button>
-        </div>
+        </StaggerItem>
 
-        <div className="settings-row">
-          <div>
-            <strong>Reduce motion</strong>
-            <p className="settings-row-desc">
-              Turn off animations and transitions, independent of your system setting.
-            </p>
+        <StaggerItem className="panel">
+          <div className="panel-head">
+            <span className="panel-head-num">§ 02</span>
+            <h2>Your account</h2>
           </div>
-          <button type="button" className="btn-ghost" onClick={() => setReduceMotion(!reduceMotion)}>
-            {reduceMotion ? 'On' : 'Off'}
-          </button>
-        </div>
 
-        <div className="settings-row settings-row-column">
-          <div>
-            <strong>Theme color</strong>
-            <p className="settings-row-desc">
-              Pick a color and the whole site — background, text, accent, shadows — recolors to
-              match.
-            </p>
-          </div>
-          <ThemeColorSwatches />
-        </div>
-      </StaggerItem>
-
-      <StaggerItem className="card">
-        <h2>Account</h2>
-        <div className="settings-row">
-          <div>
-            <strong>Email</strong>
-            <p className="settings-row-desc">{user?.email}</p>
-          </div>
-        </div>
-
-        <form onSubmit={handlePasswordChange} className="settings-subform">
-          {passwordError && <div className="form-error">{passwordError}</div>}
-          <PasswordInput
-            label="New password"
-            value={newPassword}
-            onChange={setNewPassword}
-            autoComplete="new-password"
-          />
-          <button type="submit" className="btn-primary" disabled={passwordSaving}>
-            {passwordSaving ? 'Saving…' : 'Change password'}
-          </button>
-          <FormSuccess visible={passwordSuccess} message="Password updated." />
-        </form>
-
-        <div className="settings-row">
-          <div>
-            <strong>Sign out</strong>
-            <p className="settings-row-desc">End your session on this device.</p>
-          </div>
-          <button type="button" className="btn-ghost" onClick={handleSignOut}>
-            Sign out
-          </button>
-        </div>
-      </StaggerItem>
-
-      <StaggerItem className="card">
-        <h2>Data</h2>
-
-        <div className="settings-row">
-          <div>
-            <strong>Mood chart history</strong>
-            <p className="settings-row-desc">How many recent entries the trend chart loads.</p>
-          </div>
-          <select value={historyLength} onChange={handleHistoryChange}>
-            <option value={30}>Last 30</option>
-            <option value={60}>Last 60</option>
-            <option value={90}>Last 90</option>
-          </select>
-        </div>
-
-        <div className="settings-row">
-          <div>
-            <strong>Export your data</strong>
-            <p className="settings-row-desc">Download everything you've logged as a JSON file.</p>
-          </div>
-          <button type="button" className="btn-ghost" onClick={handleExport} disabled={exporting}>
-            {exporting ? 'Exporting…' : 'Export'}
-          </button>
-        </div>
-        {exportError && <div className="form-error">{exportError}</div>}
-
-        <div className="settings-row">
-          <div>
-            <strong>Delete all my data</strong>
-            <p className="settings-row-desc">
-              Clears every mood log, habit, and thought record. This does not delete your
-              account — real account deletion needs a step we haven't built yet, since it
-              requires server-side access this app's Supabase key doesn't have.
-            </p>
-          </div>
-          <button type="button" className="btn-danger" onClick={() => setPendingDeleteData(true)}>
-            Delete data
-          </button>
-        </div>
-        {deleteError && <div className="form-error">{deleteError}</div>}
-        <FormSuccess visible={dataDeleted} message="All data deleted." />
-      </StaggerItem>
-
-      <StaggerItem className="card">
-        <h2>Privacy</h2>
-        <div className="settings-row">
-          <div>
-            <strong>Cookie preference</strong>
-            <p className="settings-row-desc">
-              Currently: {consent === 'accepted' ? 'Accepted' : consent === 'declined' ? 'Declined' : 'Not set'}
-            </p>
-          </div>
-          <div className="settings-toggle-group">
-            <button type="button" className="btn-ghost" onClick={() => handleConsentChoice('declined')}>
-              Decline
+          <form onSubmit={handlePasswordChange} className="settings-form">
+            <FormError message={passwordError} label="Password" />
+            <PasswordInput
+              label="New password"
+              value={newPassword}
+              onChange={setNewPassword}
+              autoComplete="new-password"
+            />
+            <button type="submit" className="btn btn--ink" disabled={passwordSaving}>
+              <Icon name="lock" size={14} />
+              {passwordSaving ? 'Saving…' : 'Change password'}
             </button>
-            <button type="button" className="btn-primary" onClick={() => handleConsentChoice('accepted')}>
-              Accept
-            </button>
+            <FormSuccess visible={passwordSuccess} message="Password updated." />
+          </form>
+
+          <div className="ledger">
+            <div className="ledger-row">
+              <div className="ledger-label">
+                <strong>Close the book</strong>
+                <p>End your session on this device.</p>
+              </div>
+              <button type="button" className="btn btn--quiet btn--sm" onClick={handleSignOut}>
+                <Icon name="exit" size={14} />
+                Sign out
+              </button>
+            </div>
           </div>
-        </div>
-      </StaggerItem>
+        </StaggerItem>
+
+        <StaggerItem className="panel">
+          <div className="panel-head">
+            <span className="panel-head-num">§ 03</span>
+            <h2>What's on file</h2>
+          </div>
+
+          <div className="ledger">
+            <div className="ledger-row">
+              <div className="ledger-label">
+                <strong>Chart history</strong>
+                <p>How many recent mood entries the trend line loads.</p>
+              </div>
+              <select value={historyLength} onChange={handleHistoryChange} aria-label="Chart history length">
+                <option value={30}>Last 30</option>
+                <option value={60}>Last 60</option>
+                <option value={90}>Last 90</option>
+              </select>
+            </div>
+
+            <div className="ledger-row">
+              <div className="ledger-label">
+                <strong>Take a copy</strong>
+                <p>Download every mood, habit, check-in, and record as one JSON file.</p>
+              </div>
+              <button
+                type="button"
+                className="btn btn--quiet btn--sm"
+                onClick={handleExport}
+                disabled={exporting}
+              >
+                <Icon name="download" size={14} />
+                {exporting ? 'Preparing…' : 'Export'}
+              </button>
+            </div>
+
+            <div className="ledger-row">
+              <div className="ledger-label">
+                <strong>Burn the pages</strong>
+                <p>
+                  Clears every mood log, habit, and thought record. It does not delete the account
+                  itself — that needs server-side access this app's Supabase key doesn't have.
+                </p>
+              </div>
+              <button
+                type="button"
+                className="btn btn--danger btn--sm"
+                onClick={() => setPendingDeleteData(true)}
+              >
+                <Icon name="trash" size={14} />
+                Delete data
+              </button>
+            </div>
+          </div>
+
+          <FormError message={exportError} label="Export" />
+          <FormError message={deleteError} label="Delete" />
+          <FormSuccess visible={dataDeleted} message="Everything has been cleared." />
+        </StaggerItem>
+
+        <StaggerItem className="panel">
+          <div className="panel-head">
+            <span className="panel-head-num">§ 04</span>
+            <h2>Privacy</h2>
+            <span className="panel-head-note">
+              <Icon name="shield" size={13} /> Row-level security
+            </span>
+          </div>
+
+          <div className="ledger">
+            <div className="ledger-row">
+              <div className="ledger-label">
+                <strong>Local storage</strong>
+                <p>
+                  Currently{' '}
+                  {consent === 'accepted'
+                    ? 'accepted'
+                    : consent === 'declined'
+                      ? 'declined'
+                      : 'not yet set'}
+                  . Declining also clears any campaign parameters captured at boot.
+                </p>
+              </div>
+              <Switch
+                label="Storage preference"
+                value={consent ?? ''}
+                onChange={handleConsentChoice}
+                options={[
+                  { value: 'declined', label: 'Decline' },
+                  { value: 'accepted', label: 'Accept' },
+                ]}
+              />
+            </div>
+          </div>
+        </StaggerItem>
       </StaggerGroup>
 
       <ConfirmModal
         open={pendingDeleteData}
-        title="Delete all your data?"
-        message="This permanently removes every mood log, habit, habit check-in, and thought record. This can't be undone."
-        confirmLabel={deletingData ? 'Deleting…' : 'Delete everything'}
+        slug="Irreversible"
+        title="Delete everything you've written?"
+        message="This permanently removes every mood log, habit, check-in, and thought record. There is no undo, and no copy kept."
+        confirmLabel={deletingData ? 'Deleting…' : 'Delete it all'}
         onConfirm={confirmDeleteAllData}
         onCancel={() => setPendingDeleteData(false)}
       />

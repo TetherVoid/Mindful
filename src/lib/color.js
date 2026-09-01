@@ -1,6 +1,6 @@
-const HOVER_MIX_WEIGHT = 0.16
+const HOVER_MIX_WEIGHT = 0.18
 const LIGHT_LUMINANCE_THRESHOLD = 0.45
-const DEFAULT_HUE = 210 // matches the app's original blue-gray default
+const DEFAULT_HUE = 32 // matches the almanac's default warm paper/ink hue
 
 export function hexToRgb(hex) {
   const clean = hex.replace('#', '')
@@ -87,10 +87,16 @@ export function hexToHsl(hex) {
   return rgbToHsl(hexToRgb(hex))
 }
 
+const INK = '#141310'
+const PAPER = '#fbf9f3'
+
 export function deriveAccentPalette(hex) {
   const rgb = hexToRgb(hex)
   const isLight = relativeLuminance(rgb) > LIGHT_LUMINANCE_THRESHOLD
-  const contrast = isLight ? '#182029' : '#ffffff'
+  // Whichever of ink/paper actually reads better ON this accent wins — a
+  // fixed luminance cutoff picks paper-on-mid-tone pairs that fail 4.5:1.
+  const contrast =
+    contrastRatio(rgb, hexToRgb(INK)) >= contrastRatio(rgb, hexToRgb(PAPER)) ? INK : PAPER
   const hoverTarget = isLight ? { r: 0, g: 0, b: 0 } : { r: 255, g: 255, b: 255 }
   const hover = rgbToHex(mix(rgb, hoverTarget, HOVER_MIX_WEIGHT))
   return { accent: hex, accentHover: hover, accentContrast: contrast }
@@ -99,32 +105,39 @@ export function deriveAccentPalette(hex) {
 // Resynthesizes an accent for the OTHER theme than the one it was picked
 // under — a light-tuned accent hex reused verbatim in dark mode reads too
 // dark/muddy against the dark neomorphic shadows, and vice versa.
+// Resynthesizes an accent for the OTHER theme than the one it was picked
+// under — a light-tuned accent hex reused verbatim against a near-black ink
+// field reads muddy, and a dark-tuned one washes out on paper.
 export function deriveAccentForTheme(baseHex, theme) {
   const { h, s } = hexToHsl(baseHex)
   const target =
-    theme === 'dark' ? { h, s: Math.max(s, 60), l: 70 } : { h, s: Math.min(Math.max(s, 45), 55), l: 37 }
+    theme === 'dark'
+      ? { h, s: Math.max(s, 62), l: 64 }
+      : { h, s: Math.min(Math.max(s, 52), 72), l: 36 }
   return hslToHex(target)
 }
 
-// Fixed role targets reverse-engineered from the app's own default palette
-// (index.css). Only hue is taken from the user's chosen color — saturation
-// and lightness per role stay pinned so an arbitrary hue can't produce a
-// garish or illegible result.
+// Fixed role targets for the paper-and-ink system (see index.css). Only hue
+// is taken from the user's chosen color — saturation and lightness per role
+// stay pinned so an arbitrary hue can't produce a garish or illegible page.
+// `rule` is the heavier hairline used for structural dividers; `border` is
+// the lighter one used inside panels.
 const ROLE_TARGETS = {
   light: {
-    bg: { s: 25, l: 92 },
-    text: { s: 28, l: 28 },
-    muted: { s: 16, l: 51 },
-    shadowDark: { s: 20, l: 77 },
-    shadowDarkStrong: { s: 19, l: 71 },
+    bg: { s: 20, l: 94 },
+    surface: { s: 30, l: 97.5 },
+    text: { s: 24, l: 9 },
+    muted: { s: 10, l: 40 },
+    border: { s: 14, l: 79 },
+    rule: { s: 14, l: 66 },
   },
   dark: {
-    bg: { s: 21, l: 21 },
-    text: { s: 28, l: 93 },
-    muted: { s: 21, l: 65 },
-    shadowLight: { s: 21, l: 25.5 },
-    shadowDark: { s: 22, l: 14 },
-    shadowDarkStrong: { s: 22, l: 10 },
+    bg: { s: 12, l: 6 },
+    surface: { s: 11, l: 10 },
+    text: { s: 16, l: 93 },
+    muted: { s: 9, l: 58 },
+    border: { s: 10, l: 24 },
+    rule: { s: 12, l: 34 },
   },
 }
 
@@ -142,22 +155,17 @@ export function deriveFullPalette(baseHex, theme) {
 
   const bg = { h, s: roles.bg.s, l: roles.bg.l }
   const text = clampTextContrast({ h, s: roles.text.s, l: roles.text.l }, bg)
-  const muted = { h, s: roles.muted.s, l: roles.muted.l }
-  const shadowDark = { h, s: roles.shadowDark.s, l: roles.shadowDark.l }
-  const shadowDarkStrong = { h, s: roles.shadowDarkStrong.s, l: roles.shadowDarkStrong.l }
-  const shadowLight = theme === 'dark' ? { h, s: roles.shadowLight.s, l: roles.shadowLight.l } : null
 
   const accentHex = deriveAccentForTheme(baseHex, theme)
   const { accent, accentHover, accentContrast } = deriveAccentPalette(accentHex)
 
   return {
     bg: hslToHex(bg),
-    surface: hslToHex(bg),
+    surface: hslToHex({ h, s: roles.surface.s, l: roles.surface.l }),
     text: hslToHex(text),
-    muted: hslToHex(muted),
-    shadowLight: theme === 'dark' ? hslToHex(shadowLight) : '#ffffff',
-    shadowDark: hslToHex(shadowDark),
-    shadowDarkStrong: hslToHex(shadowDarkStrong),
+    muted: hslToHex({ h, s: roles.muted.s, l: roles.muted.l }),
+    border: hslToHex({ h, s: roles.border.s, l: roles.border.l }),
+    rule: hslToHex({ h, s: roles.rule.s, l: roles.rule.l }),
     accent,
     accentHover,
     accentContrast,

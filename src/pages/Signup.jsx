@@ -2,7 +2,8 @@ import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import PasswordInput from '../components/PasswordInput'
-import AuthHero from '../components/AuthHero'
+import FormError from '../components/FormError'
+import Frontispiece from '../components/Frontispiece'
 import Reveal from '../components/Reveal'
 
 export default function Signup() {
@@ -34,26 +35,39 @@ export default function Signup() {
 
   if (success) {
     return (
-      <AuthHero>
-        <Reveal className="auth-card form-success" delay={0.15} y={16}>
-          <h1>You're in</h1>
-          <p>
-            Account created for <strong>{email}</strong>. If email confirmation is enabled on
-            your Supabase project, check your inbox to confirm before signing in.
+      <Frontispiece>
+        <Reveal className="plate" delay={0.12} y={18}>
+          <div className="plate-head">
+            <p className="mono" style={{ color: 'var(--accent)', margin: '0 0 0.5rem' }}>
+              Page one
+            </p>
+            <h1>Your book is open</h1>
+          </div>
+          <p style={{ color: 'var(--muted)', marginTop: 0 }}>
+            Registered to <strong style={{ color: 'var(--text)' }}>{email}</strong>. If email
+            confirmation is switched on for this project, confirm from your inbox before signing in.
           </p>
-          <Link className="btn-primary" to="/login">
+          <Link className="btn btn--solid btn--block" to="/login" style={{ marginTop: '1.25rem' }}>
             Go to sign in
           </Link>
         </Reveal>
-      </AuthHero>
+      </Frontispiece>
     )
   }
 
   return (
-    <AuthHero>
-      <Reveal as="form" className="auth-card" delay={0.15} y={16} onSubmit={handleSubmit}>
-        <h1>Create your account</h1>
-        {error && <div className="form-error">{error}</div>}
+    <Frontispiece>
+      <Reveal as="form" className="plate" delay={0.12} y={18} onSubmit={handleSubmit}>
+        <div className="plate-head">
+          <p className="mono" style={{ color: 'var(--accent)', margin: '0 0 0.5rem' }}>
+            New volume
+          </p>
+          <h1>Start your book</h1>
+          <p>Two fields. No onboarding tour, no questionnaire.</p>
+        </div>
+
+        <FormError message={error} label="Sign-up" />
+
         <div className="field">
           <label htmlFor="email">Email</label>
           <input
@@ -66,13 +80,15 @@ export default function Signup() {
           />
         </div>
         <PasswordInput value={password} onChange={setPassword} autoComplete="new-password" />
-        <button type="submit" className="btn-primary" disabled={submitting}>
-          {submitting ? 'Creating account…' : 'Sign up'}
+
+        <button type="submit" className="btn btn--solid btn--block" disabled={submitting}>
+          {submitting ? 'Binding…' : 'Create account'}
         </button>
-        <p className="auth-switch">
-          Already have an account? <Link to="/login">Sign in</Link>
+
+        <p className="plate-switch">
+          Already keeping one? <Link to="/login">Sign in</Link>
         </p>
       </Reveal>
-    </AuthHero>
+    </Frontispiece>
   )
 }

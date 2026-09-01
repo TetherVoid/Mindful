@@ -2,7 +2,8 @@ import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import PasswordInput from '../components/PasswordInput'
-import AuthHero from '../components/AuthHero'
+import FormError from '../components/FormError'
+import Frontispiece from '../components/Frontispiece'
 import Reveal from '../components/Reveal'
 
 export default function Login() {
@@ -28,10 +29,18 @@ export default function Login() {
   }
 
   return (
-    <AuthHero>
-      <Reveal as="form" className="auth-card" delay={0.15} y={16} onSubmit={handleSubmit}>
-        <h1>Welcome back</h1>
-        {error && <div className="form-error">{error}</div>}
+    <Frontispiece>
+      <Reveal as="form" className="plate" delay={0.12} y={18} onSubmit={handleSubmit}>
+        <div className="plate-head">
+          <p className="mono" style={{ color: 'var(--accent)', margin: '0 0 0.5rem' }}>
+            Returning reader
+          </p>
+          <h1>Open your book</h1>
+          <p>Everything is exactly where you left it.</p>
+        </div>
+
+        <FormError message={error} label="Sign-in" />
+
         <div className="field">
           <label htmlFor="email">Email</label>
           <input
@@ -44,13 +53,15 @@ export default function Login() {
           />
         </div>
         <PasswordInput value={password} onChange={setPassword} autoComplete="current-password" />
-        <button type="submit" className="btn-primary" disabled={submitting}>
-          {submitting ? 'Signing in…' : 'Sign in'}
+
+        <button type="submit" className="btn btn--solid btn--block" disabled={submitting}>
+          {submitting ? 'Opening…' : 'Sign in'}
         </button>
-        <p className="auth-switch">
-          No account yet? <Link to="/signup">Sign up</Link>
+
+        <p className="plate-switch">
+          No book yet? <Link to="/signup">Start one</Link>
         </p>
       </Reveal>
-    </AuthHero>
+    </Frontispiece>
   )
 }
