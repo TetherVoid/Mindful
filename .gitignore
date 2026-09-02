@@ -27,3 +27,6 @@ dist-ssr
 dist-fixtures
 dist-empty
 dist-heavy
+
+# graphify knowledge graph (regenerate with: graphify update .)
+graphify-out/

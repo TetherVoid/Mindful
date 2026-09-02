@@ -18,6 +18,7 @@ const Dashboard = lazy(() => import('./pages/Dashboard'))
 const Mood = lazy(() => import('./pages/Mood'))
 const Habits = lazy(() => import('./pages/Habits'))
 const ThoughtRecords = lazy(() => import('./pages/ThoughtRecords'))
+const Report = lazy(() => import('./pages/Report'))
 const Settings = lazy(() => import('./pages/Settings'))
 
 function RootRedirect() {
@@ -92,6 +93,7 @@ function App() {
         <Route path="/mood" element={withSuspense(Mood)} />
         <Route path="/habits" element={withSuspense(Habits)} />
         <Route path="/thoughts" element={withSuspense(ThoughtRecords)} />
+        <Route path="/report" element={withSuspense(Report)} />
         <Route path="/settings" element={withSuspense(Settings)} />
       </Route>
 

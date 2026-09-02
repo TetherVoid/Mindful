@@ -221,6 +221,21 @@ export default function Dashboard() {
             <Icon name="arrowRight" size={18} className="index-entry-arrow" />
           </Link>
         </StaggerItem>
+        <StaggerItem index={3}>
+          <Link to="/report" className="index-entry">
+            <span className="index-entry-num">04</span>
+            <span className="index-entry-label">
+              <h2>The reading</h2>
+              <p>Your entries, read back as one piece</p>
+            </span>
+            <span className="index-entry-value">
+              <span className="mono">
+                {isNewBook ? 'Waiting on a first entry' : 'Ready to write'}
+              </span>
+            </span>
+            <Icon name="arrowRight" size={18} className="index-entry-arrow" />
+          </Link>
+        </StaggerItem>
       </StaggerGroup>
 
       {hasMoodData && (

@@ -17,6 +17,8 @@
   .inline-form,
   .gauge,
   .swatch-row,
+  .brief-payload,
+  .brief-actions,
   form {
     display: none !important;
   }

@@ -10,6 +10,7 @@ const ENTRIES = [
   { to: '/mood', label: 'Mood', icon: 'gauge' },
   { to: '/habits', label: 'Register', icon: 'register' },
   { to: '/thoughts', label: 'Case notes', icon: 'quill' },
+  { to: '/report', label: 'The reading', icon: 'reading' },
   { to: '/faq', label: 'Marginalia', icon: 'marginalia' },
   { to: '/settings', label: 'Preferences', icon: 'dial' },
 ]
