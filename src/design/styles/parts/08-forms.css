@@ -1,0 +1,156 @@
+/* ═══ 8. FORMS ═══════════════════════════════════════════════════════════ */
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin-bottom: 1.2rem;
+}
+
+.field-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+label,
+.field-label {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  font-family: var(--font-mono);
+  font-size: 0.63rem;
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.field-num {
+  color: var(--accent);
+  font-weight: 700;
+}
+
+input,
+textarea,
+select {
+  width: 100%;
+  padding: 0.7rem 0.85rem;
+  font-family: var(--font-display);
+  font-size: 1rem;
+  color: var(--text);
+  background: color-mix(in srgb, var(--text) 3.5%, var(--surface));
+  border: var(--hair) solid var(--rule);
+  border-radius: 0;
+  transition: border-color var(--tick) var(--ease), background var(--tick) var(--ease),
+    box-shadow var(--tick) var(--ease);
+}
+
+textarea {
+  resize: vertical;
+  min-height: 3.4rem;
+  line-height: 1.5;
+}
+
+input:hover,
+textarea:hover,
+select:hover {
+  border-color: var(--text);
+}
+
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  outline: none;
+  background: var(--surface);
+  border-color: var(--text);
+  box-shadow: var(--stamp-sm);
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: color-mix(in srgb, var(--muted) 70%, transparent);
+  font-style: italic;
+  font-weight: 300;
+}
+
+select {
+  cursor: pointer;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  width: auto;
+  min-width: 8rem;
+}
+
+input[type='number'] {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.password-field {
+  display: flex;
+}
+
+.password-field input {
+  flex: 1;
+  border-right: 0;
+}
+
+.password-toggle {
+  flex-shrink: 0;
+  padding: 0 0.85rem;
+  cursor: pointer;
+  background: transparent;
+  color: var(--muted);
+  border: var(--hair) solid var(--rule);
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  transition: color var(--tick) var(--ease), background var(--tick) var(--ease);
+}
+
+.password-toggle:hover {
+  color: var(--accent-contrast);
+  background: var(--text);
+}
+
+/* Notices are stamped, not floated. */
+.form-error,
+.form-ok {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  padding: 0.7rem 0.9rem;
+  margin-bottom: 1rem;
+  font-size: 0.9rem;
+  border-left: var(--offset) solid var(--danger);
+  background: color-mix(in srgb, var(--danger) 9%, var(--surface));
+  color: var(--danger);
+}
+
+.form-ok {
+  margin: 1rem 0 0;
+  border-left-color: var(--success-text);
+  background: var(--success-bg);
+  color: var(--success-text);
+  animation: stamp-in 200ms var(--ease);
+}
+
+.form-error strong,
+.form-ok strong {
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  flex-shrink: 0;
+  padding-top: 0.18em;
+}
+
+@keyframes stamp-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+}

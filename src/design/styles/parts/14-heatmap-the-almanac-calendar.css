@@ -1,0 +1,82 @@
+/* ═══ 14. HEATMAP — THE ALMANAC CALENDAR ═════════════════════════════════ */
+
+.heat {
+  display: flex;
+  gap: 0.5rem;
+  overflow-x: auto;
+  padding-bottom: 0.35rem;
+}
+
+.heat-days {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  flex-shrink: 0;
+  padding-top: 0;
+}
+
+.heat-day {
+  height: 14px;
+  line-height: 14px;
+  font-family: var(--font-mono);
+  font-size: 0.52rem;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+}
+
+.heat-grid {
+  display: flex;
+  gap: 3px;
+}
+
+.heat-week {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.heat-cell {
+  width: 14px;
+  height: 14px;
+  border: var(--hair) solid var(--border);
+  background: transparent;
+}
+
+.heat-cell[data-level='1'] {
+  background: color-mix(in srgb, var(--accent) 28%, transparent);
+  border-color: color-mix(in srgb, var(--accent) 34%, transparent);
+}
+
+.heat-cell[data-level='2'] {
+  background: color-mix(in srgb, var(--accent) 52%, transparent);
+  border-color: color-mix(in srgb, var(--accent) 58%, transparent);
+}
+
+.heat-cell[data-level='3'] {
+  background: color-mix(in srgb, var(--accent) 76%, transparent);
+  border-color: color-mix(in srgb, var(--accent) 80%, transparent);
+}
+
+.heat-cell[data-level='4'] {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.heat-cell[data-future='true'] {
+  border-style: dashed;
+  border-color: color-mix(in srgb, var(--border) 55%, transparent);
+}
+
+.heat-legend {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  margin-top: 0.9rem;
+  padding-top: 0.75rem;
+  border-top: var(--hair) solid var(--border);
+  font-family: var(--font-mono);
+  font-size: 0.55rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+}

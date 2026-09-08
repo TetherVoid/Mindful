@@ -1,0 +1,121 @@
+/* ═══ 15. THOUGHT RECORDS — CASE NOTES ═══════════════════════════════════ */
+
+.note {
+  position: relative;
+  padding: 1.25rem 1.4rem;
+  background: var(--surface);
+  border: var(--hair) solid var(--rule);
+  transition: border-color var(--tick) var(--ease), transform var(--tick) var(--ease),
+    box-shadow var(--tick) var(--ease);
+}
+
+.note:hover {
+  border-color: var(--text);
+  transform: translate(-2px, -2px);
+  box-shadow: var(--stamp-sm);
+}
+
+.note-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-bottom: 0.7rem;
+  margin-bottom: 0.85rem;
+  border-bottom: var(--hair) solid var(--border);
+}
+
+.note-head h3 {
+  font-size: 1.2rem;
+  letter-spacing: -0.015em;
+  overflow-wrap: anywhere;
+}
+
+.note-date {
+  flex-shrink: 0;
+  font-family: var(--font-mono);
+  font-size: 0.58rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.note-line {
+  display: grid;
+  grid-template-columns: 6.5rem minmax(0, 1fr);
+  gap: 0.85rem;
+  padding: 0.4rem 0;
+  align-items: baseline;
+}
+
+.note-line dt {
+  font-family: var(--font-mono);
+  font-size: 0.57rem;
+  font-weight: 500;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.note-line dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.note-quote {
+  font-style: italic;
+  font-weight: 300;
+  color: var(--text);
+}
+
+.note-balanced {
+  color: var(--success-text);
+}
+
+.note-actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 1rem;
+  padding-top: 0.85rem;
+  border-top: var(--hair) dashed var(--border);
+}
+
+.note-list {
+  display: grid;
+  gap: 1rem;
+}
+
+/* An intensity readout drawn as a 10-segment bar. Inline-flex so the
+   emotion's name sits on the same line as its strength. */
+.intensity {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  vertical-align: -0.15em;
+  margin-right: 0.35rem;
+}
+
+.intensity-bars {
+  display: flex;
+  gap: 2px;
+}
+
+.intensity-bars i {
+  width: 7px;
+  height: 14px;
+  border: var(--hair) solid var(--rule);
+  background: transparent;
+}
+
+.intensity-bars i.on {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.intensity-value {
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  letter-spacing: 0.1em;
+  color: var(--muted);
+}

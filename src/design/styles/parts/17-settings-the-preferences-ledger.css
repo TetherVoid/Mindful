@@ -1,0 +1,135 @@
+/* ═══ 17. SETTINGS — THE PREFERENCES LEDGER ══════════════════════════════ */
+
+.ledger {
+  border-top: var(--hair) solid var(--border);
+}
+
+.ledger-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.75rem;
+  padding: 1.1rem 0;
+  border-bottom: var(--hair) solid var(--border);
+}
+
+.ledger-row:last-child {
+  border-bottom: 0;
+  padding-bottom: 0;
+}
+
+.ledger-row-stacked {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 1rem;
+}
+
+.ledger-label {
+  min-width: 0;
+}
+
+.ledger-label strong {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 0.66rem;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.ledger-label p {
+  margin: 0.35rem 0 0;
+  max-width: 48ch;
+  font-size: 0.93rem;
+  color: var(--muted);
+}
+
+.ledger-controls {
+  display: flex;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+/* A two-state printed switch: the chosen side is inked. */
+.switch {
+  display: inline-flex;
+  border: var(--hair) solid var(--text);
+  flex-shrink: 0;
+}
+
+.switch button {
+  min-height: 38px;
+  padding: 0.4rem 0.9rem;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+  transition: background var(--tick) var(--ease), color var(--tick) var(--ease);
+}
+
+.switch button + button {
+  border-left: var(--hair) solid var(--border);
+}
+
+.switch button:hover {
+  color: var(--text);
+}
+
+.switch button[aria-pressed='true'] {
+  background: var(--text);
+  color: var(--bg);
+}
+
+.settings-form {
+  padding: 1.25rem 0;
+  border-bottom: var(--hair) solid var(--border);
+}
+
+/* Ink swatches — square chips, the selected one gets a printed frame. */
+.swatch-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.swatch {
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  cursor: pointer;
+  border: var(--hair) solid var(--text);
+  transition: transform var(--tick) var(--ease), box-shadow var(--tick) var(--ease);
+}
+
+.swatch:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: var(--stamp-sm);
+}
+
+.swatch.selected {
+  box-shadow: 0 0 0 2px var(--surface), 0 0 0 4px var(--text);
+}
+
+.swatch-custom {
+  position: relative;
+  overflow: hidden;
+  display: inline-block;
+  background: linear-gradient(135deg, #b4472f 0 25%, #3f7d52 25% 50%, #2f6f8f 50% 75%, #7a4f9e 75%);
+}
+
+.swatch-custom input[type='color'] {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  opacity: 0;
+  cursor: pointer;
+}

@@ -1,0 +1,171 @@
+/* ═══ 23. RESPONSIVE ═════════════════════════════════════════════════════ */
+
+@media (max-width: 1000px) {
+  .almanac {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .content {
+    border-left: 0;
+    margin-left: 0;
+  }
+
+  .rail {
+    position: fixed;
+    inset: 0 auto 0 0;
+    width: min(320px, 86vw);
+    transform: translateX(-102%);
+    background: var(--bg);
+    box-shadow: none;
+    transition: transform 220ms var(--ease);
+  }
+
+  .rail.open {
+    transform: translateX(0);
+    border-right: var(--stroke) solid var(--text);
+  }
+
+  .rail-close {
+    display: inline-flex;
+  }
+
+  .rail-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 39;
+    background: color-mix(in srgb, var(--text) 55%, transparent);
+    animation: stamp-in 140ms var(--ease);
+  }
+
+  .masthead-mark {
+    display: block;
+  }
+
+  .masthead .menu-toggle {
+    display: inline-flex;
+  }
+
+  .index-entry {
+    grid-template-columns: 3rem minmax(0, 1fr) 1.5rem;
+    grid-template-areas:
+      'num label arrow'
+      '.   value value';
+    gap: 0.5rem 1rem;
+  }
+
+  .index-entry-num {
+    grid-area: num;
+  }
+  .index-entry-label {
+    grid-area: label;
+  }
+  .index-entry-value {
+    grid-area: value;
+    padding-top: 0.5rem;
+  }
+  .index-entry-arrow {
+    grid-area: arrow;
+    align-self: center;
+  }
+
+  .frontispiece {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .frontispiece-left {
+    border-right: 0;
+    border-bottom: var(--hair) solid var(--rule);
+    min-height: auto;
+    padding-bottom: 2.5rem;
+  }
+
+  .plate {
+    max-width: 480px;
+    box-shadow: var(--stamp-sm);
+  }
+}
+
+@media (max-width: 640px) {
+  body {
+    font-size: 16px;
+  }
+
+  .folio-head {
+    grid-template-columns: minmax(0, 1fr);
+    align-items: start;
+  }
+
+  .folio-meta {
+    align-items: flex-start;
+    text-align: left;
+  }
+
+  .panel {
+    padding: 1.25rem 1.1rem;
+  }
+
+  .field-row {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .register-row {
+    grid-template-columns: auto minmax(0, 1fr);
+    grid-template-areas:
+      'tick name'
+      'streak actions';
+    gap: 0.65rem 0.85rem;
+  }
+
+  .register-row .tick-box {
+    grid-area: tick;
+  }
+  .register-row .register-name {
+    grid-area: name;
+  }
+  .register-row .streak {
+    grid-area: streak;
+  }
+  .register-row .register-actions {
+    grid-area: actions;
+    justify-self: end;
+  }
+
+  .note-line {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.15rem;
+  }
+
+  .marginalia-q {
+    grid-template-columns: 2rem minmax(0, 1fr) 1.25rem;
+    gap: 0.75rem;
+  }
+
+  .marginalia-a {
+    padding-left: 2.75rem;
+    padding-right: 1rem;
+  }
+
+  .ledger-row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.85rem;
+  }
+
+  .ledger-controls {
+    justify-content: flex-start;
+  }
+
+  .frontispiece-contents li {
+    grid-template-columns: 2.5rem 1fr;
+  }
+
+  .gauge-step {
+    min-height: 84px;
+    padding: 0.75rem 0.2rem 0.6rem;
+  }
+
+  .gauge-label {
+    font-size: 0.5rem;
+    letter-spacing: 0.06em;
+  }
+}

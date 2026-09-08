@@ -1,0 +1,43 @@
+/* ═══ 21. SKELETONS ══════════════════════════════════════════════════════ */
+
+/* Loading reads as ruled, empty lines waiting to be filled in. */
+.ruled-skeleton {
+  border-top: var(--hair) solid var(--border);
+  background-image: repeating-linear-gradient(
+    to bottom,
+    transparent 0 33px,
+    var(--border) 33px 34px
+  );
+  position: relative;
+  overflow: hidden;
+}
+
+.ruled-skeleton::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    color-mix(in srgb, var(--accent) 12%, transparent),
+    transparent
+  );
+  animation: sweep 1.5s var(--ease) infinite;
+}
+
+.ruled-skeleton--chart {
+  height: 238px;
+}
+
+.ruled-skeleton--list {
+  height: 170px;
+}
+
+@keyframes sweep {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(100%);
+  }
+}

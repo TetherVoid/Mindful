@@ -1,0 +1,83 @@
+/* ═══ 6. PANELS ══════════════════════════════════════════════════════════ */
+
+.panel {
+  position: relative;
+  background: var(--surface);
+  border: var(--hair) solid var(--text);
+  padding: 1.6rem 1.75rem;
+  margin-bottom: 1.5rem;
+}
+
+/* A registration mark, once per page on the folio head rather than twice on
+   every panel. Repeated on each panel it stopped reading as a printer's proof
+   and started reading as decoration on a data table. */
+.folio-head::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  bottom: -1px;
+  width: 11px;
+  height: 11px;
+  border: var(--hair) solid var(--accent);
+  border-left: 0;
+  border-top: 0;
+}
+
+.folio-head {
+  position: relative;
+}
+
+.panel-head {
+  display: flex;
+  align-items: baseline;
+  gap: 0.85rem;
+  padding-bottom: 0.75rem;
+  margin-bottom: 1.25rem;
+  border-bottom: var(--hair) solid var(--border);
+}
+
+.panel-head-num {
+  font-family: var(--font-mono);
+  font-size: 0.63rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  color: var(--accent);
+}
+
+.panel-head h2,
+.panel-head h3 {
+  flex: 1;
+  font-size: 1.35rem;
+  letter-spacing: -0.02em;
+}
+
+.panel-head-note {
+  font-family: var(--font-mono);
+  font-size: 0.58rem;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.panel-note {
+  margin: -0.6rem 0 1.25rem;
+  font-size: 0.95rem;
+  color: var(--muted);
+  font-style: italic;
+  font-weight: 300;
+}
+
+.panel-flush {
+  padding: 0;
+}
+
+.empty-state {
+  margin: 0;
+  padding: 1.4rem 0;
+  color: var(--muted);
+  font-style: italic;
+  font-weight: 300;
+  border-top: var(--hair) dashed var(--border);
+  border-bottom: var(--hair) dashed var(--border);
+  text-align: center;
+}

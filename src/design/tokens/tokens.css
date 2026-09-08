@@ -1,0 +1,88 @@
+/* ============================================================================
+   DESIGN TOKENS — the custom-property layer.
+
+   Every colour, rule weight, font and measure in the app resolves through a
+   variable declared here. Nothing else in the codebase may hard-code a hex.
+
+   These names are a CONTRACT: frontend and backend code reads them via
+   var(--name) and through design/tokens/palette.js. Renaming one is a
+   cross-agent change (see AGENT_RULES.md).
+   ========================================================================== */
+
+:root {
+  /* --- Ground -------------------------------------------------------- */
+  --bg: #efece2; /* paper */
+  --surface: #f8f6ef; /* panel — one shade brighter than the page */
+  --text: #17150f; /* ink */
+  --muted: #6b6557; /* pencil */
+  --border: #d8d1bf; /* hairline inside panels */
+  --rule: #a9a08a; /* structural divider */
+
+  /* --- Marks --------------------------------------------------------- */
+  --accent: #9a3b1f; /* the red pencil */
+  --accent-hover: #7d2f18;
+  --accent-contrast: #fbf9f3;
+  --accent-2: #3c5a4a; /* the green pencil, for secondary marks */
+
+  --danger: #a32f1c;
+  --danger-hover: #832415;
+  --success-bg: #e6ece2;
+  --success-text: #35563c;
+
+  /* --- Structure ----------------------------------------------------- */
+  --hair: 1px; /* hairline */
+  --stroke: 2px; /* structural stroke */
+  --offset: 5px; /* hard drop-block offset for pressables */
+  --radius: 0;
+
+  /* The stamp: a hard, printed offset block. No blur, ever. */
+  --stamp: var(--offset) var(--offset) 0 var(--text);
+  --stamp-sm: 3px 3px 0 var(--text);
+  --stamp-accent: var(--offset) var(--offset) 0 var(--accent);
+
+  --ease: cubic-bezier(0.2, 0.9, 0.3, 1);
+  --tick: 140ms; /* everything is fast and mechanical */
+
+  /* --- Type ---------------------------------------------------------- */
+  --font-display: 'Newsreader', 'Iowan Old Style', Georgia, 'Times New Roman', serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+
+  /* --- Measure ------------------------------------------------------- */
+  --rail: 232px;
+  --folio: 1080px;
+  --gutter: clamp(1.25rem, 4vw, 3.5rem);
+
+  color-scheme: light;
+}
+
+:root[data-theme='dark'] {
+  --bg: #0e0d0b; /* ink field */
+  --surface: #171613; /* the plate */
+  --text: #efece2;
+  --muted: #97907f;
+  --border: #333029;
+  --rule: #55503f;
+
+  --accent: #e0714f;
+  --accent-hover: #ec8f73;
+  --accent-contrast: #141310;
+  --accent-2: #86b39a;
+
+  --danger: #e0705a;
+  --danger-hover: #ec8b78;
+  --success-bg: #16231a;
+  --success-text: #8fc79c;
+
+  color-scheme: dark;
+}
+
+/* --- Density override -----------------------------------------------------
+   Every --custom-property in the app is declared in this file, including the
+   ones a density mode replaces. The component-level compact rules that go with
+   this (.panel, .folio, .btn, .field) stay in styles/base.css — they are
+   spacing decisions, not tokens. */
+
+:root[data-density='compact'] {
+  --gutter: clamp(1rem, 3vw, 2.25rem);
+  --offset: 4px;
+}

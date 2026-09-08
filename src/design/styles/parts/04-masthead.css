@@ -1,0 +1,61 @@
+/* ═══ 4. MASTHEAD (top bar inside the content column) ═════════════════════ */
+
+.masthead {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0 var(--gutter);
+  min-height: 52px;
+  /* Opaque, not translucent: a long case-note heading scrolling underneath
+     was legible straight through the 10% gap, which read as a rendering
+     fault. The running head has to occlude. */
+  background: var(--bg);
+  border-bottom: var(--hair) solid var(--rule);
+}
+
+.masthead-mark {
+  display: none;
+  font-family: var(--font-display);
+  font-size: 1.2rem;
+  text-decoration: none;
+  letter-spacing: -0.02em;
+}
+
+.masthead-slug {
+  flex: 1;
+  min-width: 0;
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  font-weight: 500;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.masthead-slug b {
+  color: var(--text);
+  font-weight: 500;
+}
+
+.masthead-tools {
+  display: flex;
+  gap: 0.4rem;
+}
+
+.masthead .menu-toggle {
+  display: none;
+}
+
+/* Signed-out pages have no rail to hang inside — they get the folio on its
+   own, centered, with the same top margin the masthead would have given. */
+.standalone {
+  position: relative;
+  z-index: 1;
+  display: block;
+}

@@ -1,0 +1,172 @@
+/* ═══ 22. THE READING — GENERATED REPORT ═════════════════════════════════ */
+
+/* The lead panel of a reading is the only one that carries the red pencil, so
+   the summary reads as the top of the piece and the sections under it as body
+   copy rather than four equal boxes. */
+.panel.brief {
+  border-left: var(--stroke) solid var(--accent);
+}
+
+.brief-summary {
+  font-family: var(--font-display);
+  font-size: 1.22rem;
+  line-height: 1.55;
+  font-weight: 300;
+  text-wrap: pretty;
+}
+
+.brief-body {
+  font-size: 1.02rem;
+  line-height: 1.7;
+  font-weight: 300;
+  max-width: 68ch;
+  text-wrap: pretty;
+}
+
+.brief-figures {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 1.5rem 1.75rem;
+}
+
+.brief-figure {
+  border-top: var(--hair) solid var(--rule);
+  padding-top: 0.7rem;
+}
+
+.brief-figure .figure-num {
+  font-size: 2rem;
+}
+
+.brief-figure-label {
+  display: block;
+  margin-top: 0.35rem;
+  max-width: 26ch;
+  color: var(--muted);
+  font-size: 0.9rem;
+  font-weight: 300;
+  line-height: 1.4;
+}
+
+/* Numbered like the marginalia in the FAQ: the figure sits in the gutter and
+   the sentence hangs off it, so a list of observations still scans as a list
+   when every line is a different length. */
+.brief-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  counter-reset: brief;
+}
+
+.brief-list li {
+  position: relative;
+  counter-increment: brief;
+  padding: 0.85rem 0 0.85rem 2.6rem;
+  border-bottom: var(--hair) solid var(--border);
+  font-size: 1rem;
+  font-weight: 300;
+  line-height: 1.6;
+}
+
+.brief-list li:last-child {
+  border-bottom: 0;
+  padding-bottom: 0;
+}
+
+.brief-list li::before {
+  content: counter(brief, decimal-leading-zero);
+  position: absolute;
+  left: 0;
+  top: 1.05rem;
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  letter-spacing: 0.12em;
+  color: var(--rule);
+}
+
+.brief-list--asked li {
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  font-style: italic;
+}
+
+.brief-list--asked li::before {
+  content: '?';
+  top: 1.15rem;
+  font-style: normal;
+  font-size: 0.8rem;
+  color: var(--accent);
+}
+
+/* Gaps are printed under the figures rather than in the report proper: they
+   describe what the record is missing, which is not a finding about the
+   person. */
+.brief-list--gaps {
+  margin-top: 1.5rem;
+  border-top: var(--hair) dashed var(--border);
+  padding-top: 0.4rem;
+}
+
+.brief-list--gaps li {
+  color: var(--muted);
+  font-size: 0.93rem;
+  font-style: italic;
+  border-bottom: 0;
+  padding: 0.5rem 0 0.5rem 2.6rem;
+}
+
+.brief-list--gaps li::before {
+  content: '§';
+  top: 0.62rem;
+  font-style: normal;
+}
+
+.brief-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+}
+
+.brief-actions--foot {
+  justify-content: flex-end;
+  margin-bottom: 1.5rem;
+}
+
+/* The disclosure is a receipt, so it is set in the machine face and allowed to
+   scroll rather than being summarised into something shorter than the truth. */
+.brief-payload {
+  width: 100%;
+  max-height: 260px;
+  overflow: auto;
+  margin: 0;
+  padding: 0.9rem 1rem;
+  background: var(--bg);
+  border: var(--hair) solid var(--border);
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  line-height: 1.6;
+  color: var(--muted);
+  white-space: pre;
+}
+
+.brief-notice {
+  margin: -0.5rem 0 1.5rem;
+  padding: 0.7rem 0.95rem;
+  border-left: var(--stroke) solid var(--rule);
+  color: var(--muted);
+  font-size: 0.93rem;
+  font-style: italic;
+  font-weight: 300;
+}
+
+.brief-footnote {
+  margin-top: 2.5rem;
+  padding-top: 1rem;
+  border-top: var(--hair) solid var(--border);
+  max-width: 62ch;
+  color: var(--muted);
+  font-size: 0.85rem;
+  font-weight: 300;
+  line-height: 1.65;
+}

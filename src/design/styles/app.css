@@ -1,0 +1,39 @@
+/* ============================================================================
+   THE ALMANAC — component sheet index.
+
+   A paper-and-ink design system: printed logbook, not a dashboard. Rules, not
+   shadows. Square corners, not pills. Serif for language, monospace for
+   measurement. Everything sits on a visible grid the way entries sit on a
+   ruled page. Built from four materials: hairlines, blocks of ink, mono
+   labels, and serif language.
+
+   Import order is cascade order. Later files win on equal specificity, and
+   23-responsive.css must stay last. Reordering this list changes the page.
+
+   Add a new area as its own part file and append it here, before the
+   responsive block. Do not grow an existing part with unrelated rules.
+   ========================================================================== */
+
+@import './parts/01-shell.css';
+@import './parts/02-the-grid-field.css';
+@import './parts/03-the-index-rail.css';
+@import './parts/04-masthead.css';
+@import './parts/05-folio.css';
+@import './parts/06-panels.css';
+@import './parts/07-buttons.css';
+@import './parts/08-forms.css';
+@import './parts/09-auth-the-frontispiece.css';
+@import './parts/10-dashboard-the-day-sheet.css';
+@import './parts/11-mood-the-gauge.css';
+@import './parts/12-charts.css';
+@import './parts/13-habits-the-register.css';
+@import './parts/14-heatmap-the-almanac-calendar.css';
+@import './parts/15-thought-records-case-notes.css';
+@import './parts/16-faq-marginalia.css';
+@import './parts/17-settings-the-preferences-ledger.css';
+@import './parts/18-overlays.css';
+@import './parts/19-floating-bits.css';
+@import './parts/20-colophon.css';
+@import './parts/21-skeletons.css';
+@import './parts/22-the-reading-generated-report.css';
+@import './parts/23-responsive.css';

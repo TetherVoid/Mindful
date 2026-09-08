@@ -1,0 +1,64 @@
+/* ═══ 16. FAQ — MARGINALIA ═══════════════════════════════════════════════ */
+
+.marginalia {
+  border-top: var(--stroke) solid var(--text);
+}
+
+.marginalia-item {
+  border-bottom: var(--hair) solid var(--rule);
+}
+
+.marginalia-q {
+  display: grid;
+  grid-template-columns: 3rem minmax(0, 1fr) 1.5rem;
+  align-items: baseline;
+  gap: 1rem;
+  width: 100%;
+  padding: 1.35rem 0.5rem 1.35rem 0.25rem;
+  background: none;
+  border: 0;
+  cursor: pointer;
+  text-align: left;
+  color: var(--text);
+  transition: background var(--tick) var(--ease), padding-left var(--tick) var(--ease);
+}
+
+.marginalia-q:hover {
+  background: color-mix(in srgb, var(--accent) 7%, transparent);
+  padding-left: 0.9rem;
+}
+
+.marginalia-num {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: var(--rule);
+}
+
+.marginalia-q:hover .marginalia-num,
+.marginalia-item.open .marginalia-num {
+  color: var(--accent);
+}
+
+.marginalia-q h3 {
+  font-size: 1.28rem;
+  letter-spacing: -0.02em;
+}
+
+.marginalia-sign {
+  justify-self: end;
+  color: var(--accent);
+  font-family: var(--font-mono);
+  font-size: 1.1rem;
+  line-height: 1;
+}
+
+.marginalia-a {
+  margin: 0;
+  padding: 0 3.5rem 1.5rem 4.25rem;
+  max-width: 62ch;
+  color: var(--muted);
+  border-left: var(--stroke) solid var(--accent);
+  margin-left: 0.25rem;
+}

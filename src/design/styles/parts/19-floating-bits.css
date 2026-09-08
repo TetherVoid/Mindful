@@ -1,0 +1,80 @@
+/* ═══ 19. FLOATING BITS ══════════════════════════════════════════════════ */
+
+.rule-progress {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  z-index: 200;
+  background: transparent;
+  pointer-events: none;
+}
+
+.rule-progress i {
+  display: block;
+  height: 100%;
+  background: var(--accent);
+  transition: width 90ms linear;
+}
+
+.dock {
+  position: fixed;
+  right: clamp(0.85rem, 2vw, 1.5rem);
+  bottom: clamp(0.85rem, 2vw, 1.5rem);
+  z-index: 90;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.dock .icon-btn {
+  width: 44px;
+  height: 44px;
+  background: var(--surface);
+  border-color: var(--text);
+}
+
+.cookie-notice {
+  position: fixed;
+  left: clamp(0.85rem, 2vw, 1.5rem);
+  bottom: clamp(0.85rem, 2vw, 1.5rem);
+  z-index: 250;
+  width: min(420px, calc(100vw - 2rem));
+  padding: 1.1rem 1.25rem;
+  background: var(--surface);
+  border: var(--stroke) solid var(--text);
+  box-shadow: var(--stamp);
+  animation: stamp-in 220ms var(--ease);
+}
+
+.cookie-notice p {
+  margin: 0.6rem 0 1rem;
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+.cookie-actions {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: flex-end;
+}
+
+.skip-to-content {
+  position: absolute;
+  left: -999px;
+  top: 0;
+  z-index: 400;
+  padding: 0.75rem 1.25rem;
+  background: var(--text);
+  color: var(--bg);
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  text-decoration: none;
+}
+
+.skip-to-content:focus {
+  left: 0;
+}

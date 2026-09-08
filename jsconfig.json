@@ -1,0 +1,20 @@
+{
+  "compilerOptions": {
+    "baseUrl": ".",
+    "checkJs": false,
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "target": "esnext",
+    "jsx": "react-jsx",
+    "paths": {
+      "@app/*": ["src/app/*"],
+      "@frontend/*": ["src/frontend/*"],
+      "@design/*": ["src/design/*"],
+      "@backend/*": ["src/backend/*"],
+      "@shared/*": ["src/shared/*"],
+      "@config/*": ["src/config/*"]
+    }
+  },
+  "include": ["src", "api", "vite.config.js"],
+  "exclude": ["node_modules", "dist", "graphify-out"]
+}

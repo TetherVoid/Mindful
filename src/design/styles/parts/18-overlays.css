@@ -1,0 +1,141 @@
+/* ═══ 18. OVERLAYS ═══════════════════════════════════════════════════════ */
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 300;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.25rem;
+  background: color-mix(in srgb, var(--text) 58%, transparent);
+  animation: stamp-in 140ms var(--ease);
+}
+
+.overlay--top {
+  align-items: flex-start;
+  padding-top: clamp(3rem, 12vh, 8rem);
+}
+
+.sheet {
+  width: 100%;
+  max-width: 420px;
+  background: var(--surface);
+  border: var(--stroke) solid var(--text);
+  box-shadow: var(--stamp);
+}
+
+.sheet-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.85rem 1.25rem;
+  border-bottom: var(--hair) solid var(--text);
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  font-weight: 500;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.sheet-body {
+  padding: 1.5rem 1.25rem;
+}
+
+.sheet-body h2 {
+  font-size: 1.45rem;
+  margin-bottom: 0.6rem;
+}
+
+.sheet-body p {
+  margin: 0;
+  color: var(--muted);
+}
+
+.sheet-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.6rem;
+  padding: 1rem 1.25rem;
+  border-top: var(--hair) solid var(--border);
+}
+
+/* Search: a command sheet, wider and flush. */
+.search-sheet {
+  max-width: 560px;
+  max-height: 72vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.search-sheet input {
+  border: 0;
+  border-bottom: var(--hair) solid var(--text);
+  padding: 1rem 1.25rem;
+  font-size: 1.15rem;
+  background: transparent;
+}
+
+.search-sheet input:focus-visible {
+  box-shadow: none;
+  background: transparent;
+}
+
+.search-results {
+  overflow-y: auto;
+  padding: 0.5rem 0;
+}
+
+.search-group-label {
+  padding: 0.75rem 1.25rem 0.4rem;
+  font-family: var(--font-mono);
+  font-size: 0.57rem;
+  font-weight: 500;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.search-result {
+  display: grid;
+  grid-template-columns: 1.5rem 1fr;
+  gap: 0.6rem;
+  align-items: baseline;
+  width: 100%;
+  padding: 0.6rem 1.25rem;
+  background: none;
+  border: 0;
+  cursor: pointer;
+  text-align: left;
+  color: var(--text);
+  transition: background var(--tick) var(--ease);
+}
+
+.search-result:hover,
+.search-result:focus-visible {
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+}
+
+.search-result span:first-child {
+  font-family: var(--font-mono);
+  font-size: 0.58rem;
+  color: var(--rule);
+}
+
+.search-result span:last-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.search-hint {
+  margin: 0;
+  padding: 1.5rem 1.25rem;
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+}

@@ -1,0 +1,76 @@
+/* ═══ 12. CHARTS ═════════════════════════════════════════════════════════ */
+
+.chart-frame {
+  position: relative;
+  border: var(--hair) solid var(--border);
+  padding: 1rem 0.5rem 0.25rem;
+  background: color-mix(in srgb, var(--text) 2%, transparent);
+}
+
+.chart-frame .recharts-cartesian-axis-tick text {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  fill: var(--muted);
+}
+
+.chart-tooltip {
+  padding: 0.5rem 0.7rem;
+  background: var(--surface);
+  border: var(--hair) solid var(--text);
+  box-shadow: var(--stamp-sm);
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text);
+}
+
+.chart-tooltip b {
+  display: block;
+  color: var(--accent);
+  font-weight: 700;
+  margin-bottom: 0.15rem;
+}
+
+/* The annotation that appears when a data point is picked. */
+.chart-annotation {
+  position: relative;
+  margin: 1rem 0 0;
+  padding: 0.85rem 2.75rem 0.85rem 1rem;
+  border-left: var(--offset) solid var(--accent);
+  background: color-mix(in srgb, var(--accent) 7%, transparent);
+  font-size: 0.95rem;
+  animation: stamp-in 200ms var(--ease);
+}
+
+.chart-annotation strong {
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--accent);
+  display: block;
+  margin-bottom: 0.2rem;
+}
+
+.chart-annotation-dismiss {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  cursor: pointer;
+  background: none;
+  border: var(--hair) solid transparent;
+  color: var(--muted);
+}
+
+.chart-annotation-dismiss:hover {
+  color: var(--text);
+  border-color: var(--text);
+}
