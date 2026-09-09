@@ -21,3 +21,23 @@ export const useFixtures =
 export const fixtureScenario = import.meta.env.VITE_FIXTURE_SCENARIO
 export const fixtureStartsSignedIn = import.meta.env.VITE_FIXTURE_SIGNED_OUT !== 'true'
 export const fixtureLatencyMs = Number(import.meta.env.VITE_FIXTURE_LATENCY ?? 220)
+
+// --- Authentication ---------------------------------------------------------
+
+// Where an OAuth provider sends the browser back to. Supabase requires the
+// value to be on the project's redirect allow-list, so it is configurable
+// rather than always derived from window.location — a preview deployment and
+// production do not share an origin.
+//
+// Public by design: it is a URL the user's own browser is about to visit.
+export const authRedirectUrl = import.meta.env.VITE_AUTH_REDIRECT_URL
+
+// Which third-party sign-in buttons the UI should offer, e.g. "google,apple".
+// Listing a provider here does nothing on its own — it must also be enabled and
+// configured in the Supabase dashboard (see supabase/OAUTH.md). This exists so
+// the sign-in page can hide a button for a provider this deployment has not set
+// up, rather than showing one that fails on click.
+export const oauthProviders = String(import.meta.env.VITE_OAUTH_PROVIDERS ?? '')
+  .split(',')
+  .map((name) => name.trim().toLowerCase())
+  .filter(Boolean)

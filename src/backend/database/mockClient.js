@@ -8,7 +8,7 @@
 // `undefined` here exactly as it would against the real database. A mock that
 // always returned whole rows would hide that class of bug.
 
-import { buildFixtureTables } from './fixtures'
+import { buildFixtureTables, FIXTURE_USER_ID } from './fixtures'
 
 // Simulated request latency, so loading states are actually visible. Set by
 // createMockClient() from @config/env rather than read here, so that config
@@ -209,9 +209,31 @@ class QueryBuilder {
 }
 
 const LOCAL_USER = {
-  id: 'local-user',
+  id: FIXTURE_USER_ID,
   email: 'sam@example.com',
   user_metadata: {},
+}
+
+// The database functions in supabase/schema.sql § 6 exist to enforce
+// authorisation, and this file has no authorisation to enforce — there is no
+// row-level security behind it, no roles, and no second user to be kept out.
+//
+// So only my_profile() is answered, because the app reads it on every boot and
+// it is a plain fact about the fixture user. Every other function returns the
+// same error a misconfigured project would, rather than a fabricated roster: a
+// teacher view that works on sample data and fails against a real project is a
+// worse lie than one that says up front it cannot be tried here.
+function mockRpc(store, fn) {
+  if (fn === 'my_profile') {
+    return { data: store.profiles.map((row) => ({ ...row })), error: null }
+  }
+  return {
+    data: null,
+    error: {
+      message: `${fn}() needs a real Supabase project — roles and classes cannot be tried on sample data.`,
+      code: 'FIXTURE_UNSUPPORTED',
+    },
+  }
 }
 
 function makeSession() {
@@ -237,10 +259,18 @@ export function createMockClient(scenario, { startSignedIn = true, latencyMs } =
     from(table) {
       return new QueryBuilder(store, table)
     },
+    async rpc(fn) {
+      await sleep(LATENCY_MS)
+      return mockRpc(store, fn)
+    },
     auth: {
       async getSession() {
         await sleep(60)
         return { data: { session }, error: null }
+      },
+      async getUser() {
+        await sleep(40)
+        return { data: { user: session?.user ?? null }, error: null }
       },
       onAuthStateChange(callback) {
         listeners.add(callback)
@@ -275,6 +305,23 @@ export function createMockClient(scenario, { startSignedIn = true, latencyMs } =
       async updateUser() {
         await sleep(LATENCY_MS)
         return { data: { user: session?.user ?? LOCAL_USER }, error: null }
+      },
+      // Neither of these can be simulated: one hands the browser to Google or
+      // Apple, the other sends an email. Saying so beats a stub that resolves
+      // and leaves the caller waiting for something that will never arrive.
+      async signInWithOAuth({ provider }) {
+        await sleep(80)
+        return {
+          data: null,
+          error: { message: `${provider} sign-in needs a real Supabase project; this is sample data.` },
+        }
+      },
+      async resetPasswordForEmail() {
+        await sleep(80)
+        return {
+          data: null,
+          error: { message: 'Password reset emails need a real Supabase project.' },
+        }
       },
     },
   }

@@ -256,4 +256,22 @@ the human asks.
 
 Newest first. One line each: date · agent · file · why.
 
+- 2026-09-09 · Claude (backend) · `src/shared/constants/tables.js` · additive: four
+  table names for the roles/classes schema (`classes`, `class_teachers`,
+  `class_members`, `role_change_audit`). Nothing renamed or removed.
+- 2026-09-09 · Claude (backend) · `src/shared/contracts/index.js` · additive:
+  `Profile`, `ClassRoom` and `StudentOverview` typedefs, so the shapes the new
+  services return are documented where the frontend agent will look for them.
+- 2026-09-09 · Claude (backend) · **for Codex, no frontend files touched** ·
+  `useAuth()` gained `profile`, `role`, `isStudent`, `isTeacher`, `isAdmin`,
+  `refreshProfile`, `authError`, `clearAuthError`, `requestPasswordReset`,
+  `oauthProviders`, `signInWithOAuth`, `signInWithGoogle`, `signInWithApple`.
+  Every existing field and function is unchanged, so no page needs editing to
+  keep working. Three things need a page before they are reachable by a user:
+  the Google/Apple buttons (render one per `oauthProviders` entry), a place to
+  show `authError` on the sign-in page, and a call to
+  `deleteAccount()` from `@backend/services/account` next to the existing
+  "Delete data" control in Settings. Teacher and admin screens have services
+  ready in `@backend/services/classes` and `@backend/services/profile` and no UI
+  at all — see the handover notes rather than guessing at shapes.
 - 2026-09-08 · setup · repository reorganised into `app/frontend/design/backend/shared/config`; 28 database calls moved out of pages into `backend/services/*`; `App.css` split into 23 part files; a pre-existing `utm.js ↔ consent.js` import cycle broken by extracting `backend/utils/consentStore.js`.

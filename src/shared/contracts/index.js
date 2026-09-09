@@ -55,6 +55,61 @@
  */
 
 /**
+ * A row from `profiles`, as `my_profile()` returns it.
+ *
+ * `role` is the application's authorisation fact. It is read from this table
+ * and nowhere else — not from the JWT, not from user metadata, both of which
+ * are shaped by whatever the browser sent. Nothing in the client may write it:
+ * `authenticated` holds no UPDATE privilege on the column, and the only path
+ * that changes it is the administrator-only set_user_role().
+ *
+ * @typedef  {object}  Profile
+ * @property {string}  id
+ * @property {'student'|'teacher'|'admin'} role
+ * @property {string|null}  display_name
+ * @property {boolean} share_with_teachers  false hides this student's figures from their teachers
+ * @property {string|null}  deactivated_at   ISO timestamp; set means the account is suspended
+ * @property {string|null}  created_at
+ */
+
+/**
+ * A row from `classes`.
+ *
+ * `join_code` is only ever returned to the class's own teachers and to
+ * administrators — a student's row-level policy lets them read the class they
+ * are in, code included, so treat it as shared-within-the-class, not secret.
+ * Rotate it with rotateJoinCode() when it has travelled too far.
+ *
+ * @typedef  {object}  ClassRoom
+ * @property {string}  id
+ * @property {string}  name
+ * @property {string}  join_code
+ * @property {string}  owner_id
+ * @property {boolean} archived     archiving also ends its teachers' access to those students
+ * @property {string}  created_at
+ */
+
+/**
+ * One student as a teacher sees them: figures only.
+ *
+ * There is deliberately no field here for a mood note, a situation, an
+ * automatic thought, or any other sentence the student wrote. The database
+ * functions that produce this shape never select those columns, and teachers
+ * have no table-level access that would let them be read another way.
+ *
+ * @typedef  {object}  StudentOverview
+ * @property {string}  user_id
+ * @property {string|null} display_name
+ * @property {number}  mood_entries
+ * @property {number|null} average_mood
+ * @property {string|null} last_mood_at
+ * @property {number}  active_habits
+ * @property {number}  habit_ticks
+ * @property {number}  thought_record_count
+ * @property {string|null} last_activity_at
+ */
+
+/**
  * What every backend service returns.
  *
  * Deliberately the same `{ data, error }` shape Supabase itself uses. Services

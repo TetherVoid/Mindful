@@ -19,7 +19,40 @@ function createRealClient() {
         'or set VITE_USE_FIXTURES=true to run against local sample data.'
     )
   }
-  return createClient(supabaseUrl, supabaseAnonKey)
+  // The auth options are all spelled out rather than left to the library's
+  // defaults, because three of them are security decisions and a default can
+  // change under you between minor versions:
+  //
+  //   flowType: 'pkce'        the authorization-code flow with a proof key. The
+  //                           alternative, 'implicit', puts the access token in
+  //                           the URL fragment, where it lands in history and in
+  //                           any Referer a third-party asset triggers. PKCE
+  //                           returns a single-use code instead, and the code is
+  //                           worthless without the verifier held in this tab.
+  //   detectSessionInUrl      required by the above: it is what exchanges the
+  //                           code for a session when the provider redirects
+  //                           back, and then strips it from the address bar.
+  //   autoRefreshToken        access tokens are short-lived on purpose; without
+  //                           this a long session silently starts failing RLS
+  //                           checks rather than staying signed in.
+  //
+  // PKCE is not the library's default — supabase-js still defaults to
+  // 'implicit' — so this is a deliberate change with one cost worth stating:
+  // the code verifier lives in the localStorage of the browser that started the
+  // flow, so a confirmation or password-reset link opened in a DIFFERENT
+  // browser than the one it was requested from cannot complete. Signing up on a
+  // laptop and confirming from a phone stops working. That is the accepted
+  // trade for keeping access tokens out of URLs, browser history and Referer
+  // headers; if it turns out to matter for this audience, the way back is this
+  // one line, not a workaround elsewhere.
+  return createClient(supabaseUrl, supabaseAnonKey, {
+    auth: {
+      flowType: 'pkce',
+      detectSessionInUrl: true,
+      persistSession: true,
+      autoRefreshToken: true,
+    },
+  })
 }
 
 export const supabase = useFixtures

@@ -28,8 +28,18 @@ async function accessToken() {
  * Resolves to `{ report, notice }`. `notice` is set only when the fallback was
  * used, and carries the reason in the reader's language — the page says why it
  * is showing a locally written report rather than quietly showing a worse one.
+ *
+ * `subjectUserId` names whose record the figures describe. Leave it unset for
+ * the ordinary case, a reader looking at their own. Setting it to somebody else
+ * is a claim, and the endpoint settles that claim against the database before
+ * writing a word — so passing a student's id is not a way to obtain a report
+ * about a student you do not teach.
  */
-export async function requestReport(insights, thoughts, { includeText = false } = {}) {
+export async function requestReport(
+  insights,
+  thoughts,
+  { includeText = false, subjectUserId = null } = {}
+) {
   // Fixtures mode has no real session to authenticate with, so there is nothing
   // to try. Say so rather than firing a request that is certain to 401.
   if (supabase.__isFixtureClient) {
@@ -48,6 +58,7 @@ export async function requestReport(insights, thoughts, { includeText = false } 
   }
 
   const payload = buildReportPayload(insights, thoughts, { includeText })
+  if (subjectUserId) payload.subjectUserId = subjectUserId
   const controller = new AbortController()
   const timer = setTimeout(() => controller.abort(), TIMEOUT_MS)
 
@@ -65,6 +76,12 @@ export async function requestReport(insights, thoughts, { includeText = false } 
       // hide that the reader asked for the same thing several times over.
       if (response.status === 429) {
         return { report: null, error: body.error ?? 'Too many reports for now. Try again later.' }
+      }
+      // 403 is the other one worth stopping on. Falling back would write the
+      // report in the browser from figures the server has just said this reader
+      // is not entitled to — a refusal that produces the thing it refused.
+      if (response.status === 403) {
+        return { report: null, error: body.error ?? 'You do not have access to that record.' }
       }
       return {
         report: writeReportLocally(insights),

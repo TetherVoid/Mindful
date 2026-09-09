@@ -191,6 +191,11 @@ function buildScenario(name) {
 
 export const SCENARIOS = ['empty', 'week', 'heavy']
 
+// The signed-in fixture user. Kept here rather than in mockClient because the
+// profiles row and the auth user have to agree on an id, and one of them has to
+// own that fact.
+export const FIXTURE_USER_ID = 'local-user'
+
 export function buildFixtureTables(scenario) {
   const name = SCENARIOS.includes(scenario) ? scenario : 'week'
   const { moodLogs, habits, habitLogs, thoughtRecords } = buildScenario(name)
@@ -199,5 +204,24 @@ export function buildFixtureTables(scenario) {
     habits,
     habit_logs: habitLogs,
     thought_records: thoughtRecords,
+    // A student, with no classes. Roles and classes are an authorisation
+    // feature, and authorisation is the one thing fixtures cannot honestly
+    // stand in for — there is no row-level security here to enforce any of it.
+    // A fixture teacher would show a roster that the real database would refuse
+    // to return, which is worse than showing nothing. See mockClient's rpc().
+    profiles: [
+      {
+        id: FIXTURE_USER_ID,
+        role: 'student',
+        display_name: 'Sam',
+        share_with_teachers: true,
+        deactivated_at: null,
+        created_at: daysAgo(120).toISOString(),
+      },
+    ],
+    classes: [],
+    class_teachers: [],
+    class_members: [],
+    role_change_audit: [],
   }
 }

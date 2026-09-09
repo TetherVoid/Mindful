@@ -1,4 +1,4 @@
-import { supabase } from '../database/client'
+import { supabase, isFixtureMode } from '../database/client'
 import { TABLES } from '@shared/constants/tables'
 
 // Whole-account operations: take everything out, or destroy everything.
@@ -8,13 +8,30 @@ import { TABLES } from '@shared/constants/tables'
 // delete that silently leaves one behind, is the failure mode worth guarding.
 const OWNED_TABLES = [TABLES.moodLogs, TABLES.habits, TABLES.habitLogs, TABLES.thoughtRecords]
 
+// The signed-in user, from the auth server rather than from an argument.
+//
+// exportAllData and deleteAllData take a userId from the caller. RLS means a
+// wrong one returns nothing rather than somebody else's rows, so it was never a
+// hole — but "the id the page happened to have" and "the id this request is
+// authenticated as" are different facts, and for an export and a delete it
+// ought to be the second. The argument is still accepted, so existing call
+// sites keep working unchanged; it is now only a fallback.
+async function resolveUserId(explicitId) {
+  const { data, error } = await supabase.auth.getUser()
+  if (!error && data?.user?.id) return data.user.id
+  return explicitId ?? null
+}
+
 /**
  * Every row this user owns, keyed by table name.
  * @returns {Promise<import('@shared/contracts').ServiceResult<Record<string, object[]>>>}
  */
 export async function exportAllData(userId) {
+  const id = await resolveUserId(userId)
+  if (!id) return { data: null, error: { message: 'Sign in to export your data.' } }
+
   const results = await Promise.all(
-    OWNED_TABLES.map((table) => supabase.from(table).select('*').eq('user_id', userId))
+    OWNED_TABLES.map((table) => supabase.from(table).select('*').eq('user_id', id))
   )
 
   const error = results.map((r) => r.error).find(Boolean)
@@ -34,14 +51,69 @@ export async function exportAllData(userId) {
  * reverse order would work too, but deleting children first means a partial
  * failure never leaves logs orphaned against a habit that no longer exists.
  *
- * This does not delete the auth user — only their data. Account deletion needs
- * the service-role key and belongs on the server, not in the browser.
+ * That ordering was previously written as a Promise.all, which issues all four
+ * at once and guarantees nothing about which lands first. Awaiting them in turn
+ * is what actually makes the comment above true, and it stops a failure halfway
+ * through from being reported as a success for the tables that did go.
+ *
+ * This does not delete the auth user — only their data. For that, see
+ * deleteAccount() below.
  */
 export async function deleteAllData(userId) {
+  const id = await resolveUserId(userId)
+  if (!id) return { data: null, error: { message: 'Sign in to delete your data.' } }
+
   const ordered = [TABLES.moodLogs, TABLES.habitLogs, TABLES.habits, TABLES.thoughtRecords]
-  const results = await Promise.all(
-    ordered.map((table) => supabase.from(table).delete().eq('user_id', userId))
-  )
-  const error = results.map((r) => r.error).find(Boolean)
-  return { data: error ? null : true, error: error ?? null }
+  for (const table of ordered) {
+    const { error } = await supabase.from(table).delete().eq('user_id', id)
+    if (error) return { data: null, error }
+  }
+  return { data: true, error: null }
+}
+
+/**
+ * Delete the account itself: the auth user, and by cascade every row it owns.
+ *
+ * The browser cannot do this. Removing an auth user is a service-role
+ * operation, and a service-role key in a client bundle would let anyone holding
+ * the page delete anyone. So the request goes to /api/account, which verifies
+ * the caller's own token and then deletes the user that token belongs to —
+ * there is no user id in the request for anybody to change.
+ *
+ * Returns `{ data: true, error: null }` on success. On a deployment with no
+ * service-role key configured it returns an error saying so, rather than
+ * reporting a deletion that did not happen.
+ */
+export async function deleteAccount() {
+  if (isFixtureMode) {
+    return { data: null, error: { message: 'There is no account to delete on sample data.' } }
+  }
+
+  const { data: sessionData } = await supabase.auth.getSession()
+  const token = sessionData?.session?.access_token
+  if (!token) return { data: null, error: { message: 'Sign in again to delete your account.' } }
+
+  let response
+  try {
+    response = await fetch('/api/account', {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${token}` },
+    })
+  } catch {
+    return { data: null, error: { message: 'Could not reach the server. Nothing was deleted.' } }
+  }
+
+  const body = await response.json().catch(() => ({}))
+  if (!response.ok) {
+    return { data: null, error: { message: body.error ?? 'The account could not be deleted.' } }
+  }
+
+  // The session refers to nobody the moment the user is gone; clearing it stops
+  // the app spending the next few minutes making requests with a dead token.
+  try {
+    await supabase.auth.signOut()
+  } catch {
+    // Already unusable. Nothing to recover.
+  }
+  return { data: true, error: null }
 }
