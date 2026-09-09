@@ -3,6 +3,8 @@
 /* Loading reads as ruled, empty lines waiting to be filled in. */
 .ruled-skeleton {
   border-top: var(--hair) solid var(--border);
+  border-bottom: var(--hair) solid var(--border);
+  background-color: color-mix(in srgb, var(--surface) 40%, transparent);
   background-image: repeating-linear-gradient(
     to bottom,
     transparent 0 33px,
@@ -12,6 +14,11 @@
   overflow: hidden;
 }
 
+/* Inherit the heavy folio-head border without creating an awkward double hairline. */
+.folio-head + .ruled-skeleton {
+  border-top: 0;
+}
+
 .ruled-skeleton::after {
   content: '';
   position: absolute;
@@ -19,10 +26,10 @@
   background: linear-gradient(
     90deg,
     transparent,
-    color-mix(in srgb, var(--accent) 12%, transparent),
+    color-mix(in srgb, var(--accent) 14%, transparent),
     transparent
   );
-  animation: sweep 1.5s var(--ease) infinite;
+  animation: sweep 1.6s var(--ease) infinite;
 }
 
 .ruled-skeleton--chart {
@@ -33,11 +40,31 @@
   height: 170px;
 }
 
+.ruled-skeleton--short {
+  height: 102px;
+}
+
+.ruled-skeleton--table {
+  height: 204px;
+}
+
 @keyframes sweep {
   from {
     transform: translateX(-100%);
   }
   to {
     transform: translateX(100%);
+  }
+}
+
+:root[data-motion='reduced'] .ruled-skeleton::after {
+  animation: none !important;
+  display: none !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ruled-skeleton::after {
+    animation: none !important;
+    display: none !important;
   }
 }

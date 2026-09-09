@@ -72,12 +72,43 @@
 }
 
 .empty-state {
-  margin: 0;
-  padding: 1.4rem 0;
+  margin: 1.25rem 0;
+  padding: 2.2rem 1.5rem;
   color: var(--muted);
   font-style: italic;
   font-weight: 300;
+  font-size: 1.05rem;
+  line-height: 1.6;
   border-top: var(--hair) dashed var(--border);
   border-bottom: var(--hair) dashed var(--border);
   text-align: center;
+  text-wrap: pretty;
+}
+
+.empty-state::before {
+  content: '§';
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  font-style: normal;
+  color: var(--accent);
+  margin-bottom: 0.6rem;
+  opacity: 0.85;
+}
+
+.panel > .empty-state:first-child {
+  margin-top: 0;
+}
+
+.panel > .empty-state:last-child {
+  margin-bottom: 0;
+}
+
+.panel > .settings-form:first-of-type {
+  padding-top: 0;
+}
+
+.panel > .settings-form:last-child {
+  border-bottom: 0;
+  padding-bottom: 0;
 }

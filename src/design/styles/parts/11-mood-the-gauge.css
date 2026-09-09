@@ -32,13 +32,30 @@
   color: var(--text);
 }
 
+.gauge-step:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: -2px;
+  position: relative;
+  z-index: 2;
+}
+
 .gauge-step.selected {
   background: var(--text);
   color: var(--bg);
 }
 
+.gauge-step.selected:focus-visible {
+  outline-color: var(--accent);
+}
+
 .gauge-face {
   display: block;
+  transition: transform var(--tick) var(--ease);
+}
+
+.gauge-step:hover .gauge-face,
+.gauge-step:focus-visible .gauge-face {
+  transform: translateY(-2px);
 }
 
 .gauge-label {

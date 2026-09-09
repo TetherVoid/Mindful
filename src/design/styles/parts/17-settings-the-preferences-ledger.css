@@ -80,6 +80,13 @@
   color: var(--text);
 }
 
+.switch button:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: -1px;
+  position: relative;
+  z-index: 2;
+}
+
 .switch button[aria-pressed='true'] {
   background: var(--text);
   color: var(--bg);
@@ -112,6 +119,11 @@
   box-shadow: var(--stamp-sm);
 }
 
+.swatch:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: 3px;
+}
+
 .swatch.selected {
   box-shadow: 0 0 0 2px var(--surface), 0 0 0 4px var(--text);
 }
@@ -121,6 +133,13 @@
   overflow: hidden;
   display: inline-block;
   background: linear-gradient(135deg, #b4472f 0 25%, #3f7d52 25% 50%, #2f6f8f 50% 75%, #7a4f9e 75%);
+}
+
+.swatch-custom:focus-within {
+  outline: var(--focus-ring);
+  outline-offset: 3px;
+  transform: translate(-2px, -2px);
+  box-shadow: var(--stamp-sm);
 }
 
 .swatch-custom input[type='color'] {

@@ -43,6 +43,10 @@
   --ease: cubic-bezier(0.2, 0.9, 0.3, 1);
   --tick: 140ms; /* everything is fast and mechanical */
 
+  /* Focus indicator */
+  --focus-ring: var(--stroke) solid var(--accent);
+  --focus-offset: 2px;
+
   /* --- Type ---------------------------------------------------------- */
   --font-display: 'Newsreader', 'Iowan Old Style', Georgia, 'Times New Roman', serif;
   --font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;

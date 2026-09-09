@@ -33,6 +33,11 @@
   padding-left: 1rem;
 }
 
+.index-entry:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: -1px;
+}
+
 .index-entry-num {
   font-family: var(--font-mono);
   font-size: 1.6rem;
@@ -112,11 +117,16 @@
 .mark-strip {
   display: flex;
   gap: 3px;
+  overflow-x: auto;
+  max-width: 100%;
+  padding-bottom: 2px;
+  scrollbar-width: none;
 }
 
 .mark-cell {
   width: 26px;
   height: 34px;
+  flex-shrink: 0;
   border: var(--hair) solid var(--rule);
   display: flex;
   align-items: flex-end;

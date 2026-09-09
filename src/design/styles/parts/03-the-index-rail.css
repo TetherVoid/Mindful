@@ -5,6 +5,10 @@
   top: 0;
   align-self: start;
   height: 100vh;
+  height: 100dvh;
+  max-height: 100dvh;
+  overflow-y: auto;
+  scrollbar-width: thin;
   display: flex;
   flex-direction: column;
   padding: 1.5rem 0 1.25rem;
@@ -27,6 +31,11 @@
   display: block;
   text-decoration: none;
   color: var(--text);
+}
+
+.wordmark:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: 3px;
 }
 
 .wordmark-name {
@@ -112,6 +121,12 @@
 .rail-link:focus-visible {
   --link-ink: var(--text);
   background: color-mix(in srgb, var(--text) 5%, transparent);
+}
+
+.rail-link:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: -2px;
+  z-index: 1;
 }
 
 .rail-link:hover .rail-link-icon,

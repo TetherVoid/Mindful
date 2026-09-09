@@ -40,6 +40,16 @@
   height: 14px;
   border: var(--hair) solid var(--border);
   background: transparent;
+  transition: transform var(--tick) var(--ease), outline-color var(--tick) var(--ease);
+}
+
+.heat-cell:hover:not([data-future='true']),
+.heat-cell:focus-visible:not([data-future='true']) {
+  outline: var(--focus-ring);
+  outline-offset: 1px;
+  position: relative;
+  z-index: 2;
+  transform: scale(1.15);
 }
 
 .heat-cell[data-level='1'] {

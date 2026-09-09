@@ -134,6 +134,12 @@
   border-bottom: var(--hair) solid var(--border);
 }
 
+.plate-head .mono {
+  color: var(--accent);
+  margin: 0 0 0.5rem;
+  display: block;
+}
+
 .plate-head h1 {
   font-size: 1.85rem;
   letter-spacing: -0.025em;
@@ -161,9 +167,15 @@
   color: var(--accent);
   text-decoration: none;
   border-bottom: var(--hair) solid var(--accent);
+  transition: color var(--tick) var(--ease), border-color var(--tick) var(--ease);
 }
 
 .plate-switch a:hover {
   color: var(--text);
   border-bottom-color: var(--text);
+}
+
+.plate-switch a:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: 3px;
 }

@@ -73,8 +73,32 @@ button {
 
 /* One focus treatment everywhere: a printed double-rule, never removed. */
 :where(a, button, input, textarea, select, [tabindex]):focus-visible {
-  outline: var(--stroke) solid var(--accent);
-  outline-offset: 2px;
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-offset);
+}
+
+/* ---------- Scrollbars ---------- */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--rule) transparent;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border: 1px solid var(--surface);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--rule);
 }
 
 /* ---------- Typographic primitives ---------- */
@@ -111,6 +135,33 @@ button {
     transition-duration: 0.001ms !important;
     scroll-behavior: auto !important;
   }
+
+  .grid-field-wash,
+  .ruled-skeleton::after {
+    animation: none !important;
+    display: none !important;
+  }
+
+  .page-loading::before {
+    animation: none !important;
+    opacity: 1 !important;
+  }
+
+  .btn:hover:not(:disabled),
+  .btn:focus-visible:not(:disabled),
+  .icon-btn:hover,
+  .icon-btn:focus-visible,
+  .tick-box:hover:not(:disabled),
+  .note:hover,
+  .swatch:hover {
+    transform: none !important;
+  }
+
+  .index-entry:hover,
+  .index-entry:focus-visible,
+  .marginalia-q:hover {
+    padding-left: inherit !important;
+  }
 }
 
 :root[data-motion='reduced'] *,
@@ -120,6 +171,33 @@ button {
   animation-iteration-count: 1 !important;
   transition-duration: 0.001ms !important;
   scroll-behavior: auto !important;
+}
+
+:root[data-motion='reduced'] .grid-field-wash,
+:root[data-motion='reduced'] .ruled-skeleton::after {
+  animation: none !important;
+  display: none !important;
+}
+
+:root[data-motion='reduced'] .page-loading::before {
+  animation: none !important;
+  opacity: 1 !important;
+}
+
+:root[data-motion='reduced'] .btn:hover:not(:disabled),
+:root[data-motion='reduced'] .btn:focus-visible:not(:disabled),
+:root[data-motion='reduced'] .icon-btn:hover,
+:root[data-motion='reduced'] .icon-btn:focus-visible,
+:root[data-motion='reduced'] .tick-box:hover:not(:disabled),
+:root[data-motion='reduced'] .note:hover,
+:root[data-motion='reduced'] .swatch:hover {
+  transform: none !important;
+}
+
+:root[data-motion='reduced'] .index-entry:hover,
+:root[data-motion='reduced'] .index-entry:focus-visible,
+:root[data-motion='reduced'] .marginalia-q:hover {
+  padding-left: inherit !important;
 }
 
 /* ---------- Density ---------- */
@@ -163,6 +241,7 @@ button {
   width: 10px;
   height: 10px;
   background: var(--accent);
+  border: var(--hair) solid var(--border);
   animation: blink 1s steps(2, end) infinite;
 }
 

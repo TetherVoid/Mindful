@@ -42,6 +42,18 @@
   box-shadow: var(--stamp-sm);
 }
 
+.tick-box:focus-visible:not(:disabled) {
+  outline: var(--focus-ring);
+  outline-offset: 2px;
+  transform: translate(-2px, -2px);
+  box-shadow: var(--stamp-sm);
+}
+
+.tick-box:active:not(:disabled) {
+  transform: translate(1px, 1px);
+  box-shadow: none;
+}
+
 .tick-box:disabled {
   opacity: 0.45;
   cursor: progress;
@@ -104,6 +116,11 @@
   border-bottom-color: var(--accent);
 }
 
+.streak:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: 2px;
+}
+
 .streak.hot b {
   color: var(--accent);
 }
@@ -117,6 +134,10 @@
 .inline-form input {
   flex: 1;
   border-right: 0;
+}
+
+.inline-form:focus-within input {
+  border-color: var(--text);
 }
 
 .inline-form .btn {
