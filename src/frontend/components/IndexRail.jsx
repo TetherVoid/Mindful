@@ -13,6 +13,7 @@ const ENTRIES = [
   { to: '/report', label: 'The reading', icon: 'reading' },
   { to: '/faq', label: 'Marginalia', icon: 'marginalia' },
   { to: '/settings', label: 'Preferences', icon: 'dial' },
+  { to: '/classes', label: 'Class register', icon: 'register' },
 ]
 
 export default function IndexRail({ onSearchClick, mobileOpen, onMobileClose }) {

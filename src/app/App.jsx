@@ -9,6 +9,8 @@ import Colophon from '@design/primitives/Colophon'
 import Login from '@frontend/pages/Login'
 import Signup from '@frontend/pages/Signup'
 import FAQ from '@frontend/pages/FAQ'
+import NotFound from '@frontend/pages/NotFound'
+import AuthCallback from '@frontend/pages/AuthCallback'
 
 // Lazy-loaded: these are the chart/data-heavy pages behind ProtectedRoute,
 // split into their own chunks so recharts etc. only load once someone's
@@ -19,23 +21,28 @@ const Habits = lazy(() => import('@frontend/pages/Habits'))
 const ThoughtRecords = lazy(() => import('@frontend/pages/ThoughtRecords'))
 const Report = lazy(() => import('@frontend/pages/Report'))
 const Settings = lazy(() => import('@frontend/pages/Settings'))
+const Classes = lazy(() => import('@frontend/pages/Classes'))
+
+function AuthLoading({ label = 'Opening the book' }) {
+  return <div className="page-loading" role="status" aria-live="polite">{label}</div>
+}
 
 function RootRedirect() {
   const { user, loading } = useAuth()
-  if (loading) return <div className="page-loading">Opening the book</div>
+  if (loading) return <AuthLoading />
   return <Navigate to={user ? '/dashboard' : '/login'} replace />
 }
 
 function PublicOnly({ children }) {
   const { user, loading } = useAuth()
-  if (loading) return <div className="page-loading">Opening the book</div>
+  if (loading) return <AuthLoading />
   if (user) return <Navigate to="/dashboard" replace />
   return children
 }
 
 function withSuspense(Component) {
   return (
-    <Suspense fallback={<div className="page-loading">Setting the page</div>}>
+    <Suspense fallback={<AuthLoading label="Setting the page" />}>
       <Component />
     </Suspense>
   )
@@ -43,7 +50,7 @@ function withSuspense(Component) {
 
 function FaqRoute() {
   const { user, loading } = useAuth()
-  if (loading) return <div className="page-loading">Opening the book</div>
+  if (loading) return <AuthLoading />
   // Signed out, the FAQ is a standalone spread with its own page furniture —
   // there's no index rail to hang it inside.
   if (!user) {
@@ -85,6 +92,7 @@ function App() {
           </PublicOnly>
         }
       />
+      <Route path="/auth/callback" element={<AuthCallback />} />
       <Route path="/faq" element={<FaqRoute />} />
 
       <Route element={<ProtectedRoute />}>
@@ -94,9 +102,10 @@ function App() {
         <Route path="/thoughts" element={withSuspense(ThoughtRecords)} />
         <Route path="/report" element={withSuspense(Report)} />
         <Route path="/settings" element={withSuspense(Settings)} />
+        <Route path="/classes" element={withSuspense(Classes)} />
       </Route>
 
-      <Route path="*" element={<Navigate to="/" replace />} />
+      <Route path="*" element={<NotFound />} />
     </Routes>
   )
 }

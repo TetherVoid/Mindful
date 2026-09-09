@@ -7,13 +7,14 @@ import Frontispiece from '@design/primitives/Frontispiece'
 import Reveal from '@design/primitives/Reveal'
 
 export default function Signup() {
-  const { signUp } = useAuth()
+  const { signUp, oauthProviders, signInWithOAuth } = useAuth()
   const navigate = useNavigate()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState(null)
   const [submitting, setSubmitting] = useState(false)
   const [success, setSuccess] = useState(false)
+  const [oauthSubmitting, setOauthSubmitting] = useState(null)
 
   async function handleSubmit(e) {
     e.preventDefault()
@@ -31,6 +32,12 @@ export default function Signup() {
     } finally {
       setSubmitting(false)
     }
+  }
+
+  async function handleOAuth(provider) {
+    setError(null)
+    setOauthSubmitting(provider)
+    try { await signInWithOAuth(provider) } catch (err) { setError(err.message); setOauthSubmitting(null) }
   }
 
   if (success) {
@@ -84,6 +91,8 @@ export default function Signup() {
         <button type="submit" className="btn btn--solid btn--block" disabled={submitting}>
           {submitting ? 'Binding…' : 'Create account'}
         </button>
+
+        {oauthProviders.length > 0 && <div className="ledger">{oauthProviders.map((provider) => <button key={provider} type="button" className="btn btn--quiet btn--block" onClick={() => handleOAuth(provider)} disabled={Boolean(oauthSubmitting)}>{oauthSubmitting === provider ? 'Connecting…' : `Continue with ${provider[0].toUpperCase()}${provider.slice(1)}`}</button>)}</div>}
 
         <p className="plate-switch">
           Already keeping one? <Link to="/login">Sign in</Link>

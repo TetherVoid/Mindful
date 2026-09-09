@@ -1,8 +1,10 @@
 import { useState } from 'react'
-import { exportAllData, deleteAllData } from '@backend/services/account'
+import { exportAllData, deleteAccount, deleteAllData } from '@backend/services/account'
+import { updateMyProfile } from '@backend/services/profile'
 import { useAuth } from '@backend/auth/AuthContext'
 import AppearanceSettings from '@design/theme/AppearanceSettings'
 import { getConsent, applyConsentChoice } from '@backend/utils/consent'
+import { STORAGE_KEYS } from '@shared/constants/storage'
 import { getMoodHistoryLength, setMoodHistoryLength } from '@shared/utils/preferences'
 import PasswordInput from '@frontend/components/PasswordInput'
 import FormSuccess from '@frontend/components/FormSuccess'
@@ -12,289 +14,33 @@ import Reveal from '@design/primitives/Reveal'
 import { StaggerGroup, StaggerItem } from '@design/primitives/Stagger'
 import Icon from '@design/primitives/Icon'
 
-function todayStamp() {
-  return new Date().toISOString().slice(0, 10)
-}
-
-// A two-state printed switch. Both states stay visible so the setting reads
-// as a choice between two named options rather than an on/off you have to
-// toggle to discover.
-function Switch({ label, options, value, onChange }) {
-  return (
-    <div className="switch" role="group" aria-label={label}>
-      {options.map((option) => (
-        <button
-          key={option.value}
-          type="button"
-          aria-pressed={value === option.value}
-          onClick={() => onChange(option.value)}
-        >
-          {option.label}
-        </button>
-      ))}
-    </div>
-  )
-}
+function Switch({ label, options, value, onChange }) { return <div className="switch" role="group" aria-label={label}>{options.map((o) => <button key={o.value} type="button" aria-pressed={value === o.value} onClick={() => onChange(o.value)}>{o.label}</button>)}</div> }
+const stamp = () => new Date().toISOString().slice(0, 10)
 
 export default function Settings() {
-  const { user, signOut, updatePassword } = useAuth()
-
-  const [newPassword, setNewPassword] = useState('')
-  const [passwordSaving, setPasswordSaving] = useState(false)
-  const [passwordSuccess, setPasswordSuccess] = useState(false)
-  const [passwordError, setPasswordError] = useState(null)
-
-  const [historyLength, setHistoryLength] = useState(getMoodHistoryLength)
-  const [exporting, setExporting] = useState(false)
-  const [exportError, setExportError] = useState(null)
-
-  const [pendingDeleteData, setPendingDeleteData] = useState(false)
-  const [deletingData, setDeletingData] = useState(false)
-  const [dataDeleted, setDataDeleted] = useState(false)
-  const [deleteError, setDeleteError] = useState(null)
-
-  const [consent, setConsentState] = useState(getConsent)
-
-  async function handleSignOut() {
-    try {
-      await signOut()
-    } catch (err) {
-      console.error('Sign out failed:', err.message)
-    }
-  }
-
-  async function handlePasswordChange(e) {
-    e.preventDefault()
-    setPasswordError(null)
-    setPasswordSaving(true)
-    try {
-      await updatePassword(newPassword)
-      setNewPassword('')
-      setPasswordSuccess(true)
-      setTimeout(() => setPasswordSuccess(false), 2500)
-    } catch (err) {
-      setPasswordError(err.message)
-    } finally {
-      setPasswordSaving(false)
-    }
-  }
-
-  function handleHistoryChange(e) {
-    const value = Number(e.target.value)
-    setHistoryLength(value)
-    setMoodHistoryLength(value)
-  }
-
-  async function handleExport() {
-    setExporting(true)
-    setExportError(null)
-
-    const { data, error } = await exportAllData(user.id)
-    if (error) {
-      setExportError(error.message)
-      setExporting(false)
-      return
-    }
-
-    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `mindful-export-${todayStamp()}.json`
-    a.click()
-    URL.revokeObjectURL(url)
-    setExporting(false)
-  }
-
-  async function confirmDeleteAllData() {
-    setDeletingData(true)
-    setDeleteError(null)
-
-    const { error } = await deleteAllData(user.id)
-
-    setDeletingData(false)
-    setPendingDeleteData(false)
-    if (error) {
-      setDeleteError(error.message)
-      return
-    }
-    setDataDeleted(true)
-  }
-
-  function handleConsentChoice(choice) {
-    applyConsentChoice(choice)
-    setConsentState(choice)
-  }
-
-  return (
-    <div className="folio">
-      <Reveal as="header" className="folio-head" y={14} index={0}>
-        <div>
-          <p className="folio-kicker">Section 06</p>
-          <h1 className="folio-title">
-            House <em>rules</em>
-          </h1>
-          <p className="folio-standfirst">
-            How the book is set, who you are to it, and what happens to everything you've written.
-          </p>
-        </div>
-        <div className="folio-meta">
-          <span>
-            Signed in as <b>{user?.email}</b>
-          </span>
-        </div>
-      </Reveal>
-
-      <StaggerGroup base={0.05}>
-        <StaggerItem className="panel" index={0}>
-          <div className="panel-head">
-            <span className="panel-head-num">§ 01</span>
-            <h2>Setting &amp; impression</h2>
-          </div>
-
-          <AppearanceSettings Switch={Switch} />
-        </StaggerItem>
-
-        <StaggerItem className="panel" index={1}>
-          <div className="panel-head">
-            <span className="panel-head-num">§ 02</span>
-            <h2>Your account</h2>
-          </div>
-
-          <form onSubmit={handlePasswordChange} className="settings-form">
-            <FormError message={passwordError} label="Password" />
-            <PasswordInput
-              label="New password"
-              value={newPassword}
-              onChange={setNewPassword}
-              autoComplete="new-password"
-            />
-            <button type="submit" className="btn btn--ink" disabled={passwordSaving}>
-              <Icon name="lock" size={14} />
-              {passwordSaving ? 'Saving…' : 'Change password'}
-            </button>
-            <FormSuccess visible={passwordSuccess} message="Password updated." />
-          </form>
-
-          <div className="ledger">
-            <div className="ledger-row">
-              <div className="ledger-label">
-                <strong>Close the book</strong>
-                <p>End your session on this device.</p>
-              </div>
-              <button type="button" className="btn btn--quiet btn--sm" onClick={handleSignOut}>
-                <Icon name="exit" size={14} />
-                Sign out
-              </button>
-            </div>
-          </div>
-        </StaggerItem>
-
-        <StaggerItem className="panel" index={2}>
-          <div className="panel-head">
-            <span className="panel-head-num">§ 03</span>
-            <h2>What's on file</h2>
-          </div>
-
-          <div className="ledger">
-            <div className="ledger-row">
-              <div className="ledger-label">
-                <strong>Chart history</strong>
-                <p>How many recent mood entries the trend line loads.</p>
-              </div>
-              <select value={historyLength} onChange={handleHistoryChange} aria-label="Chart history length">
-                <option value={30}>Last 30</option>
-                <option value={60}>Last 60</option>
-                <option value={90}>Last 90</option>
-              </select>
-            </div>
-
-            <div className="ledger-row">
-              <div className="ledger-label">
-                <strong>Take a copy</strong>
-                <p>Download every mood, habit, check-in, and record as one JSON file.</p>
-              </div>
-              <button
-                type="button"
-                className="btn btn--quiet btn--sm"
-                onClick={handleExport}
-                disabled={exporting}
-              >
-                <Icon name="download" size={14} />
-                {exporting ? 'Preparing…' : 'Export'}
-              </button>
-            </div>
-
-            <div className="ledger-row">
-              <div className="ledger-label">
-                <strong>Burn the pages</strong>
-                <p>
-                  Clears every mood log, habit, and thought record. It does not delete the account
-                  itself — that needs server-side access this app's Supabase key doesn't have.
-                </p>
-              </div>
-              <button
-                type="button"
-                className="btn btn--danger btn--sm"
-                onClick={() => setPendingDeleteData(true)}
-              >
-                <Icon name="trash" size={14} />
-                Delete data
-              </button>
-            </div>
-          </div>
-
-          <FormError message={exportError} label="Export" />
-          <FormError message={deleteError} label="Delete" />
-          <FormSuccess visible={dataDeleted} message="Everything has been cleared." />
-        </StaggerItem>
-
-        <StaggerItem className="panel" index={3}>
-          <div className="panel-head">
-            <span className="panel-head-num">§ 04</span>
-            <h2>Privacy</h2>
-            <span className="panel-head-note">
-              <Icon name="shield" size={13} /> Row-level security
-            </span>
-          </div>
-
-          <div className="ledger">
-            <div className="ledger-row">
-              <div className="ledger-label">
-                <strong>Local storage</strong>
-                <p>
-                  Currently{' '}
-                  {consent === 'accepted'
-                    ? 'accepted'
-                    : consent === 'declined'
-                      ? 'declined'
-                      : 'not yet set'}
-                  . Declining also clears any campaign parameters captured at boot.
-                </p>
-              </div>
-              <Switch
-                label="Storage preference"
-                value={consent ?? ''}
-                onChange={handleConsentChoice}
-                options={[
-                  { value: 'declined', label: 'Decline' },
-                  { value: 'accepted', label: 'Accept' },
-                ]}
-              />
-            </div>
-          </div>
-        </StaggerItem>
-      </StaggerGroup>
-
-      <ConfirmModal
-        open={pendingDeleteData}
-        slug="Irreversible"
-        title="Delete everything you've written?"
-        message="This permanently removes every mood log, habit, check-in, and thought record. There is no undo, and no copy kept."
-        confirmLabel={deletingData ? 'Deleting…' : 'Delete it all'}
-        onConfirm={confirmDeleteAllData}
-        onCancel={() => setPendingDeleteData(false)}
-      />
-    </div>
-  )
+  const { user, profile, role, signOut, updatePassword, refreshProfile } = useAuth()
+  const [displayName, setDisplayName] = useState(profile?.display_name ?? '')
+  const [share, setShare] = useState(profile?.share_with_teachers ? 'yes' : 'no')
+  const [password, setPassword] = useState(''); const [history, setHistory] = useState(getMoodHistoryLength); const [consent, setConsent] = useState(getConsent)
+  const [busy, setBusy] = useState(null); const [error, setError] = useState(null); const [success, setSuccess] = useState(null); const [confirm, setConfirm] = useState(null)
+  const notify = (message) => { setSuccess(message); window.setTimeout(() => setSuccess(null), 3000) }
+  const fail = (message) => { setError(message); setBusy(null) }
+  async function saveProfile(e) { e.preventDefault(); setBusy('profile'); setError(null); const { error: err } = await updateMyProfile({ displayName, shareWithTeachers: share === 'yes' }); if (err) return fail(err.message); await refreshProfile(); setBusy(null); notify('Account details saved.') }
+  async function savePassword(e) { e.preventDefault(); setBusy('password'); setError(null); try { await updatePassword(password); setPassword(''); notify('Password updated.') } catch (err) { setError(err.message) } finally { setBusy(null) } }
+  async function exportData() { setBusy('export'); setError(null); const { data, error: err } = await exportAllData(user?.id); if (err) return fail(err.message); const url = URL.createObjectURL(new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })); const link = document.createElement('a'); link.href = url; link.download = `mindful-export-${stamp()}.json`; link.click(); URL.revokeObjectURL(url); setBusy(null); notify('Your export has downloaded.') }
+  async function runConfirmed() { const action = confirm; setBusy(action); setError(null); if (action === 'data') { const { error: err } = await deleteAllData(user?.id); if (err) return fail(err.message); notify('Your written data has been cleared.') } if (action === 'account') { const { error: err } = await deleteAccount(); if (err) return fail(err.message) } if (action === 'local') { Object.values(STORAGE_KEYS).forEach((key) => localStorage.removeItem(key)); setConsent(null); notify('Local preferences and campaign data cleared.') } setBusy(null); setConfirm(null) }
+  async function leave() { setBusy('signout'); try { await signOut() } catch (err) { fail(err.message) } }
+  const roleLabel = role === 'admin' ? 'Administrator' : role === 'teacher' ? 'Teacher' : 'Student'
+  return <div className="folio">
+    <Reveal as="header" className="folio-head" y={14} index={0}><div><p className="folio-kicker">Section 06</p><h1 className="folio-title">House <em>rules</em></h1><p className="folio-standfirst">Your account, privacy choices, and the book on this device.</p></div><div className="folio-meta"><span>Signed in as <b>{user?.email}</b></span><span>{roleLabel}</span></div></Reveal>
+    <FormError message={error} label="Settings" /><FormSuccess visible={Boolean(success)} message={success} />
+    <StaggerGroup base={0.05}>
+      <StaggerItem className="panel" index={0}><div className="panel-head"><span className="panel-head-num">§ 01</span><h2>Profile &amp; visibility</h2></div><form className="settings-form" onSubmit={saveProfile}><div className="field"><label htmlFor="display-name">Display name</label><input id="display-name" value={displayName} maxLength={120} onChange={(e) => setDisplayName(e.target.value)} autoComplete="name" /></div>{role === 'student' && <div className="ledger"><div className="ledger-row"><div className="ledger-label"><strong>Share figures with teachers</strong><p>Only summary figures can be shown to teachers in your classes. Your notes and thought records remain private.</p></div><Switch label="Teacher visibility" value={share} onChange={setShare} options={[{ value: 'no', label: 'Private' }, { value: 'yes', label: 'Share figures' }]} /></div></div>}<button type="submit" className="btn btn--ink" disabled={busy === 'profile'}>{busy === 'profile' ? 'Saving…' : 'Save profile'}</button></form></StaggerItem>
+      <StaggerItem className="panel" index={1}><div className="panel-head"><span className="panel-head-num">§ 02</span><h2>Appearance</h2></div><AppearanceSettings Switch={Switch} /></StaggerItem>
+      <StaggerItem className="panel" index={2}><div className="panel-head"><span className="panel-head-num">§ 03</span><h2>Security &amp; session</h2></div><form onSubmit={savePassword} className="settings-form"><PasswordInput label="New password" value={password} onChange={setPassword} autoComplete="new-password" /><button type="submit" className="btn btn--ink" disabled={busy === 'password'}><Icon name="lock" size={14} />{busy === 'password' ? 'Saving…' : 'Change password'}</button></form><div className="ledger"><div className="ledger-row"><div className="ledger-label"><strong>Close the book</strong><p>Sign out of this device. Other sessions remain active.</p></div><button type="button" className="btn btn--quiet btn--sm" onClick={leave} disabled={busy === 'signout'}><Icon name="exit" size={14} />{busy === 'signout' ? 'Signing out…' : 'Sign out'}</button></div></div></StaggerItem>
+      <StaggerItem className="panel" index={3}><div className="panel-head"><span className="panel-head-num">§ 04</span><h2>Data &amp; privacy</h2></div><div className="ledger"><div className="ledger-row"><div className="ledger-label"><strong>Chart history</strong><p>How many recent mood entries the trend line loads.</p></div><select value={history} onChange={(e) => { const n = Number(e.target.value); setHistory(n); setMoodHistoryLength(n) }} aria-label="Chart history length"><option value={30}>Last 30</option><option value={60}>Last 60</option><option value={90}>Last 90</option></select></div><div className="ledger-row"><div className="ledger-label"><strong>Take a copy</strong><p>Download your mood, habit, check-in, and thought-record data as JSON.</p></div><button type="button" className="btn btn--quiet btn--sm" onClick={exportData} disabled={busy === 'export'}><Icon name="download" size={14} />{busy === 'export' ? 'Preparing…' : 'Export'}</button></div><div className="ledger-row"><div className="ledger-label"><strong>Local storage</strong><p>Currently {consent ?? 'not yet set'}.</p></div><Switch label="Storage preference" value={consent ?? ''} onChange={(choice) => { applyConsentChoice(choice); setConsent(choice); notify(`Local storage preference set to ${choice}.`) }} options={[{ value: 'declined', label: 'Decline' }, { value: 'accepted', label: 'Accept' }]} /></div><div className="ledger-row"><div className="ledger-label"><strong>Clear this device</strong><p>Remove local appearance, chart, consent, and campaign preferences. Cloud data stays intact.</p></div><button type="button" className="btn btn--quiet btn--sm" onClick={() => setConfirm('local')}><Icon name="trash" size={14} />Clear local data</button></div></div></StaggerItem>
+      <StaggerItem className="panel" index={4}><div className="panel-head"><span className="panel-head-num">§ 05</span><h2>Permanent actions</h2></div><div className="ledger"><div className="ledger-row"><div className="ledger-label"><strong>Delete written data</strong><p>Remove moods, habits, check-ins, and thought records. Your account remains open.</p></div><button type="button" className="btn btn--danger btn--sm" onClick={() => setConfirm('data')}><Icon name="trash" size={14} />Delete data</button></div><div className="ledger-row"><div className="ledger-label"><strong>Delete account</strong><p>Permanently delete your account and all related data. This cannot be undone.</p></div><button type="button" className="btn btn--danger btn--sm" onClick={() => setConfirm('account')}><Icon name="trash" size={14} />Delete account</button></div></div></StaggerItem>
+    </StaggerGroup>
+    <ConfirmModal open={Boolean(confirm)} slug={confirm === 'local' ? 'Local device only' : 'Irreversible'} title={confirm === 'account' ? 'Delete your account permanently?' : confirm === 'data' ? 'Delete everything you have written?' : 'Clear local data from this device?'} message={confirm === 'account' ? 'This permanently removes your account and all related data.' : confirm === 'data' ? 'This permanently removes your mood logs, habits, check-ins, and thought records.' : 'You will need to set your visual and privacy preferences again.'} confirmLabel={busy ? 'Working…' : confirm === 'local' ? 'Clear local data' : confirm === 'account' ? 'Delete account' : 'Delete data'} confirmDisabled={Boolean(busy)} onConfirm={runConfirmed} onCancel={() => !busy && setConfirm(null)} />
+  </div>
 }

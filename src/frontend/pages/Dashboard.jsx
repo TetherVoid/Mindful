@@ -8,6 +8,7 @@ import Reveal from '@design/primitives/Reveal'
 import { StaggerGroup, StaggerItem } from '@design/primitives/Stagger'
 import Icon, { MoodFace } from '@design/primitives/Icon'
 import { MOOD_LABELS, MOOD_SCORES } from '@shared/constants/mood'
+import FormError from '@frontend/components/FormError'
 
 const DISTRIBUTION_SAMPLE_SIZE = 90
 
@@ -40,11 +41,14 @@ export default function Dashboard() {
   const [recentThoughts, setRecentThoughts] = useState([])
   const [thoughtCount, setThoughtCount] = useState(0)
   const [moodDistribution, setMoodDistribution] = useState([])
+  const [error, setError] = useState(null)
 
   useEffect(() => {
     async function load() {
+      setError(null)
       const { data, error } = await loadDashboard({ distributionSample: DISTRIBUTION_SAMPLE_SIZE })
       if (error) {
+        setError(error.message)
         setLoading(false)
         return
       }
@@ -119,6 +123,20 @@ export default function Dashboard() {
       <div className="folio">
         {header}
         <div className="ruled-skeleton ruled-skeleton--list" />
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="folio">
+        {header}
+        <section className="panel">
+          <FormError message={error} label="Day sheet" />
+          <button type="button" className="btn btn--quiet" onClick={() => window.location.reload()}>
+            Try again
+          </button>
+        </section>
       </div>
     )
   }

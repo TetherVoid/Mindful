@@ -5,6 +5,7 @@ export default function ConfirmModal({
   title,
   message,
   confirmLabel = 'Confirm',
+  confirmDisabled = false,
   slug = 'Confirmation required',
   onConfirm,
   onCancel,
@@ -46,7 +47,7 @@ export default function ConfirmModal({
           <button ref={cancelRef} type="button" className="btn btn--quiet btn--sm" onClick={onCancel}>
             Cancel
           </button>
-          <button type="button" className="btn btn--danger btn--sm" onClick={onConfirm}>
+          <button type="button" className="btn btn--danger btn--sm" onClick={onConfirm} disabled={confirmDisabled}>
             {confirmLabel}
           </button>
         </div>
