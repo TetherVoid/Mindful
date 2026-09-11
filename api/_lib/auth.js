@@ -7,6 +7,8 @@
 //   SUPABASE_URL / SUPABASE_ANON_KEY
 //       Falls back to the VITE_-prefixed pair, which the build already needs,
 //       so a Vercel project usually has these already. Both are public values.
+//       If both pairs are set and name different projects, every endpoint here
+//       fails closed — see supabaseRestConfig().
 //   SUPABASE_SERVICE_ROLE_KEY
 //       Optional, and read only by api/account.js. It bypasses row-level
 //       security entirely. It must never gain a VITE_ prefix and must never be
@@ -20,10 +22,49 @@ export function readEnv(...names) {
   return null
 }
 
+/**
+ * The project ref out of a Supabase URL — the `abcd` in
+ * https://abcd.supabase.co. Null for anything that is not one, including a
+ * local stack on 127.0.0.1, which has no ref and needs none.
+ */
+function projectRef(url) {
+  const match = /^https:\/\/([^./]+)\.supabase\.co$/i.exec(String(url ?? '').trim().replace(/\/$/, ''))
+  return match ? match[1].toLowerCase() : null
+}
+
+/**
+ * Which Supabase project this function talks to, and with which public key.
+ *
+ * The server-side pair wins and the VITE_ pair is the fallback, because the
+ * build already needs the second — so a Vercel project usually has it and the
+ * functions work without extra configuration.
+ *
+ * The check below is the point of this function rather than an extra. These two
+ * pairs can name DIFFERENT PROJECTS, and if they do, the endpoint verifies a
+ * token against one project while the browser holds a session from another.
+ * Every token then fails and every request 401s — or, worse, the two projects
+ * both have an account with the same id and the caller is verified as somebody
+ * else entirely. It is a configuration mistake that produces no error message
+ * of its own, which is exactly the kind worth turning into one: a mismatch
+ * returns null here, and both endpoints answer 503 rather than guessing which
+ * project was meant.
+ */
 export function supabaseRestConfig() {
   const url = readEnv('SUPABASE_URL', 'VITE_SUPABASE_URL')
   const key = readEnv('SUPABASE_ANON_KEY', 'VITE_SUPABASE_ANON_KEY')
   if (!url || !key) return null
+
+  const serverRef = projectRef(process.env.SUPABASE_URL)
+  const clientRef = projectRef(process.env.VITE_SUPABASE_URL)
+  if (serverRef && clientRef && serverRef !== clientRef) {
+    console.error(
+      `[auth] SUPABASE_URL (${serverRef}) and VITE_SUPABASE_URL (${clientRef}) are different projects. ` +
+        'The browser signs in against one and this function would verify against the other. ' +
+        'Point both at the same project, or unset SUPABASE_URL.'
+    )
+    return null
+  }
+
   return { url: url.replace(/\/$/, ''), key }
 }
 

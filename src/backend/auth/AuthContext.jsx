@@ -29,13 +29,23 @@ function signupMetadata() {
   return safe
 }
 
-// Where a provider or an email link sends the browser back to. Configurable,
-// because Supabase matches this against the project's redirect allow-list and a
-// preview deployment does not share an origin with production.
+// Where a provider or an email link sends the browser back to.
+//
+// The default is this origin's /auth/callback, which is a real route (see
+// app/App.jsx) whose only job is to wait for supabase-js to finish exchanging
+// the `?code=` for a session and then send the user on. Landing on `/` instead
+// worked, but it put the code exchange behind RootRedirect, which decides where
+// to go from a session that has not arrived yet — so a returning user could be
+// bounced to /login for the moment it took to settle.
+//
+// VITE_AUTH_REDIRECT_URL overrides it, because Supabase matches this against
+// the project's redirect allow-list and a preview deployment does not share an
+// origin with production. Whatever is set there must be on that allow-list, and
+// should end in /auth/callback for the same reason the default does.
 function redirectTarget() {
   if (authRedirectUrl) return authRedirectUrl
   if (typeof window === 'undefined') return undefined
-  return `${window.location.origin}/`
+  return `${window.location.origin}/auth/callback`
 }
 
 // An OAuth provider that refuses reports back in the query string, not by

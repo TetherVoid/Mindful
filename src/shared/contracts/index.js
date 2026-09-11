@@ -110,6 +110,54 @@
  */
 
 /**
+ * One row of the class roster: who is enrolled, and whether they share figures.
+ *
+ * This is the whole membership of a class, sharers and non-sharers alike, which
+ * is what makes it different from StudentOverview — `class_overview()` omits a
+ * student who has not opted in, so the two together are how a page tells
+ * "nobody is enrolled" apart from "nobody has opted in". It carries no figures
+ * and no written text.
+ *
+ * @typedef  {object}  RosterEntry
+ * @property {string}  user_id
+ * @property {string|null} display_name
+ * @property {boolean} share_with_teachers
+ * @property {string}  joined_at
+ */
+
+/**
+ * One row of the administrator's user directory, as `admin_list_users()`
+ * returns it.
+ *
+ * `email` is the reason this shape is administrator-only: it is the single
+ * place in the schema where one person's address is returned to another. It
+ * carries no figures and nothing the user wrote.
+ *
+ * @typedef  {object}  DirectoryUser
+ * @property {string}  id
+ * @property {string}  email
+ * @property {string|null} display_name
+ * @property {'student'|'teacher'|'admin'} role
+ * @property {string|null} deactivated_at
+ * @property {string|null} created_at
+ */
+
+/**
+ * One row of `role_change_audit`.
+ *
+ * Written only by set_user_role(); there is no client path that inserts here.
+ *
+ * @typedef  {object}  RoleChange
+ * @property {string}  id
+ * @property {string}  target_user_id
+ * @property {'student'|'teacher'|'admin'|null} previous_role
+ * @property {'student'|'teacher'|'admin'} new_role
+ * @property {string|null} changed_by
+ * @property {string|null} reason
+ * @property {string}  created_at
+ */
+
+/**
  * What every backend service returns.
  *
  * Deliberately the same `{ data, error }` shape Supabase itself uses. Services

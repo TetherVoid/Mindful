@@ -16,14 +16,17 @@
 // thought records, the profile row and class memberships all go with it.
 //
 // Environment:
-//   SUPABASE_URL                required (or VITE_SUPABASE_URL)
+//   SUPABASE_URL                required (or VITE_SUPABASE_URL). It must name
+//                               the same project the browser signs in against;
+//                               a mismatch between the two is refused outright
+//                               (see _lib/auth.js supabaseRestConfig).
 //   SUPABASE_SERVICE_ROLE_KEY   required. Without it this returns 503 and
 //                               nothing is deleted. Never give it a VITE_
 //                               prefix — that would inline it into the public
 //                               bundle and hand every visitor full database
 //                               access.
 
-import { verifyCaller, readEnv, createRateLimiter, sendJson } from './_lib/auth.js'
+import { verifyCaller, readEnv, supabaseRestConfig, createRateLimiter, sendJson } from './_lib/auth.js'
 
 export const config = { maxDuration: 30 }
 
@@ -45,7 +48,13 @@ export default async function handler(req, res) {
     return sendJson(res, 429, { error: 'Too many attempts. Try again later.' })
   }
 
-  const url = readEnv('SUPABASE_URL', 'VITE_SUPABASE_URL')
+  // The same project the token was just verified against, resolved by the same
+  // function — not a second, independent read of the environment. Resolving it
+  // twice is how this endpoint could end up verifying a caller against one
+  // project and then deleting a user with that id from another, which with the
+  // service-role key is the one mistake here that destroys somebody's data.
+  const config = supabaseRestConfig()
+  const url = config?.url
   const serviceKey = readEnv('SUPABASE_SERVICE_ROLE_KEY')
   if (!url || !serviceKey) {
     // Saying plainly that it is not configured beats a generic failure: the
@@ -58,7 +67,7 @@ export default async function handler(req, res) {
 
   let response
   try {
-    response = await fetch(`${url.replace(/\/$/, '')}/auth/v1/admin/users/${auth.userId}`, {
+    response = await fetch(`${url}/auth/v1/admin/users/${auth.userId}`, {
       method: 'DELETE',
       headers: {
         apikey: serviceKey,

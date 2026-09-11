@@ -109,6 +109,29 @@ export async function setAccountActive({ userId, active }) {
   return supabase.rpc('set_account_active', { p_user_id: userId, p_active: Boolean(active) })
 }
 
+/**
+ * The user directory: the only call in the app that returns another person's
+ * email address.
+ *
+ * Administrator-only, and enforced inside `admin_list_users()` rather than
+ * here — a non-administrator calling this gets 42501 back from Postgres. The
+ * function clamps `page_limit` to 1..100 itself, so the value below is a
+ * request rather than a guarantee.
+ *
+ * Paging is offset-based because the underlying function is: it orders by
+ * `created_at, id` and takes a limit and an offset.
+ *
+ * @returns {Promise<import('@shared/contracts').ServiceResult<import('@shared/contracts').DirectoryUser[]>>}
+ */
+export function adminListUsers({ search = null, limit = 25, offset = 0 } = {}) {
+  const needle = String(search ?? '').trim()
+  return supabase.rpc('admin_list_users', {
+    search: needle === '' ? null : needle,
+    page_limit: Math.min(Math.max(Number(limit) || 25, 1), 100),
+    page_offset: Math.max(Number(offset) || 0, 0),
+  })
+}
+
 /** The role-change history for one user. Readable by administrators and by that user. */
 export function listRoleChanges(userId, limit = 50) {
   return supabase

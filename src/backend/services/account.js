@@ -72,6 +72,35 @@ export async function deleteAllData(userId) {
 }
 
 /**
+ * Switch this account off without deleting anything.
+ *
+ * The middle option between "keep using it" and "delete everything": the rows
+ * stay, and the account loses access to all of them — the four owner policies
+ * carry `not is_deactivated()`. Class memberships are cleared so the user stops
+ * appearing on a roster.
+ *
+ * The function takes no arguments on purpose. There is no user id in its
+ * signature and none in its body except `auth.uid()`, so a caller has nowhere
+ * to name somebody else. It only ever *sets* `deactivated_at`, so it is not a
+ * toggle and cannot undo an administrator's suspension; reactivation is
+ * set_account_active(), which is administrator-only.
+ *
+ * Returns `true` when this call is what deactivated the account and `false`
+ * when it already was — both mean the account is now off, so neither is an
+ * error. The caller should sign out afterwards: the session stays valid until
+ * it is next used, and the app would otherwise spend the next hour making
+ * requests that every policy now refuses.
+ *
+ * @returns {Promise<import('@shared/contracts').ServiceResult<boolean>>}
+ */
+export async function deactivateMyAccount() {
+  if (isFixtureMode) {
+    return { data: null, error: { message: 'There is no account to deactivate on sample data.' } }
+  }
+  return supabase.rpc('deactivate_my_account')
+}
+
+/**
  * Delete the account itself: the auth user, and by cascade every row it owns.
  *
  * The browser cannot do this. Removing an auth user is a service-role
