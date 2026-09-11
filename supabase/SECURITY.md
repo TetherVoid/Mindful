@@ -4,6 +4,24 @@ What `schema.sql` enforces, and why it draws the lines where it does. Read this
 before widening a policy — several of them are narrow on purpose, and the reason
 is not always obvious from the SQL.
 
+## Which project this describes
+
+**Production is the `Mindful` project, ref `czvejcytunugftbspxmr`, Mumbai
+(`ap-south-1`).** Everything below describes what is enforced there.
+
+The older `TetherVoid's Project`, ref `ydbhuynqjymfkqllijzc` (Seoul), is
+**deprecated**. It is a frozen backup, its three accounts are test accounts that
+are not being migrated, and it must not be linked to, migrated, or modified. See
+`MIGRATIONS.md` § Which project is production.
+
+This matters to the access model and not just to operations: every guarantee
+below is a property of one database. Two deployments pointed at two different
+projects do not share a `profiles` table, so they do not share roles,
+suspensions, or consent. `api/_lib/auth.js` refuses to start work when
+`SUPABASE_URL` and `VITE_SUPABASE_URL` name different projects, because a
+function that verifies a caller against one database and acts on another is
+authenticating nobody in particular.
+
 ## The three roles
 
 `profiles.role` is a `user_role` enum: `student`, `teacher`, `admin`. Everyone
@@ -98,15 +116,23 @@ Expect that to look broken the first time a teacher opens a class. It is the
 intended state: nothing about how a child feels reaches an adult who did not ask
 until the child agrees to it.
 
-Two consequences worth planning for rather than discovering:
+Two consequences that were worth planning for, and how the app now handles them:
 
-- A teacher-facing screen needs to distinguish "nobody has shared" from "nobody
-  has written anything". `class_roster` returns every enrolled student with
-  their `share_with_teachers` flag, so the roster can show who has opted in
-  while `class_overview` carries figures only for those who have.
-- Students need somewhere to say yes. Until Settings has that control, the flag
-  can only be changed through `updateMyProfile({ shareWithTeachers: true })`,
-  which means in practice it stays false.
+- A teacher-facing screen has to distinguish "nobody has shared" from "nobody is
+  enrolled" — and from "nobody has written anything". `frontend/pages/Classes.jsx`
+  calls `class_roster` and `class_overview` together for exactly this reason:
+  the roster is the whole membership with each student's `share_with_teachers`
+  flag, and the overview carries figures only for those who opted in. An empty
+  roster says nobody has joined; a full roster with an empty overview says the
+  class has kept its figures private, and the page says so in those words rather
+  than showing a blank list.
+- Students need somewhere to say yes. Settings § 01 has that control, backed by
+  `updateMyProfile({ shareWithTeachers })`. It stays **disabled until the
+  profile has loaded**, and a save made before then omits the field entirely
+  rather than sending the default — otherwise a page saved in its first moment
+  would write `share_with_teachers = false` and silently revoke consent the
+  student had already given. An opt-in that a race can switch off is not an
+  opt-in.
 
 To make it opt-out instead, change the column default to `true` — both places in
 `schema.sql` § 1, since the `alter column … set default` is what a re-run

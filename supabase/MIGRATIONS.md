@@ -2,6 +2,33 @@
 
 How the database is changed, and how this particular upgrade reaches production.
 
+## Which project is production
+
+There are two Supabase projects. Only one of them is production.
+
+| | project | ref | region | status |
+|---|---|---|---|---|
+| **Production** | Mindful | `czvejcytunugftbspxmr` | Mumbai, `ap-south-1` | **the live project** |
+| Deprecated | TetherVoid's Project | `ydbhuynqjymfkqllijzc` | Seoul | frozen backup — do not touch |
+
+**Mumbai (`czvejcytunugftbspxmr`) is production.** It was created through the
+Vercel Marketplace integration and is linked to the Vercel project and to the
+GitHub repository. Every `--linked` command in this file means this project.
+
+**Seoul (`ydbhuynqjymfkqllijzc`) is deprecated.** It is what the site ran on
+before, it holds three test accounts that are deliberately **not** being
+migrated, and the account that owns this repository cannot administer it. It is
+kept as a backup and nothing else: do not link to it, do not run a migration
+against it, do not change it. If a command or an environment variable still
+names that ref, that is the bug.
+
+Nothing about the two is interchangeable. A Vercel deployment whose
+`VITE_SUPABASE_URL` names one project and whose `SUPABASE_URL` names the other
+is a deployment where the browser signs in against one database and
+`/api/report` and `/api/account` verify the caller against the other;
+`supabaseRestConfig()` in `api/_lib/auth.js` refuses to run rather than guess,
+but the real fix is that both must name Mumbai.
+
 ## The files
 
 ```
@@ -38,71 +65,103 @@ order from nothing, which is the same sequence production will receive.
 
 ## Production
 
-Production has never had `schema.sql` applied and its migration history is
-empty, but it *does* already hold every object in the baseline migration. So the
-baseline must be **marked** as applied, not run.
+Mumbai is a **fresh, empty project**. That changes the procedure, and it is
+worth being explicit about what changed and why, because the previous version of
+this section said the opposite.
 
-This is not about the file erroring. Two earlier explanations here were wrong
-and are corrected: `create event trigger` does **not** need superuser on hosted
-Supabase (production shows `postgres` owning both `rls_auto_enable` and
-`ensure_rls` without being one), and the trigger already existing would not stop
-it either, because the baseline drops it `if exists` first, as it does with every
-other object.
+**The `migration repair` step is gone. Do not run it.** It existed for the old
+Seoul project, which already held every object the baseline describes and had
+real users sitting on top of them — replaying a *description* of a live database
+against that database would have dropped and recreated five owner policies and
+the DDL event trigger, and reinstated the old `handle_new_user`, for no gain.
+None of that reasoning applies to an empty database. On Mumbai there is nothing
+to preserve and nothing to churn, so `20260911000100_baseline_production.sql` is
+**run**, like any other migration, and all eight apply in order from nothing.
+That is the same sequence `supabase db reset` exercises locally, which is what
+makes the local run evidence about this one.
 
-The reason is that 000100 is a *description* of production, and replaying a
-description against a live database with real users is needless churn with a real
-blast radius. It would drop and recreate the five owner policies, drop and
-recreate the event trigger that guards DDL, and reinstate the old
-`handle_new_user` — the version with no conflict handling and no exception block
-— until 000200 replaces it again moments later. Each window is brief and
-avoidable, and none of it buys anything, because production already holds the end
-state the file describes.
-
-Order matters below: `supabase login` and `supabase link` establish the
-connection that every `--linked` command depends on, so nothing that talks to
-the project can come before them.
+Marking the baseline applied on an empty project would be actively wrong: the
+five tables, the `user_role` enum and the `ensure_rls` event trigger would never
+be created, and 000200 would fail on the first table it altered.
 
 ```bash
-# 1. Authenticate, then point the CLI at the project. Everything after this
-#    depends on both.
+# 1. Authenticate, then point the CLI at Mumbai. Everything after this depends
+#    on both.
 supabase login
-supabase link --project-ref <your-project-ref>
+supabase link --project-ref czvejcytunugftbspxmr
 
-# 2. Back up. `db dump` defaults to SCHEMA ONLY, so a plain dump would give you
-#    a perfect copy of the structure and none of the three users' journals.
-#    Take all three of these.
-supabase db dump --linked -f backup-schema.sql
-supabase db dump --linked --data-only -f backup-data.sql
-
-#    The default dump covers `public` and excludes Supabase's own schemas, so
-#    the accounts themselves are NOT in either file above. Dump auth separately
-#    or a restore would bring back the rows with no users to own them.
-supabase db dump --linked --data-only --schema auth -f backup-auth-data.sql
-
-#    These are a convenience, not the safety net. Take a real one first:
-#    Dashboard -> Database -> Backups, or enable PITR.
-
-# 3. Tell the remote history the baseline is already there. Not optional —
-#    see above.
-supabase migration repair --status applied 20260911000100
-
-# 4. Check what is about to happen. Expect 000100 applied on both sides, and
-#    these seven as remote-pending — every migration after the baseline:
-#      20260911000200_roles
-#      20260911000300_classes
-#      20260911000400_teacher_reads
-#      20260911000500_owner_policy_hardening
-#      20260911000600_revoke_unused_table_privileges
-#      20260911000700_self_service_deactivation
-#      20260911000800_admin_user_directory
-#    Anything else pending, or 000100 pending, means stop and re-read step 3.
+# 2. Confirm it really is empty before writing to it. Expect: no remote
+#    migrations, and no tables in `public`.
 supabase migration list
+supabase db dump --linked -f /tmp/mumbai-before.sql
 
-# 5. Apply.
+#    If either shows tables, policies or auth users, STOP. Something else has
+#    been applied to this project and the assumption behind this procedure is
+#    no longer true.
+
+# 3. Apply all eight. No repair step.
 supabase db push
+
+# 4. Confirm. Expect all eight listed as applied both locally and remotely.
+supabase migration list
 ```
 
-### What changes for the three existing users
+### Verifying the result
+
+After the push, the project should hold:
+
+- **Tables** (`public`): `profiles`, `mood_logs`, `habits`, `habit_logs`,
+  `thought_records`, `classes`, `class_teachers`, `class_members`,
+  `role_change_audit` — with **RLS enabled on every one of them**.
+- **`profiles.role`**, a `user_role` enum (`student` | `teacher` | `admin`)
+  defaulting to `student`, alongside `display_name`, `share_with_teachers`
+  (default **false**) and `deactivated_at`.
+- **Functions**, including `my_profile()`, `is_admin()`, `is_deactivated()`,
+  `may_view_student()`, `set_user_role()`, `set_account_active()`,
+  `create_class()`, `join_class()`, `leave_class()`, `rotate_join_code()`,
+  `class_roster()`, `class_overview()`, `student_overview()`,
+  `student_mood_series()`, `student_habit_summary()`, and the two this upgrade
+  added: **`deactivate_my_account()`** and **`admin_list_users()`**.
+- **The `ensure_rls` event trigger** and `public.rls_auto_enable()` behind it.
+- **No function in `public` executable by `anon`** — 000800 ends with a `do`
+  block that raises rather than completing if any is.
+
+A one-query version of the same check, for the SQL Editor:
+
+```sql
+select tablename, rowsecurity from pg_tables where schemaname = 'public' order by tablename;
+select proname from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+  where n.nspname = 'public' order by proname;
+select evtname from pg_event_trigger;
+select count(*) as anon_callable from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+  where n.nspname = 'public' and has_function_privilege('anon', p.oid, 'EXECUTE');
+```
+
+`rowsecurity` must be `true` on every row of the first, `ensure_rls` must appear
+in the third, and `anon_callable` must be `0`.
+
+### Backups, for every change after this one
+
+This push needs no backup — the project is empty, so there is nothing to lose.
+Every later change to Mumbai does, once it holds real accounts.
+
+```bash
+# `db dump` defaults to SCHEMA ONLY. A plain dump gives you a perfect copy of
+# the structure and none of the journals. Take all three.
+supabase db dump --linked -f backup-schema.sql
+supabase db dump --linked --data-only -f backup-data.sql
+supabase db dump --linked --data-only --schema auth -f backup-auth-data.sql
+```
+
+These are a convenience, not the safety net. Dashboard -> Database -> Backups,
+or PITR, is the safety net.
+
+### What the Seoul project's three users would have needed
+
+Kept for the record only. **They are not being migrated** — they are test
+accounts, and Mumbai starts empty. This is what the upgrade would have done to
+them, and it is still what will happen to any account that exists on Mumbai when
+a future migration of this shape runs.
 
 - Each gains `role = 'student'`, a null `display_name`, a null `deactivated_at`,
   and `share_with_teachers = false`. The `add column ... not null default` fills
@@ -160,13 +219,18 @@ cleared so it stops appearing on rosters.
 
 ## Rolling back
 
-There is no down migration. Reversing this upgrade means restoring the backups
-from step 2 — which is why step 2 comes before step 5.
+There is no down migration.
 
-A partial failure does not need a rollback: `db push` runs each migration in its
-own transaction, so a migration that fails leaves the database as it was before
-that file, and the history records which ones succeeded. Fix the file and push
-again.
+For **this** push there is nothing to roll back to, and nothing that needs it:
+Mumbai was empty beforehand, so the worst case is an empty project again.
+
+For any **later** change, reversing it means restoring the backups above — which
+is why taking them comes before applying anything.
+
+Either way, a partial failure does not need a rollback. `db push` runs each
+migration in its own transaction, so one that fails leaves the database exactly
+as it was before that file, and the remote history records which ones succeeded.
+Fix the file and push again.
 
 ## `rls_auto_enable`
 

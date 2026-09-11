@@ -256,6 +256,36 @@ the human asks.
 
 Newest first. One line each: date · agent · file · why.
 
+- 2026-09-11 · Claude · **whole-repo change, authorised by the human for this
+  task, overriding the ownership split above** · frontend pages, backend
+  services, shared contracts, `api/`, docs. Summary, so the owning agents can
+  see what moved in their areas:
+  - `src/frontend/pages/Admin.jsx` (new) and a `/admin` route in
+    `src/app/App.jsx` guarded by `isAdmin`; a rail entry in
+    `src/frontend/components/IndexRail.jsx` shown only to administrators. The
+    guard is UX — every call is refused in the database for anyone else.
+  - `src/frontend/pages/Classes.jsx` now calls `listClassRoster` beside
+    `loadClassOverview`, so "nobody is enrolled" and "nobody has shared" are
+    told apart instead of both rendering as an empty list.
+  - `src/frontend/pages/Settings.jsx`: the teacher-visibility control is
+    disabled until the profile loads and syncs from it, and a save made before
+    then omits the field rather than writing `false`; new "Deactivate my
+    account" action; the four confirmation copies moved into one table.
+  - `src/backend/services/profile.js` · additive: `adminListUsers()`.
+    `src/backend/services/account.js` · additive: `deactivateMyAccount()`.
+  - `src/shared/contracts/index.js` · additive: `RosterEntry`, `DirectoryUser`,
+    `RoleChange` typedefs. Nothing renamed or removed.
+  - `src/backend/auth/AuthContext.jsx`: the auth redirect now defaults to
+    `<origin>/auth/callback` instead of `<origin>/`. `VITE_AUTH_REDIRECT_URL`
+    still overrides it.
+  - `api/_lib/auth.js`, `api/account.js`: `supabaseRestConfig()` refuses to
+    resolve when `SUPABASE_URL` and `VITE_SUPABASE_URL` name different Supabase
+    projects, and `api/account.js` now takes its URL from that one resolver
+    rather than reading the environment a second time.
+  - `supabase/MIGRATIONS.md`, `supabase/SECURITY.md`, `.env.example`: Mumbai
+    (`czvejcytunugftbspxmr`) recorded as production, Seoul
+    (`ydbhuynqjymfkqllijzc`) as deprecated; the `migration repair` step removed,
+    since it existed for the old project and is wrong for an empty one.
 - 2026-09-09 · Claude (backend) · `src/shared/constants/tables.js` · additive: four
   table names for the roles/classes schema (`classes`, `class_teachers`,
   `class_members`, `role_change_audit`). Nothing renamed or removed.
