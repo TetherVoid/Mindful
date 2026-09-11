@@ -1,0 +1,41 @@
+# Local development stack. Nothing here points at the production project, and
+# nothing here is used by a deployment — `supabase start` reads it to bring up
+# Postgres, GoTrue and PostgREST in Docker so `supabase db reset` and
+# `supabase test db` have somewhere to run.
+#
+# This file was written by hand rather than by `supabase init`, so it is
+# deliberately minimal: the CLI fills in every key it does not find. If a future
+# CLI version rejects it, `supabase init --force` regenerates a complete one —
+# that command touches only this directory and never the remote project.
+
+project_id = "mindful"
+
+[api]
+enabled = true
+port = 54321
+schemas = ["public", "graphql_public"]
+extra_search_path = ["public", "extensions"]
+max_rows = 1000
+
+[db]
+port = 54322
+shadow_port = 54320
+# Matches production. The pgTAP tests exercise plpgsql and RLS behaviour that
+# has changed between major versions, so testing on 17 is the point.
+major_version = 17
+
+[studio]
+enabled = true
+port = 54323
+
+[auth]
+enabled = true
+site_url = "http://localhost:5173"
+additional_redirect_urls = ["http://localhost:5173"]
+jwt_expiry = 3600
+enable_refresh_token_rotation = true
+enable_signup = true
+
+[auth.email]
+enable_signup = true
+enable_confirmations = false

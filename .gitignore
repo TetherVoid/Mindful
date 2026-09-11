@@ -30,3 +30,8 @@ dist-heavy
 
 # graphify knowledge graph (regenerate with: graphify update .)
 graphify-out/
+
+# Supabase CLI local working state. Created by `supabase start`/`db reset`.
+# .temp holds the linked project ref and pooler details — not for version control.
+supabase/.branches
+supabase/.temp

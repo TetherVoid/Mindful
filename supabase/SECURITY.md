@@ -56,6 +56,35 @@ which is none.
 only. There is no administrative delete. Suspension (`set_account_active`) is
 the administrative operation, and unlike deletion it is reversible.
 
+`admin_list_users(search, page_limit, page_offset)` is the one place in the
+schema that returns another person's email address. It exists because
+`set_user_role()` and `set_account_active()` take a uuid and there has to be a
+sanctioned way to obtain one. It is administrator-only, returns no journal
+content of any kind, escapes `%` and `_` in the search term so a search means
+what was typed, and clamps `page_limit` to 100 server-side.
+
+It is deliberately not available to teachers. An endpoint answering "does this
+address have an account" is a user-enumeration oracle; restricting it to
+administrators does not stop it being one, it just makes the set of people
+holding it small and named. Teachers enrol students with a join code instead.
+
+### Closing your own account
+
+`deactivate_my_account()` is the one privileged write a user may perform on their
+own profile. Its safety is structural rather than checked:
+
+- **It takes no arguments.** There is no user id in the signature and none in the
+  body but `auth.uid()`, so a caller has nowhere to name somebody else. That is
+  stronger than accepting an id and verifying it — a verification can be edited
+  out by someone who does not see why it is there; a missing parameter cannot.
+- **It only ever sets.** `deactivated_at` is written to `now()`, never to null,
+  so it is not a toggle and cannot undo an administrator's suspension.
+- **It does not touch `role`.** The UPDATE names one column.
+
+Reactivation stays with `set_account_active()`, and a deactivated account fails
+`is_admin()` whatever its role — so a suspended administrator cannot lift their
+own suspension either.
+
 ### Teacher visibility is opt-in, per student
 
 `profiles.share_with_teachers` defaults to **false**. A teacher who creates a
@@ -98,9 +127,17 @@ must not fail, so it does not rest on a single mechanism.
 2. **A `BEFORE UPDATE` trigger.** `guard_profile_privileges` raises `42501` on
    any change to `role`, `deactivated_at`, `id` or `created_at` that did not
    arrive through the sanctioned functions. Those functions announce themselves
-   by setting `mindful.privileged_write` for the duration of their transaction —
-   a GUC that cannot be set from PostgREST, because `set_config` lives in
-   `pg_catalog` and PostgREST only exposes functions in the API schemas.
+   by setting `mindful.privileged_write` for the duration of their transaction.
+
+   The flag is not itself a secret and was never a barrier: `set_config()` is
+   executable by PUBLIC, so any session — a signed-in browser included — can
+   turn it on for itself. What the guard checks is **who is asking**. It honours
+   the flag only when `current_user` is neither `authenticated` nor `anon`.
+   Inside a SECURITY DEFINER function `current_user` is the function's owner, so
+   `set_user_role()` and `set_account_active()` are believed; the same flag set
+   by hand in a client session is ignored. `session_user` would be the wrong
+   test — it stays `authenticated` inside those functions and would lock them
+   out.
 3. **`set_user_role()`.** Administrator-only, refuses to change the caller's own
    role, refuses to remove the last administrator, and writes to
    `role_change_audit` on every success.
