@@ -22,6 +22,7 @@ const ThoughtRecords = lazy(() => import('@frontend/pages/ThoughtRecords'))
 const Report = lazy(() => import('@frontend/pages/Report'))
 const Settings = lazy(() => import('@frontend/pages/Settings'))
 const Classes = lazy(() => import('@frontend/pages/Classes'))
+const Admin = lazy(() => import('@frontend/pages/Admin'))
 
 function AuthLoading({ label = 'Opening the book' }) {
   return <div className="page-loading" role="status" aria-live="polite">{label}</div>
@@ -37,6 +38,24 @@ function PublicOnly({ children }) {
   const { user, loading } = useAuth()
   if (loading) return <AuthLoading />
   if (user) return <Navigate to="/dashboard" replace />
+  return children
+}
+
+// The administrator's page, hidden from everybody else.
+//
+// This is a courtesy, not a control. Every call the page makes checks
+// is_admin() inside the database and raises 42501 for anyone else, so a user
+// who reaches /admin another way gets a page of refusals rather than anything
+// they should not see. What this avoids is offering a door that does not open.
+//
+// It waits on `loading` before deciding. `role` falls back to 'student' while
+// the profile is in flight, so checking it any earlier would bounce an
+// administrator off their own page for the moment it takes the profile to
+// arrive.
+function AdminOnly({ children }) {
+  const { isAdmin, loading } = useAuth()
+  if (loading) return <AuthLoading />
+  if (!isAdmin) return <Navigate to="/dashboard" replace />
   return children
 }
 
@@ -103,6 +122,7 @@ function App() {
         <Route path="/report" element={withSuspense(Report)} />
         <Route path="/settings" element={withSuspense(Settings)} />
         <Route path="/classes" element={withSuspense(Classes)} />
+        <Route path="/admin" element={<AdminOnly>{withSuspense(Admin)}</AdminOnly>} />
       </Route>
 
       <Route path="*" element={<NotFound />} />

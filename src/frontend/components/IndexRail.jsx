@@ -16,9 +16,14 @@ const ENTRIES = [
   { to: '/classes', label: 'Class register', icon: 'register' },
 ]
 
+// Shown only to administrators. The page behind it refuses everybody else at
+// the database, so this is about not offering a door that does not open.
+const ADMIN_ENTRY = { to: '/admin', label: 'Register of hands', icon: 'shield' }
+
 export default function IndexRail({ onSearchClick, mobileOpen, onMobileClose }) {
-  const { signOut } = useAuth()
+  const { isAdmin, signOut } = useAuth()
   const { theme, toggleTheme } = useTheme()
+  const entries = isAdmin ? [...ENTRIES, ADMIN_ENTRY] : ENTRIES
 
   async function handleSignOut() {
     try {
@@ -45,7 +50,7 @@ export default function IndexRail({ onSearchClick, mobileOpen, onMobileClose }) 
         </div>
 
         <nav className="rail-nav" aria-label="Sections">
-          {ENTRIES.map((entry, i) => (
+          {entries.map((entry, i) => (
             <NavLink
               key={entry.to}
               to={entry.to}
