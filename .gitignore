@@ -35,3 +35,13 @@ graphify-out/
 # .temp holds the linked project ref and pooler details — not for version control.
 supabase/.branches
 supabase/.temp
+
+# Written by `vercel link`. .vercel holds the project/org ids and a short-lived
+# VERCEL_OIDC_TOKEN; .env* holds real keys. Neither belongs in version control.
+#
+# .env.example is the exception and must stay tracked: it is the documented
+# contract for every variable the app reads, and it holds no values. The
+# negation has to come after the .env* line to take effect.
+.vercel
+.env*
+!.env.example

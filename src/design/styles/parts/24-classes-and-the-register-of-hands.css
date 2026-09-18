@@ -1,0 +1,95 @@
+/* ═══ 24. CLASSES & THE REGISTER OF HANDS ════════════════════════════════ */
+
+/* The class register (/classes) and the administrator's desk (/admin) were
+   built on part 17's preferences ledger, because a ledger row is the right
+   shape for both: a label on the left, a control on the right, hairline
+   between. What did not carry over is what the label HOLDS.
+
+   In Settings a ledger label is the name of a setting — "REDUCE MOTION" — so
+   part 17 sets it in mono, uppercase, 0.66rem, letterspaced. Those two pages
+   put a person's email address, a class name and a student's display name in
+   the same slot, where uppercase mono is wrong: ALEX@SCHOOL.EDU is harder to
+   read than the address, and a class called "Year 9 Wellbeing" is a name, not
+   a measurement. Serif is the system's voice for language; mono is for things
+   that measure. These modifiers put each back on the right side of that line.
+
+   Nothing here restyles the ledger itself. Every rule is a modifier that must
+   be asked for, so part 17 and the Settings page are untouched. */
+
+/* ---------- A proper noun in a ledger label ---------- */
+
+/* Same slot, different material: the display serif, mixed case, no tracking.
+   --text-base is the body step, one above the ledger description under it. */
+.ledger-label--name strong {
+  font-family: var(--font-display);
+  font-size: var(--text-base);
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+  /* An email address is one unbroken word and the panel is one --space-4
+     from the screen edge on a phone. Without this it pushes the row wider
+     than the viewport instead of wrapping. */
+  overflow-wrap: anywhere;
+}
+
+/* ---------- The join code ---------- */
+
+/* The one string on the page a teacher reads aloud and a student types. It
+   was inheriting .ledger-label p — --text-sm, --muted, proportional — which
+   made the most important thing in the panel the quietest. A code is a
+   measurement, so it earns the mono treatment and full ink.
+
+   Letterspacing matters here beyond looks: it separates the characters a
+   join code confuses, and tabular figures stop 1 and 7 from shifting width. */
+.join-code {
+  display: block;
+  margin: var(--space-1) 0 0;
+  font-family: var(--font-mono);
+  font-size: var(--text-md);
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+  /* One click selects the whole code rather than a word of it. */
+  user-select: all;
+}
+
+/* ---------- A roster row ---------- */
+
+/* A ledger row centres its two halves, which is right when the label is one
+   line. A roster line is not: "12 mood entries · 3 active habits · 5 thought
+   records · not shared with teachers; shown to you as an administrator" wraps
+   to three or four lines inside its 48ch measure, and centring then floats
+   the button in the middle of that block, level with nothing. Top-aligned,
+   the control sits with the name it belongs to. */
+.ledger-row--roster {
+  align-items: flex-start;
+}
+
+/* The right-hand cell of a roster row holds either a button or the word
+   "Private". Both should start on the name's first line. */
+.ledger-row--roster > .btn,
+.ledger-row--roster > .mono {
+  margin-top: var(--space-1);
+}
+
+/* ---------- Narrow viewports ---------- */
+
+/* Colocated with the rules they modify rather than added to part 23, which
+   governs the shared components. Part 23 still loads after this file and
+   still has the last word on .ledger-row itself. */
+@media (max-width: 640px) {
+  /* Stacked by part 23, so the top margin that aligned a control with a
+     name no longer aligns it with anything. */
+  .ledger-row--roster > .btn,
+  .ledger-row--roster > .mono {
+    margin-top: 0;
+  }
+
+  .join-code {
+    /* Tracking that reads well at --text-md starts to push the code off a
+       narrow panel. Slightly tighter, one step down. */
+    font-size: var(--text-base);
+    letter-spacing: 0.14em;
+  }
+}

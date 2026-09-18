@@ -256,6 +256,62 @@ the human asks.
 
 Newest first. One line each: date · agent · file · why.
 
+- 2026-09-18 · Claude (backend) · **`src/design/` only, authorised by the human
+  for this task** · the type and spacing scales deferred from the visual audit
+  earlier the same day. No file outside `src/design/` was touched.
+  - `tokens/tokens.css` · additive: `--text-3xs … --text-xl` (8 steps) and
+    `--space-1 … --space-8` (8 steps). Nothing renamed or removed.
+  - 22 sheets rewritten to read the scales: 292 literal values became tokens.
+    `font-size` and spacing properties only — never `letter-spacing`, a
+    dimension or an offset, verified by grep afterwards.
+  - The spacing grid is a quarter-rem run, chosen because half of all spacing
+    in the sheet already landed on it: 1.0 (x26), 1.25 (x24), 0.5 (x22),
+    1.5 (x17), 0.75 (x12) were the five most-used values before this pass.
+  - Twelve values stay literal by decision, not omission: `0.5rem`
+    (`.gauge-label` at ≤640px — snapping it equals the base value and would
+    silently delete the responsive shrink); `1.6 / 1.85 / 2.0 / 2.6rem`
+    (display type, each a one-off; the last two are one role at two sizes
+    chosen against each other); everything from `3.25rem` up (page rhythm);
+    and `1.75rem`, held back at the human's request until `/classes` and
+    `/admin` can be seen rendered. Minimums inside `clamp()` are also left
+    alone — they are tuned against their own maximums.
+  - Negative margins (`-0.6rem`, `-0.5rem`) stay literal: expressing them
+    would mean `calc(var(--space-2) * -1)`, which is more code for a worse
+    read.
+  - Still open: `1.75rem` (6 sites, only one of which is `.ledger-row`'s gap),
+    and `.swatch-custom`'s hardcoded gradient.
+- 2026-09-18 · Claude (backend) · **`src/design/` and three frontend files,
+  authorised by the human for this task because the design agent and Codex were
+  unavailable** · a visual audit of `/classes` and `/admin` and the fixes chosen
+  from it. What moved in other agents' areas:
+  - `src/design/styles/parts/24-classes-and-the-register-of-hands.css` (new):
+    `.ledger-label--name`, `.join-code`, `.ledger-row--roster`. Modifiers only —
+    part 17's ledger and the Settings page are untouched. Imported in
+    `app.css` **above** `23-responsive.css`, because responsive keeps the last
+    word; the number is authorship order, not cascade order.
+  - `src/design/tokens/tokens.css` · additive: `--danger-contrast` in both
+    themes. `.btn--danger:hover/:focus-visible` in `07-buttons.css` was
+    `color: #fff`, which is 3.17:1 on dark `--danger` and fails WCAG AA. Not
+    `--accent-contrast`: that is re-derived from a custom accent while
+    `--danger` stays fixed, which would drop it to 2.64:1.
+  - `src/design/primitives/Icon.jsx` · additive: a `cohort` glyph. `/habits` and
+    `/classes` were both using `register`, so the rail showed one icon twice.
+  - `src/frontend/components/IndexRail.jsx`: `/classes` now asks for `cohort`.
+  - `src/frontend/pages/Admin.jsx`: `.rail-tools` → `.ledger-controls` (the rail
+    class has no `flex-shrink` and no breakpoint, so row controls overflowed on
+    narrow viewports); `ledger-label--name` on the row holding an email address;
+    `ruled-skeleton--table` for tabular data. Class usage only.
+  - `src/frontend/pages/Classes.jsx`: same class changes, plus the file was
+    reformatted — it was written as single lines up to ~1,900 characters.
+    Formatting and `className` only; verified byte-identical after collapsing
+    whitespace apart from the class names and the skeleton variant.
+  - `src/frontend/components/ConfirmModal.jsx`: Tab is now trapped inside the
+    dialog and focus returns to whatever opened it. `aria-modal` already told
+    screen readers the page behind was inert; Tab did not honour it. Behaviour
+    only, no styling.
+  - Deliberately NOT done, and still open: the type scale (38 distinct font
+    sizes) and the spacing scale (39 distinct values) have no tokens and get
+    their own pass; `.swatch-custom` still hardcodes a gradient.
 - 2026-09-11 · Claude · **whole-repo change, authorised by the human for this
   task, overriding the ownership split above** · frontend pages, backend
   services, shared contracts, `api/`, docs. Summary, so the owning agents can

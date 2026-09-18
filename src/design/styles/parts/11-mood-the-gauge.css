@@ -4,7 +4,7 @@
   display: grid;
   grid-template-columns: repeat(5, 1fr);
   gap: 0;
-  margin: 0 0 1.25rem;
+  margin: 0 0 var(--space-5);
   border: var(--hair) solid var(--text);
 }
 
@@ -12,8 +12,8 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.55rem;
-  padding: 1rem 0.35rem 0.75rem;
+  gap: var(--space-2);
+  padding: var(--space-4) var(--space-1) var(--space-3);
   min-height: 96px;
   cursor: pointer;
   background: transparent;
@@ -60,7 +60,7 @@
 
 .gauge-label {
   font-family: var(--font-mono);
-  font-size: 0.58rem;
+  font-size: var(--text-3xs);
   font-weight: 500;
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -68,7 +68,7 @@
 
 .gauge-score {
   font-family: var(--font-mono);
-  font-size: 0.55rem;
+  font-size: var(--text-3xs);
   letter-spacing: 0.1em;
   opacity: 0.6;
 }

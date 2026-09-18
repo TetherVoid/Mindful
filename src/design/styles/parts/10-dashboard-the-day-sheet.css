@@ -6,7 +6,7 @@
    head directly inherit it instead of drawing their own. */
 .index-table {
   border-top: var(--stroke) solid var(--text);
-  margin-bottom: 2.5rem;
+  margin-bottom: var(--space-8);
 }
 
 .folio-head + .index-table,
@@ -19,8 +19,8 @@
   display: grid;
   grid-template-columns: 4rem minmax(0, 1fr) minmax(0, 1.15fr) 2rem;
   align-items: center;
-  gap: 1.25rem;
-  padding: 1.15rem 0.75rem 1.15rem 0.25rem;
+  gap: var(--space-5);
+  padding: var(--space-5) var(--space-3) var(--space-5) var(--space-1);
   text-decoration: none;
   color: inherit;
   border-bottom: var(--hair) solid var(--rule);
@@ -30,7 +30,7 @@
 .index-entry:hover,
 .index-entry:focus-visible {
   background: color-mix(in srgb, var(--accent) 7%, transparent);
-  padding-left: 1rem;
+  padding-left: var(--space-4);
 }
 
 .index-entry:focus-visible {
@@ -58,14 +58,14 @@
 }
 
 .index-entry-label h2 {
-  font-size: 1.5rem;
+  font-size: var(--text-xl);
   letter-spacing: -0.02em;
 }
 
 .index-entry-label p {
-  margin: 0.3rem 0 0;
+  margin: var(--space-1) 0 0;
   font-family: var(--font-mono);
-  font-size: 0.6rem;
+  font-size: var(--text-3xs);
   letter-spacing: 0.07em;
   text-transform: uppercase;
   color: var(--muted);
@@ -92,7 +92,7 @@
 .figure {
   display: flex;
   align-items: baseline;
-  gap: 0.5rem;
+  gap: var(--space-2);
 }
 
 .figure-num {
@@ -107,7 +107,7 @@
 
 .figure-unit {
   font-family: var(--font-mono);
-  font-size: 0.6rem;
+  font-size: var(--text-3xs);
   letter-spacing: 0.07em;
   text-transform: uppercase;
   color: var(--muted);
@@ -147,10 +147,10 @@
 }
 
 .excerpt-list li {
-  padding: 0.28rem 0;
+  padding: var(--space-1) 0;
   font-style: italic;
   font-weight: 300;
-  font-size: 0.95rem;
+  font-size: var(--text-sm);
   color: var(--muted);
   overflow: hidden;
   text-overflow: ellipsis;

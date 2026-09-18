@@ -27,6 +27,18 @@ const PATHS = {
       <path d="M15 9h2M15 16h2" />
     </>
   ),
+  // Two figures, the second occluded: only the right half of its head and
+  // shoulder is drawn, which is what puts it behind the first rather than
+  // beside it. The front figure is the same head-and-shoulders construction
+  // at the same 1.5 weight as the rest of the set.
+  cohort: (
+    <>
+      <circle cx="9" cy="7.5" r="3.5" />
+      <path d="M2.5 20v-1.5a4.5 4.5 0 0 1 4.5-4.5h4a4.5 4.5 0 0 1 4.5 4.5V20" />
+      <path d="M16.5 4.4a3.5 3.5 0 0 1 0 6.2" />
+      <path d="M18 14.2a4.5 4.5 0 0 1 3.5 4.3V20" />
+    </>
+  ),
   quill: (
     <>
       <path d="M4 20s1.5-6 6.5-11S20 3.5 20 3.5s.5 6-4 10.5S4 20 4 20Z" />

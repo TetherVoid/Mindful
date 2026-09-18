@@ -9,14 +9,14 @@
 
 .brief-summary {
   font-family: var(--font-display);
-  font-size: 1.22rem;
+  font-size: var(--text-md);
   line-height: 1.55;
   font-weight: 300;
   text-wrap: pretty;
 }
 
 .brief-body {
-  font-size: 1.02rem;
+  font-size: var(--text-base);
   line-height: 1.7;
   font-weight: 300;
   max-width: 68ch;
@@ -26,12 +26,12 @@
 .brief-figures {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
-  gap: 1.5rem 1.75rem;
+  gap: var(--space-6) 1.75rem;
 }
 
 .brief-figure {
   border-top: var(--hair) solid var(--rule);
-  padding-top: 0.7rem;
+  padding-top: var(--space-3);
 }
 
 .brief-figure .figure-num {
@@ -40,10 +40,10 @@
 
 .brief-figure-label {
   display: block;
-  margin-top: 0.35rem;
+  margin-top: var(--space-1);
   max-width: 26ch;
   color: var(--muted);
-  font-size: 0.9rem;
+  font-size: var(--text-sm);
   font-weight: 300;
   line-height: 1.4;
 }
@@ -61,9 +61,9 @@
 .brief-list li {
   position: relative;
   counter-increment: brief;
-  padding: 0.85rem 0 0.85rem 2.6rem;
+  padding: var(--space-3) 0 var(--space-3) var(--space-8);
   border-bottom: var(--hair) solid var(--border);
-  font-size: 1rem;
+  font-size: var(--text-base);
   font-weight: 300;
   line-height: 1.6;
 }
@@ -79,14 +79,14 @@
   left: 0;
   top: 1.05rem;
   font-family: var(--font-mono);
-  font-size: 0.6rem;
+  font-size: var(--text-3xs);
   letter-spacing: 0.12em;
   color: var(--rule);
 }
 
 .brief-list--asked li {
   font-family: var(--font-display);
-  font-size: 1.1rem;
+  font-size: var(--text-base);
   font-style: italic;
 }
 
@@ -94,7 +94,7 @@
   content: '?';
   top: 1.15rem;
   font-style: normal;
-  font-size: 0.8rem;
+  font-size: var(--text-xs);
   color: var(--accent);
 }
 
@@ -102,17 +102,17 @@
    describe what the record is missing, which is not a finding about the
    person. */
 .brief-list--gaps {
-  margin-top: 1.5rem;
+  margin-top: var(--space-6);
   border-top: var(--hair) dashed var(--border);
-  padding-top: 0.4rem;
+  padding-top: var(--space-2);
 }
 
 .brief-list--gaps li {
   color: var(--muted);
-  font-size: 0.93rem;
+  font-size: var(--text-sm);
   font-style: italic;
   border-bottom: 0;
-  padding: 0.5rem 0 0.5rem 2.6rem;
+  padding: var(--space-2) 0 var(--space-2) var(--space-8);
 }
 
 .brief-list--gaps li::before {
@@ -124,13 +124,13 @@
 .brief-actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.75rem;
-  margin-top: 1.5rem;
+  gap: var(--space-3);
+  margin-top: var(--space-6);
 }
 
 .brief-actions--foot {
   justify-content: flex-end;
-  margin-bottom: 1.5rem;
+  margin-bottom: var(--space-6);
 }
 
 /* The disclosure is a receipt, so it is set in the machine face and allowed to
@@ -140,33 +140,33 @@
   max-height: 260px;
   overflow: auto;
   margin: 0;
-  padding: 0.9rem 1rem;
+  padding: var(--space-4) var(--space-4);
   background: var(--bg);
   border: var(--hair) solid var(--border);
   font-family: var(--font-mono);
-  font-size: 0.68rem;
+  font-size: var(--text-2xs);
   line-height: 1.6;
   color: var(--muted);
   white-space: pre;
 }
 
 .brief-notice {
-  margin: -0.5rem 0 1.5rem;
-  padding: 0.7rem 0.95rem;
+  margin: -0.5rem 0 var(--space-6);
+  padding: var(--space-3) var(--space-4);
   border-left: var(--stroke) solid var(--rule);
   color: var(--muted);
-  font-size: 0.93rem;
+  font-size: var(--text-sm);
   font-style: italic;
   font-weight: 300;
 }
 
 .brief-footnote {
-  margin-top: 2.5rem;
-  padding-top: 1rem;
+  margin-top: var(--space-8);
+  padding-top: var(--space-4);
   border-top: var(--hair) solid var(--border);
   max-width: 62ch;
   color: var(--muted);
-  font-size: 0.85rem;
+  font-size: var(--text-xs);
   font-weight: 300;
   line-height: 1.65;
 }

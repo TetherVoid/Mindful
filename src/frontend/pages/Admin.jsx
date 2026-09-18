@@ -224,7 +224,7 @@ export default function Admin() {
           </div>
 
           {loading ? (
-            <div className="ruled-skeleton ruled-skeleton--list" />
+            <div className="ruled-skeleton ruled-skeleton--table" />
           ) : users.length === 0 ? (
             <p className="empty-state">
               {activeSearch
@@ -239,7 +239,7 @@ export default function Admin() {
                 const isSelf = row.id === user?.id
                 return (
                   <div className="ledger-row" key={row.id}>
-                    <div className="ledger-label">
+                    <div className="ledger-label ledger-label--name">
                       <strong>{row.display_name ?? row.email}</strong>
                       <p>
                         {row.display_name ? `${row.email} · ` : ''}
@@ -250,7 +250,7 @@ export default function Admin() {
                         {isSelf ? ' · you' : ''}
                       </p>
                     </div>
-                    <div className="rail-tools">
+                    <div className="ledger-controls">
                       {/* Changing your own role is refused by set_user_role()
                           whoever you are — the check is there so the last
                           administrator cannot demote themselves out of the
@@ -299,7 +299,7 @@ export default function Admin() {
           <p className="panel-note">
             Page {page + 1} · showing {users.length} of at most {PAGE_SIZE}
           </p>
-          <div className="rail-tools">
+          <div className="ledger-controls">
             <button
               type="button"
               className="btn btn--quiet btn--sm"

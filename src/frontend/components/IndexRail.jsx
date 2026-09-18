@@ -13,7 +13,7 @@ const ENTRIES = [
   { to: '/report', label: 'The reading', icon: 'reading' },
   { to: '/faq', label: 'Marginalia', icon: 'marginalia' },
   { to: '/settings', label: 'Preferences', icon: 'dial' },
-  { to: '/classes', label: 'Class register', icon: 'register' },
+  { to: '/classes', label: 'Class register', icon: 'cohort' },
 ]
 
 // Shown only to administrators. The page behind it refuses everybody else at

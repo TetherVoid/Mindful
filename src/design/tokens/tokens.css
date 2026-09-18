@@ -26,6 +26,11 @@
 
   --danger: #a32f1c;
   --danger-hover: #832415;
+  /* Text on an inked --danger block. Not --accent-contrast: that one is
+     re-derived from a custom accent (see tokens/palette.js) while --danger
+     stays fixed, so borrowing it drops white-on-red to 2.64:1 the moment a
+     user picks a light accent. Paper here reads 6.69:1. */
+  --danger-contrast: #fbf9f3;
   --success-bg: #e6ece2;
   --success-text: #35563c;
 
@@ -51,6 +56,44 @@
   --font-display: 'Newsreader', 'Iowan Old Style', Georgia, 'Times New Roman', serif;
   --font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
 
+  /* --- Type scale ----------------------------------------------------
+     Eight steps. Before these existed the sheet carried 38 distinct rem
+     font-sizes, ten of them between 0.55 and 0.68 — differences too small to
+     read as hierarchy and too many to maintain. The two label steps (3xs,
+     2xs) carry about half of all type in the app.
+
+     Display type is deliberately NOT here. `.wordmark-name`, `.plate-head h1`,
+     `.brief-figure` and `.figure-num` are one-offs at 1.6 / 1.85 / 2.0 / 2.6,
+     and the last two are the same role at two sizes chosen against each
+     other; a step between them would move one by 30%. They stay literal. */
+  --text-3xs: 0.58rem; /* kickers, § numbers, meta */
+  --text-2xs: 0.66rem; /* .mono labels, small buttons */
+  --text-xs: 0.8rem;
+  --text-sm: 0.93rem; /* body, ledger descriptions */
+  --text-base: 1.05rem;
+  --text-md: 1.2rem;
+  --text-lg: 1.35rem;
+  --text-xl: 1.5rem;
+
+  /* --- Spacing scale --------------------------------------------------
+     A quarter-rem grid, discovered rather than imposed: the five most-used
+     spacing values in the sheet were already 1.0, 1.25, 0.5, 1.5 and 0.75,
+     and half of all spacing landed on this grid before it was written down.
+
+     It stops at 2.5rem. Everything above — folio and section padding at
+     3.25 to 8rem — is page rhythm, nine occurrences across seven values, and
+     steps wide enough to hold them would move page margins by a fifth. Those
+     stay literal, as do the minimums inside clamp(), which are tuned against
+     their own maximums. */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --space-6: 1.5rem;
+  --space-7: 2rem;
+  --space-8: 2.5rem;
+
   /* --- Measure ------------------------------------------------------- */
   --rail: 232px;
   --folio: 1080px;
@@ -74,6 +117,7 @@
 
   --danger: #e0705a;
   --danger-hover: #ec8b78;
+  --danger-contrast: #141310; /* ink on coral — 5.87:1 */
   --success-bg: #16231a;
   --success-text: #8fc79c;
 
