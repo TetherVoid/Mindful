@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <rect width="1200" height="630" fill="#efece2"/>
+  <g stroke="#a9a08a" stroke-width="1" opacity="0.35">
+    <path d="M144 0V630M304 0V630M464 0V630M624 0V630M784 0V630M944 0V630M1104 0V630"/>
+    <path d="M0 160H1200M0 320H1200M0 480H1200"/>
+  </g>
+  <g font-family="Menlo, monospace" font-size="19" letter-spacing="5" fill="#17150f">
+    <text x="64" y="92">MINDFUL</text>
+    <text x="1131" y="92" text-anchor="end" fill="#6b6557">VOL. I — THE ALMANAC</text>
+  </g>
+  <rect x="64" y="112" width="1072" height="2" fill="#17150f"/>
+  <g font-family="Georgia, serif" font-size="82" fill="#17150f">
+    <text x="64" y="262">Keep a quiet</text>
+    <text x="64" y="356" fill="#9a3b1f">record</text>
+    <text x="318" y="356">of yourself.</text>
+  </g>
+  <g font-family="Georgia, serif" font-size="29" fill="#6b6557">
+    <text x="64" y="440">Mood, habits and thought records — kept privately,</text>
+    <text x="64" y="480">and read back to you in your own words.</text>
+  </g>
+  <g transform="translate(930 196) scale(6.4)">
+    <rect x="4.5" y="3.5" width="23" height="25" fill="none" stroke="#17150f" stroke-width="2"/>
+    <path d="M10 10h12M10 15h12M10 20h7" stroke="#17150f" stroke-width="2" stroke-linecap="square"/>
+    <rect x="19" y="18" width="4" height="4" fill="#9a3b1f"/>
+  </g>
+  <rect x="64" y="532" width="1072" height="1" fill="#a9a08a"/>
+  <text x="64" y="574" font-family="Menlo, monospace" font-size="17" letter-spacing="4" fill="#6b6557">PRIVATE BY DEFAULT · YOURS TO EXPORT · A STUDENT WELLBEING LOGBOOK</text>
+</svg>

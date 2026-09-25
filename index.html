@@ -3,7 +3,8 @@
   <head>
     <meta charset="UTF-8" />
     <script>
-      // Mirrors src/lib/color.js's deriveFullPalette — keep the two in sync.
+      // Mirrors src/design/tokens/palette.js's deriveFullPalette — keep the two
+      // in sync (AGENT_RULES.md § 3).
       // Duplicated here (rather than imported) so the palette can apply before
       // first paint, avoiding a flash of default colors while React/the module
       // bundle loads.
@@ -125,11 +126,43 @@
       })();
     </script>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/manifest.webmanifest" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta
       name="description"
       content="Mindful — a paper-quiet logbook for mood, habits, and thought records."
     />
+    <!-- The browser chrome in each theme: --bg from design/tokens/tokens.css,
+         duplicated here as the pre-paint script above duplicates the palette. -->
+    <meta name="theme-color" content="#efece2" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#0e0d0b" media="(prefers-color-scheme: dark)" />
+
+    <!-- Link previews. Static on purpose: a shared link must never carry
+         anything about the person who shared it. Image source:
+         src/design/assets/sources/og-image.svg. -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Mindful" />
+    <meta property="og:title" content="Mindful — The Almanac" />
+    <meta
+      property="og:description"
+      content="A quiet logbook for mood, habits and thought records — kept privately, and read back to you in your own words."
+    />
+    <meta property="og:url" content="https://website-1wf9.vercel.app/" />
+    <meta property="og:image" content="https://website-1wf9.vercel.app/og-image.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta
+      property="og:image:alt"
+      content="Mindful — Keep a quiet record of yourself. Mood, habits and thought records, kept privately."
+    />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Mindful — The Almanac" />
+    <meta
+      name="twitter:description"
+      content="A quiet logbook for mood, habits and thought records — kept privately."
+    />
+    <meta name="twitter:image" content="https://website-1wf9.vercel.app/og-image.png" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
