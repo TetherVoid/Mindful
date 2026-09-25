@@ -41,6 +41,8 @@ supabase/migrations/
   20260911000600_revoke_unused_table_privileges.sql  TRUNCATE/REFERENCES/TRIGGER
   20260911000700_self_service_deactivation.sql  deactivate_my_account()
   20260911000800_admin_user_directory.sql       admin_list_users()
+  20260925000100_consent_scoped_reads.sql       consent gates admins too; no habit
+                                                names or times of day in teacher reads
 supabase/tests/                             pgTAP, run with `supabase test db`
 ```
 

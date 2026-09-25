@@ -117,9 +117,11 @@ export function removeClassTeacher({ classId, userId }) {
 
 /**
  * One row per student in a class: how many entries, the average score, when
- * they were last active. Students who have opted out of teacher visibility are
- * absent from the result rather than shown empty — a row of zeroes reads as
- * "this child has stopped writing", which is not what it means.
+ * they were last active. Only students the caller may view are included —
+ * teachers and administrators alike need the student's consent, and an
+ * archived class shows nobody. The rest are absent rather than shown empty — a
+ * row of zeroes reads as "this child has stopped writing", which is not what
+ * it means.
  *
  * @returns {Promise<import('@shared/contracts').ServiceResult<import('@shared/contracts').StudentOverview[]>>}
  */
@@ -127,17 +129,23 @@ export function loadClassOverview(classId, { days = 30 } = {}) {
   return supabase.rpc('class_overview', { p_class_id: classId, p_days: days })
 }
 
-/** The same figures for one student. Works for a teacher, and for a student about themselves. */
+/** The same figures for one student. Works for a student about themselves, and for a teacher or administrator the student has consented to. */
 export function loadStudentOverview(studentId, { days = 30 } = {}) {
   return supabase.rpc('student_overview', { p_student_id: studentId, p_days: days })
 }
 
-/** Mood scores and dates. No notes — the function does not select that column. */
+/**
+ * `{ day, mood_score }` per entry, oldest first. No notes and no time of day —
+ * the function selects neither.
+ */
 export function loadStudentMoodSeries(studentId, { days = 30 } = {}) {
   return supabase.rpc('student_mood_series', { p_student_id: studentId, p_days: days })
 }
 
-/** Habit names and tick counts. */
+/**
+ * `{ habit_number, ticks, last_tick }` per active habit, numbered in creation
+ * order. No habit names or ids — a habit's name is free text the student typed.
+ */
 export function loadStudentHabitSummary(studentId, { days = 30 } = {}) {
   return supabase.rpc('student_habit_summary', { p_student_id: studentId, p_days: days })
 }

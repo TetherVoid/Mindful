@@ -38,8 +38,12 @@ out administrator on request.
 | | own journal | other students' figures | other students' free text | classes | roles |
 |---|---|---|---|---|---|
 | student | read/write | — | — | join, leave | — |
-| teacher | read/write | own classes only, opt-in | **never** | create, manage own | — |
-| admin | read/write | all | **never** | all | grant, revoke, suspend |
+| teacher | read/write | own live classes only, **opt-in** | **never** | create, manage own | — |
+| admin | read/write | students in any live class, **opt-in** | **never** | all | grant, revoke, suspend |
+
+"Opt-in" means the student has switched on `share_with_teachers`. It is the only
+consent a student gives, and since migration `20260925000100` it is the only
+thing that opens a student's figures to anyone else — teacher or administrator.
 
 Two of those cells are decisions rather than deductions, so they are spelled out
 below.
@@ -48,17 +52,28 @@ below.
 
 Teachers and administrators have **no table-level access** to `mood_logs`,
 `habits`, `habit_logs` or `thought_records`. There is no policy on those four
-tables that mentions either role. What a teacher gets instead is a set of
-`SECURITY DEFINER` functions — `class_overview`, `student_overview`,
-`student_mood_series`, `student_habit_summary` — that return counts, scores and
-dates.
+tables that mentions either role. What they get instead is a set of
+`SECURITY DEFINER` functions that return counts, scores and dates:
+
+| Function | Returns |
+|---|---|
+| `class_overview` | per student: entry counts, average mood, active habits, habit ticks, thought-record count, last-activity times |
+| `student_overview` | the same figures for one student |
+| `student_mood_series` | `(day, mood_score)` per entry — **no time of day** |
+| `student_habit_summary` | `(habit_number, ticks, last_tick)` — **no habit name, no habit id** |
 
 None of those functions selects `mood_logs.note`, `thought_records.situation`,
-`thought_records.automatic_thought`, or any other free-text column. That is not
-a filter applied on the way out which a later edit might forget: those columns
-are never named anywhere in § 6 of the schema, and there is no policy that would
-let them be read directly. A teacher can see that a student logged eleven
-entries averaging 2.4 last month. A teacher cannot see a word of what they said.
+`thought_records.automatic_thought`, `habits.name`, or any other free-text
+column. That is not a filter applied on the way out which a later edit might
+forget: those columns are never named in the read functions, and there is no
+policy that would let them be read directly. A teacher can see that a student
+logged eleven entries averaging 2.4 last month and ticked their second habit
+nine times. A teacher cannot see a word of what they said — and a habit's name
+*is* something they said, which is why `20260925000100` took it out.
+
+The same migration took `logged_at` out of `student_mood_series`. The day and
+the score draw the student's line; the time of day a child writes is
+behavioural detail that no reader of figures needs.
 
 If a future feature needs a teacher to see more, the answer is another function
 returning more figures — not a `for select using (teaches_student(user_id))`
@@ -66,9 +81,21 @@ policy on `thought_records`. That one line would undo the whole guarantee.
 
 ### An administrator administers; they are not a supervisor
 
-Admins can grant and revoke roles, suspend accounts, and see every class. They
-read the same figures a teacher does, and the same free text a teacher does,
-which is none.
+Admins can grant and revoke roles, suspend accounts, see every class, and read
+every class's roster — who is enrolled, and whether each student shares. That is
+administration, and none of it says anything about how a student is doing.
+
+A student's figures are another matter. An administrator reads them on the same
+terms as a teacher: only if the student has switched on `share_with_teachers`,
+and only while the student is enrolled in at least one live class — the
+classroom context the student consented in. An administrator reads the same
+free text a teacher does, which is none.
+
+Until `20260925000100` an administrator passed `may_view_student()` for every
+student regardless of consent. That was a deliberate choice then; it was
+reversed because "Share figures with teachers" is the only consent a student
+gives, and an adult reading figures the student never agreed to share is not
+administering anything.
 
 `api/account.js` deliberately implements deletion of the caller's own account
 only. There is no administrative delete. Suspension (`set_account_active`) is
@@ -103,14 +130,21 @@ Reactivation stays with `set_account_active()`, and a deactivated account fails
 `is_admin()` whatever its role — so a suspended administrator cannot lift their
 own suspension either.
 
-### Teacher visibility is opt-in, per student
+### Visibility is opt-in, per student, for teachers and administrators alike
 
 `profiles.share_with_teachers` defaults to **false**. A teacher who creates a
 class and enrols a cohort sees an empty overview until the students in it choose
-to share; `may_view_student()` returns false for every teacher until then, and
-the student is absent from `class_roster`'s figures and from `class_overview`
+to share; `may_view_student()` returns false for every teacher and every
+administrator until then, and the student is absent from `class_overview`
 entirely — absent rather than shown as a row of zeroes, because a row of zeroes
 reads as "this child has stopped writing", which is not what it means.
+
+`class_overview()` decides whose figures to include by asking
+`may_view_student()` about each student, so there is one rule for figure access
+rather than two. Before `20260925000100` it applied its own filter, which
+checked consent but not whether the class was archived — so the teacher of an
+archived class still saw its students' figures, despite archiving being
+documented as ending access. It no longer does.
 
 Expect that to look broken the first time a teacher opens a class. It is the
 intended state: nothing about how a child feels reaches an adult who did not ask
@@ -184,11 +218,13 @@ That makes those functions the most dangerous objects in the file, so each one:
   answer is about the caller;
 - is `revoke execute … from public, anon` and granted only to `authenticated`.
 
-`may_view_student()` is the one they all funnel into. A teacher passes it only
-if **all three** hold: they hold the teacher role and are not suspended, they
-teach a live (non-archived) class the student is enrolled in, and that student
-has not opted out. Archiving a class ends access with it — that is what
-archiving is for.
+`may_view_student()` is the one they all funnel into. Consent is checked first,
+before any role, so no later branch can forget it. After that, a teacher passes
+only if they hold the teacher role, are not suspended, and teach a live
+(non-archived) class the student is enrolled in. An administrator passes only if
+they are not suspended and the student is enrolled in at least one live class.
+A student always passes for themselves. Archiving a class ends access with it —
+that is what archiving is for.
 
 ## Enrolment is by code
 

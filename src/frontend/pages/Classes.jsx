@@ -117,9 +117,10 @@ export default function Classes() {
   }
 
   // class_overview() returns a row per student whose figures the caller may
-  // read. For a teacher that is the students who opted in; for an administrator
-  // it is everyone, opted in or not. So "who is sharing" is counted from the
-  // roster's own flag rather than from the number of rows that came back.
+  // read — for teachers and administrators alike, the students who opted in,
+  // and nobody at all if the class is archived. "Who is sharing" is counted
+  // from the roster's own flag rather than from the number of rows that came
+  // back, so an archived class still reports its members' choices honestly.
   const figuresByStudent = new Map(overview.map((row) => [row.user_id, row]))
   const sharingCount = roster.filter((student) => student.share_with_teachers).length
   const title = isAdmin ? 'Class administration' : isTeacher ? 'Your classes' : 'Your classes'
@@ -231,7 +232,6 @@ export default function Classes() {
                                 {figures ? (
                                   <>
                                     {figures.mood_entries} mood entries · {figures.active_habits} active habits · {figures.thought_record_count} thought records
-                                    {!student.share_with_teachers && ' · not shared with teachers; shown to you as an administrator'}
                                   </>
                                 ) : (
                                   'Not sharing figures'
