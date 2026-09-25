@@ -35,11 +35,7 @@ async function accessToken() {
  * writing a word — so passing a student's id is not a way to obtain a report
  * about a student you do not teach.
  */
-export async function requestReport(
-  insights,
-  thoughts,
-  { includeText = false, subjectUserId = null } = {}
-) {
+export async function requestReport(insights, { subjectUserId = null } = {}) {
   // Fixtures mode has no real session to authenticate with, so there is nothing
   // to try. Say so rather than firing a request that is certain to 401.
   if (supabase.__isFixtureClient) {
@@ -57,7 +53,7 @@ export async function requestReport(
     }
   }
 
-  const payload = buildReportPayload(insights, thoughts, { includeText })
+  const payload = buildReportPayload(insights)
   if (subjectUserId) payload.subjectUserId = subjectUserId
   const controller = new AbortController()
   const timer = setTimeout(() => controller.abort(), TIMEOUT_MS)

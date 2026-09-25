@@ -375,35 +375,17 @@ export function hasEnoughToReport(insights) {
 /**
  * The exact payload that leaves the browser when a Claude-written report is
  * requested. Split out from buildInsights so it can be shown to the user
- * verbatim before they opt in — what is disclosed and what is sent are the
- * same function's output, not two lists that can drift apart.
+ * verbatim before they press the button — what is disclosed and what is sent
+ * are the same function's output, not two lists that can drift apart.
  *
- * `includeText` adds the wording of recent thought records. It is off unless
- * the user explicitly turns it on, because that is the only field in the app
- * that contains what someone actually said to themselves.
+ * Figures only. The wording of thought records and mood notes is never sent:
+ * an opt-in that included it was removed on 2026-09-25, for every user, and
+ * api/report.js no longer reads an `excerpts` field even if one arrives.
+ * Bringing it back would need both ends changed and the privacy copy
+ * rewritten, which is deliberate.
  */
-export function buildReportPayload(insights, thoughts = [], { includeText = false } = {}) {
-  const payload = { figures: insights }
-  if (!includeText) return payload
-
-  payload.excerpts = [...thoughts]
-    .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
-    .slice(0, 8)
-    .map((r) => ({
-      date: toLocalISODate(new Date(r.created_at)),
-      situation: clip(r.situation),
-      thought: clip(r.automatic_thought),
-      emotion: r.emotion ?? null,
-      intensity: r.emotion_intensity ?? null,
-      balanced: clip(r.balanced_thought),
-    }))
-  return payload
-}
-
-function clip(value, max = 400) {
-  if (!value) return null
-  const text = String(value).trim()
-  return text.length > max ? `${text.slice(0, max)}…` : text
+export function buildReportPayload(insights) {
+  return { figures: insights }
 }
 
 export { MOOD_LABELS }

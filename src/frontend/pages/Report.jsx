@@ -131,7 +131,6 @@ export default function Report() {
   const [notice, setNotice] = useState(null)
   const [writing, setWriting] = useState(false)
   const [writeError, setWriteError] = useState(null)
-  const [shareText, setShareText] = useState(false)
   const [showPayload, setShowPayload] = useState(false)
 
   useEffect(() => {
@@ -154,15 +153,15 @@ export default function Report() {
   // The disclosure and the request read the same builder, so what is shown
   // here is exactly what would be sent — it cannot drift out of date.
   const payloadPreview = useMemo(
-    () => JSON.stringify(buildReportPayload(insights, rows.thoughts, { includeText: shareText }), null, 2),
-    [insights, rows.thoughts, shareText]
+    () => JSON.stringify(buildReportPayload(insights), null, 2),
+    [insights]
   )
 
   async function handleWrite() {
     setWriting(true)
     setWriteError(null)
     setNotice(null)
-    const result = await requestReport(insights, rows.thoughts, { includeText: shareText })
+    const result = await requestReport(insights)
     if (result.error) {
       setWriteError(result.error)
     } else {
@@ -272,33 +271,14 @@ export default function Report() {
           </div>
 
           <div className="ledger">
-            <div className="ledger-row">
-              <span className="ledger-label">
-                <strong>Include the wording of your records</strong>
-                <p>
-                  Off, only the figures above are sent — counts, averages, dates, habit names and
-                  emotion labels. On, the text of your eight most recent thought records goes too,
-                  and the reading can speak to what you actually wrote.
-                </p>
-              </span>
-              <button
-                type="button"
-                className={`tick-box ${shareText ? 'checked' : ''}`}
-                role="switch"
-                aria-checked={shareText}
-                aria-label="Include the wording of your thought records"
-                onClick={() => setShareText((v) => !v)}
-              >
-                <Icon name="check" size={18} />
-              </button>
-            </div>
-
             <div className="ledger-row ledger-row-stacked">
               <span className="ledger-label">
                 <strong>What leaves this device</strong>
                 <p>
-                  Only what is listed below, and only when you press the button. It is sent to
-                  Anthropic&rsquo;s API to be written up, and is not stored by this app.
+                  Only the figures above — counts, averages, dates, habit names and emotion labels —
+                  and only when you press the button. The wording of your thought records and notes
+                  never leaves this device. The figures are sent to Anthropic&rsquo;s API to be
+                  written up, and are not stored by this app.
                 </p>
               </span>
               <button
