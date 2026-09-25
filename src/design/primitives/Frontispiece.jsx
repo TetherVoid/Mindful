@@ -2,6 +2,7 @@ import { lazy, Suspense, useState } from 'react'
 import SilentErrorBoundary from './SilentErrorBoundary'
 import GridField from './GridField'
 import Reveal from './Reveal'
+import SupportLine from './SupportLine'
 
 const AmbientScene = lazy(() => import('./AmbientScene'))
 const MOBILE_BREAKPOINT = 720
@@ -62,7 +63,10 @@ export default function Frontispiece({ children }) {
           </ul>
         </Reveal>
 
-        <p className="frontispiece-foot">Private by default · Row-level security · Yours to export</p>
+        <div className="frontispiece-foot">
+          <p>Private by default · Row-level security · Yours to export</p>
+          <SupportLine className="support-line--frontispiece" />
+        </div>
       </section>
 
       <section className="frontispiece-right">{children}</section>

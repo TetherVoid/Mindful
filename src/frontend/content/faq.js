@@ -1,7 +1,20 @@
 // Every answer about privacy below is a promise about the database, and has to
 // match what supabase/SECURITY.md says the functions return. If the access
 // model changes, change these in the same commit.
+//
+// The first answer is built from shared/constants/support.js so the numbers
+// here can never differ from the ones printed at the foot of every page.
+import { SUPPORT_LINES } from '@shared/constants/support'
+
+const telemanas = SUPPORT_LINES.find((line) => line.id === 'telemanas')
+const childline = SUPPORT_LINES.find((line) => line.id === 'childline')
+const emergency = SUPPORT_LINES.find((line) => line.id === 'emergency')
+
 export const faqItems = [
+  {
+    question: 'I need to talk to someone now. Who can I call?',
+    answer: `Call ${telemanas.name} on ${telemanas.number} (or ${telemanas.alternate.number}) — it is the government’s free mental health helpline, open any time, and you can choose your language. If you are under 18, the ${childline.name} on ${childline.number} is also there any time. If you are in danger right now, call ${emergency.number}. Telling a teacher, a parent, or a doctor you trust counts too. This app does not watch what you write and will never contact anyone on your behalf, so reaching out has to come from you — and it is always the right thing to do.`,
+  },
   {
     question: 'What is a thought record?',
     answer:

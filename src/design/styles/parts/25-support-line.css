@@ -1,0 +1,52 @@
+/* ═══ 25. THE SUPPORT LINE ════════════════════════════════════════════════ */
+
+/* "Need to talk to someone now?" — the one line at the foot of every page that
+   somebody might need to read in a hurry. It sits inside the colophon and the
+   frontispiece foot, both of which are set in small mono capitals, so it
+   resets that styling back to readable body type. Tokens only. */
+
+.support-line {
+  flex-basis: 100%;
+  min-width: 0;
+  margin: 0 0 var(--space-2);
+  font-family: var(--font-display);
+  font-size: var(--text-sm);
+  letter-spacing: normal;
+  text-transform: none;
+  line-height: 1.6;
+  color: var(--text);
+}
+
+.support-line-lead {
+  font-style: italic;
+}
+
+.support-line-call {
+  white-space: nowrap;
+}
+
+.support-line a {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  color: var(--accent);
+  text-decoration: underline;
+  text-decoration-thickness: var(--hair);
+  text-underline-offset: 0.2em;
+}
+
+.support-line a:hover {
+  color: var(--accent-hover);
+}
+
+.support-line-note {
+  color: var(--muted);
+}
+
+/* On the sign-in spread it follows the "Private by default" strapline. */
+.frontispiece-foot > p {
+  margin: 0;
+}
+
+.support-line--frontispiece {
+  margin: var(--space-3) 0 0;
+}

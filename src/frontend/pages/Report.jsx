@@ -7,6 +7,9 @@ import FormError from '@frontend/components/FormError'
 import Reveal from '@design/primitives/Reveal'
 import { StaggerGroup, StaggerItem } from '@design/primitives/Stagger'
 import Icon from '@design/primitives/Icon'
+import { SUPPORT_LINES } from '@shared/constants/support'
+
+const telemanas = SUPPORT_LINES.find((line) => line.id === 'telemanas')
 
 function Figure({ value, unit, label }) {
   return (
@@ -336,7 +339,8 @@ export default function Report() {
       <p className="brief-footnote">
         A reading is a description of what you wrote down, not an assessment of you. It is not
         medical advice and cannot see anything you have not recorded. If something here worries you,
-        a doctor or a local crisis line is the right place to take it.
+        take it to a doctor, or call {telemanas.name} on{' '}
+        <a href={`tel:${telemanas.dial}`}>{telemanas.number}</a> — free, any time, in your language.
       </p>
     </div>
   )
