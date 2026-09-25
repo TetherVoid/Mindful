@@ -1,8 +1,9 @@
 import { Suspense, lazy } from 'react'
-import { Routes, Route, Navigate } from 'react-router-dom'
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { useAuth } from '@backend/auth/AuthContext'
 import ProtectedRoute from '@frontend/layouts/ProtectedRoute'
 import AppLayout from '@frontend/layouts/AppLayout'
+import ErrorBoundary from '@frontend/components/ErrorBoundary'
 import GridField from '@design/primitives/GridField'
 import SkipToContent from '@design/primitives/SkipToContent'
 import Colophon from '@design/primitives/Colophon'
@@ -59,11 +60,25 @@ function AdminOnly({ children }) {
   return children
 }
 
+// A failed page stays inside the layout: the index rail, the colophon and the
+// support line in it remain on screen. Keyed on the pathname, so moving to
+// another page clears the error rather than carrying it along.
+function RouteBoundary({ children }) {
+  const { pathname } = useLocation()
+  return (
+    <ErrorBoundary level="route" resetKey={pathname}>
+      {children}
+    </ErrorBoundary>
+  )
+}
+
 function withSuspense(Component) {
   return (
-    <Suspense fallback={<AuthLoading label="Setting the page" />}>
-      <Component />
-    </Suspense>
+    <RouteBoundary>
+      <Suspense fallback={<AuthLoading label="Setting the page" />}>
+        <Component />
+      </Suspense>
+    </RouteBoundary>
   )
 }
 
