@@ -3,9 +3,7 @@
 // Centralised so the public/private boundary is auditable in one file: every
 // VITE_-prefixed value below is inlined into the client bundle and is therefore
 // public. A secret must never gain a VITE_ prefix — server-only values are read
-// from process.env inside api/, never here.
-//
-// Owned by the backend agent (see AGENT_RULES.md).
+// from process.env inside api/, never here. See AGENT_RULES.md § 2.
 
 export const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
 export const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY

@@ -1,9 +1,9 @@
 #!/usr/bin/env node
-// Enforces the ownership boundaries in AGENT_RULES.md.
+// Enforces the layer rules in AGENT_RULES.md § 1.
 //
-// Three agents editing one repo in parallel need the architecture to be
-// checkable, not just documented — a rule nobody can verify is a rule that
-// quietly stops being true. Run it before handing work over:
+// The architecture needs to be checkable, not just documented — a rule nobody
+// can verify is a rule that quietly stops being true. Run it before calling a
+// change finished:
 //
 //     node scripts/check-boundaries.mjs
 //

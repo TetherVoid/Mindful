@@ -1,13 +1,13 @@
-// The shapes that cross agent boundaries.
+// The shapes that cross layer boundaries.
 //
 // This project is plain JavaScript, so there is no type checker to enforce any
 // of this. These JSDoc typedefs are documentation with a machine-readable shape:
 // editors and coding agents resolve them for completion, and a human reviewer
 // can see at a glance what a service is expected to hand back.
 //
-// The rule that makes them useful is social, not technical — see AGENT_RULES.md
-// § Shared types. Adding a field is free. Renaming or removing one is a
-// cross-agent change, because another agent's code is reading it.
+// Nothing enforces them, so keep them accurate — see AGENT_RULES.md § 4.
+// Adding a field is free. Renaming or removing one means finding every reader
+// first.
 
 /**
  * A row from `mood_logs`.
@@ -162,8 +162,8 @@
  *
  * Deliberately the same `{ data, error }` shape Supabase itself uses. Services
  * wrap queries without changing the calling convention, so a page never has to
- * learn a second error-handling style and the frontend agent can swap a raw
- * query for a service call one line at a time.
+ * learn a second error-handling style and a raw query can be swapped for a
+ * service call one line at a time.
  *
  * @template T
  * @typedef  {object} ServiceResult

@@ -1,36 +1,35 @@
-# Claude Code — backend agent
+# Claude Code
 
-Mindful is worked on by three AI agents in parallel. **Read `AGENT_RULES.md`
-before you touch anything.** It is the source of truth; this file is a summary.
+You are the only agent on Mindful and you own the whole repository. Read
+`AGENT_RULES.md` before you touch anything — it is the source of truth; this
+file is a summary.
 
-You are the **backend** agent.
+Mindful is a student wellbeing journal. Many users are school students under
+18, and what they write is sensitive. Privacy and consent are product features:
+read `supabase/SECURITY.md` before changing anything that decides who can see
+what.
 
-## You own
+## Architecture rules (enforced by `scripts/check-boundaries.mjs`)
 
-- `src/backend/auth/` — session lifecycle, sign in/up/out, password changes
-- `src/backend/database/` — Supabase client, the fixture mock, seed data
-- `src/backend/services/` — **every database query in the app lives here**
-- `src/backend/utils/` — consent, UTM capture
-- `src/config/env.js` — the only file that reads `import.meta.env`
-- `api/**` — Vercel serverless functions
-- `supabase/schema.sql`
-- `vite.config.js`, `vercel.json`, `.oxlintrc.json`, `.env.example`
+- Layers: `app` → `frontend` → `design` / `backend` → `shared` / `config`. See
+  the import table in `AGENT_RULES.md` § 1.
+- Nothing outside `src/backend/` may import `backend/database/client`. A page
+  that needs data calls a function in `src/backend/services/*`, and every
+  service returns Supabase's own `{ data, error }` shape.
+- `src/config/env.js` is the only file that reads `import.meta.env`.
+- Never give a secret a `VITE_` prefix. `VITE_` values are inlined into the
+  public bundle; server-only values come from `process.env` inside `api/`.
 
-## You must not
+## Database
 
-- Edit anything under `src/design/` — not colours, not class names, not CSS.
-- Edit page JSX under `src/frontend/`. If a service change needs a different
-  call at the call site, say so and let Codex apply it.
-- Give a secret a `VITE_` prefix. `VITE_` values are inlined into the public
-  client bundle. Server-only values come from `process.env`, inside `api/`.
+- Never edit an existing migration. New changes are new files in
+  `supabase/migrations/` with pgTAP tests in `supabase/tests/`, run with
+  `supabase test db` against the local stack.
+- Never run anything against the remote database. The human applies
+  migrations to production.
+- Never weaken RLS, consent or authorisation to make a feature easier.
 
-## The rule that matters most
-
-Nothing outside `src/backend/` may import `backend/database/client`. When a page
-needs data, add a function to `backend/services/*` and hand Codex its name. Every
-service returns Supabase's own `{ data, error }` shape — keep it that way.
-
-## Before handing over
+## Before calling a change finished
 
 ```bash
 node scripts/check-boundaries.mjs   # layers, db access, import cycles
@@ -38,5 +37,4 @@ npm run lint                        # 12 pre-existing warnings, 0 errors
 npm run build
 ```
 
-Log any cross-boundary change in `AGENT_RULES.md` § 8. Do not commit or push
-unless the human explicitly asks.
+Do not commit or push unless the human explicitly asks.

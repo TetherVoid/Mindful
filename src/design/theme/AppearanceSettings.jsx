@@ -5,13 +5,12 @@ import ThemeColorSwatches from './ThemeColorSwatches'
 //
 // It lives in design/ rather than in the page because every control here writes
 // to ThemeContext and nothing else — there is no account state, no database, no
-// routing. Lifting it out is what lets the design agent change how the book is
-// set without opening a file that also contains password changes and data
-// deletion. The page keeps ownership of where this block sits on the page; this
-// file owns what is inside it.
+// routing. Lifting it out means how the book is set can change without opening
+// a file that also contains password changes and data deletion. The page
+// decides where this block sits; this file decides what is inside it.
 //
-// `Switch` is passed in rather than imported so the page keeps ownership of its
-// own form vocabulary — see AGENT_RULES.md § Cross-agent changes.
+// `Switch` is passed in rather than imported so the page keeps its own form
+// vocabulary, and design/ never has to import from frontend/.
 export default function AppearanceSettings({ Switch }) {
   const { theme, toggleTheme, density, setDensity, reduceMotion, setReduceMotion } = useTheme()
 

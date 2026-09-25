@@ -5,8 +5,8 @@
    variable declared here. Nothing else in the codebase may hard-code a hex.
 
    These names are a CONTRACT: frontend and backend code reads them via
-   var(--name) and through design/tokens/palette.js. Renaming one is a
-   cross-agent change (see AGENT_RULES.md).
+   var(--name) and through design/tokens/palette.js. Renaming one means
+   finding every reader first.
    ========================================================================== */
 
 :root {

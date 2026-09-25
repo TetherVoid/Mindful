@@ -5,8 +5,7 @@
    layers load in dependency order — tokens define the variables every later
    layer reads, and print overrides everything at the end.
 
-   Owned by the design agent (see AGENT_RULES.md). Frontend and backend code
-   should never import a stylesheet directly.
+   Frontend and backend code should never import a stylesheet directly.
    ========================================================================== */
 
 @import '../tokens/tokens.css';

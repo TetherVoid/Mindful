@@ -9,8 +9,8 @@ import { ThemeProvider } from '@design/theme/ThemeContext'
 // paper/ink palette is applied before anything auth-gated paints, and a signed-
 // out visitor still gets their chosen theme on the sign-in page.
 //
-// This file is the seam where all three agents' code meets, which is exactly
-// why it does nothing else. See AGENT_RULES.md § Shared files.
+// This file is the seam where the design, backend and app layers meet, which
+// is exactly why it does nothing else. See AGENT_RULES.md § 3.
 export default function Providers({ children }) {
   return (
     <BrowserRouter>

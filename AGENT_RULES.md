@@ -1,30 +1,31 @@
-# Agent rules
+# Project rules
 
-Mindful is worked on by three AI coding agents at once. This file is the single
-source of truth for who owns what. `CLAUDE.md`, `AGENTS.md` and
-`.antigravity/rules.md` are short pointers at this document — if they ever
-disagree with it, this document wins.
+Mindful has one agent, Claude Code, which owns the whole repository. This file
+is the source of truth for how the code is laid out and what must stay true.
+`CLAUDE.md` and `AGENTS.md` are short pointers at it — if they ever disagree
+with it, this document wins.
 
-| Agent | Role | Owns |
-|---|---|---|
-| **Claude Code** | Backend | `src/backend/`, `api/`, `supabase/`, `src/config/` |
-| **Codex** | Frontend | `src/frontend/`, `src/app/` |
-| **Antigravity** | Design | `src/design/` |
+The layer rules below are architecture, not ownership, and they are enforced by
+a script. Run it before calling any change finished:
 
-Run `node scripts/check-boundaries.mjs` before you hand work over. It fails on
-layer violations, direct database access from outside `backend/`, and import
-cycles. A rule nobody can check is a rule that quietly stops being true.
+```bash
+node scripts/check-boundaries.mjs
+```
+
+It fails on layer violations, direct database access from outside `backend/`,
+and import cycles. A rule nobody can check is a rule that quietly stops being
+true.
 
 ---
 
 ## 1. Architecture
 
 Vite + React 19, plain JavaScript (no TypeScript), plain CSS (no Tailwind),
-Supabase for auth and data, one Vercel serverless function.
+Supabase for auth and data, Vercel serverless functions in `api/`.
 
 ```
 src/
-├── app/            composition root — main, routes, providers. Where the three layers meet.
+├── app/            composition root — main, routes, providers. Where the layers meet.
 ├── frontend/       pages, layouts, components, page content
 ├── design/         tokens, theme, stylesheets, visual primitives, assets
 ├── backend/        auth, database client, services, backend utils
@@ -32,7 +33,7 @@ src/
 └── config/         the only reader of import.meta.env
 
 api/                Vercel serverless functions (must stay at repo root)
-supabase/           schema.sql — tables, RLS policies, signup trigger
+supabase/           migrations, pgTAP tests, schema.sql, SECURITY.md
 scripts/            repo tooling, incl. check-boundaries.mjs
 ```
 
@@ -52,26 +53,26 @@ Enforced by `scripts/check-boundaries.mjs`.
 Two rules fall out of that table and matter more than the rest:
 
 - **`design/` may not import `frontend/`.** A visual primitive that needs page
-  state is not a primitive. Pass it in as a prop.
+  state is not a primitive. Pass it in as a prop. Data a primitive needs to
+  render (the support line, say) lives in `shared/constants/`.
 - **Nothing outside `backend/` may import `backend/database/client`.** Pages and
-  components call `backend/services/*` instead. This is the rule that keeps
-  Claude and Codex off each other's work.
+  components call `backend/services/*` instead. Every database query in the app
+  lives in a service.
 
 ### Path aliases
 
 `@app @frontend @design @backend @shared @config`, declared in `vite.config.js`
-and mirrored in `jsconfig.json`.
+and mirrored in `jsconfig.json`. Keep the two files in sync.
 
-They exist so a boundary crossing is visible at the import line. `@backend/...`
-inside a `frontend/` file says *this change reached across an ownership line*,
-where `../../lib/thing` would have said nothing. Keep the two files in sync;
-adding an alias is a cross-agent change.
+They exist so a layer crossing is visible at the import line: `@backend/...`
+inside a `frontend/` file says *this reaches into another layer*, where
+`../../lib/thing` would have said nothing.
 
 ### How data flows
 
 ```
-frontend/pages/Habits.jsx        ← Codex owns the page
-  └─ @backend/services/habits    ← Claude owns the query
+frontend/pages/Habits.jsx
+  └─ @backend/services/habits
        └─ backend/database/client
             └─ Supabase  (or the fixture client, in local dev)
 ```
@@ -82,162 +83,71 @@ can move behind a service one line at a time.
 
 ---
 
-## 2. What each agent owns
+## 2. Rules that must stay true
 
-### Claude Code — backend
-
-**Owns**
-
-- `src/backend/auth/` — `AuthContext`, session lifecycle, sign in/up/out, password
-- `src/backend/database/` — the Supabase client, the fixture mock, the seed data
-- `src/backend/services/` — every database query in the app
-- `src/backend/utils/` — consent, UTM capture
-- `src/config/env.js` — the only file that reads `import.meta.env`
-- `api/**` — Vercel serverless functions
-- `supabase/schema.sql` — tables, RLS, triggers
-- `vite.config.js`, `vercel.json`, `.oxlintrc.json`, `.env.example`
-
-**Must not**
-
-- Edit anything under `src/design/`. Not colours, not class names, not
-  stylesheets — not even to make a backend feature look right.
-- Edit page JSX. If a service change needs a different call at the call site,
-  say so and let Codex apply it.
-- Add a `VITE_` prefix to a secret. `VITE_` values are inlined into the public
-  bundle. Server-only values are read from `process.env` inside `api/`.
-
-### Codex — frontend
-
-**Owns**
-
-- `src/frontend/pages/` — the nine pages
-- `src/frontend/layouts/` — `AppLayout`, `ProtectedRoute`
-- `src/frontend/components/` — components that read app state, navigate, or call services
-- `src/frontend/content/` — page copy that is data (`faq.js`)
-- `src/app/` — `App.jsx` (route table), `main.jsx`, `providers.jsx`
-
-**Must not**
-
-- Write a Supabase query. Ask Claude for a service function.
-- Edit any `.css` file, or a file under `src/design/`.
-- Change a class name in JSX without agreeing it with Antigravity — the class
-  name is the contract between the markup and the stylesheet.
-
-### Antigravity — design
-
-**Owns**
-
-- `src/design/tokens/` — `tokens.css` (every custom property) and `palette.js` (the colour maths)
-- `src/design/styles/` — `index.css`, `base.css`, `print.css`, and the 23 files in `parts/`
-- `src/design/theme/` — `ThemeContext`, the theme hooks, `ThemeColorSwatches`, `AppearanceSettings`
-- `src/design/primitives/` — `Icon`, `Reveal`, `Stagger`, `GridField`, `AmbientScene`, and the rest of the visual chrome
-- `src/design/assets/`
-- The pre-paint palette script in `index.html`, and the font `<link>` tags
-
-**Must not**
-
-- Change what a page fetches, computes or submits.
-- Edit anything under `src/backend/` or `api/`.
-- Reorder the `@import` list in `design/styles/app.css`. Import order is cascade
-  order, and `23-responsive.css` must stay last.
-
-**May**, without asking: edit `className` and inline `style` attributes inside
-`frontend/` files. That is the one deliberate exception, because a visual change
-often has nowhere else to land. Change nothing else in those files.
+- **No secret gets a `VITE_` prefix.** `VITE_` values are inlined into the
+  public client bundle. Server-only values are read from `process.env`, inside
+  `api/`. `src/config/env.js` is the only file that reads `import.meta.env`.
+- **Access control lives in the database.** RLS policies and `SECURITY
+  DEFINER` functions decide who reads what; the UI only decides what to offer.
+  Read `supabase/SECURITY.md` before touching a policy, a grant or a definer
+  function, and never widen one to make a feature easier.
+- **Database changes are new migrations.** Never edit an existing file in
+  `supabase/migrations/`. Every new migration ships with pgTAP tests in
+  `supabase/tests/` and is run with `supabase test db` against the local stack.
+  Migrations are applied to production by the human, never from here.
+- **`shared/` is additive.** Adding a constant or a contract field is free;
+  renaming or removing one means finding every reader first.
 
 ---
 
-## 3. Shared files
+## 3. Files that are coupled on purpose
 
-| File | Who | Rule |
-|---|---|---|
-| `package.json` | all three | Add dependencies with `npm install <pkg>`. Never hand-edit, never reorder, never touch the lockfile by hand. |
-| `src/app/App.jsx` | Codex owns | A new route is one `lazy()` line and one `<Route>` line. Claude proposes the lines; Codex applies them. |
-| `src/app/providers.jsx` | Codex owns | Provider order is load-bearing — `ThemeProvider` sits outside `AuthProvider` so a signed-out visitor still gets their theme. |
-| `src/shared/constants/*` | all three | Additive only. |
-| `src/shared/contracts/*` | all three | Additive only. See § 6. |
-| `index.html` | Antigravity + Codex | Antigravity: the palette script and font links. Codex: title and meta. |
-| `vite.config.js` | Claude owns | The alias map is frozen. A new alias is a cross-agent request. |
-| `jsconfig.json` | Claude owns | Must mirror the aliases in `vite.config.js` exactly. |
-| `.env.example` | Claude owns | Documents both client (`VITE_`) and server variables. |
-| `vercel.json` | Claude owns | The `/((?!api/).*)` rewrite must not be broadened — widening it shadows `/api/report`. |
-| `scripts/check-boundaries.mjs` | Claude owns | Changing what it permits requires all three to agree. |
-| `AGENT_RULES.md` | all three | Append to § 8. Do not rewrite another agent's section. |
+**`index.html`'s pre-paint script** duplicates `design/tokens/palette.js` — it
+applies the saved palette before React boots, which is the only way to avoid a
+flash of default colour, and it cannot import a module. Change the colour maths
+in one, change it in the other. The storage keys it reads are listed in
+`shared/constants/storage.js`.
 
----
+**CSS class names** are the contract between markup and stylesheet, with no file
+to lock. Rename a class in the JSX and the stylesheet together.
 
-## 4. Files that cannot realistically be separated
+**`design/styles/app.css`'s `@import` order** is cascade order.
+`23-responsive.css` must stay last.
 
-Being honest about the limits of any folder structure.
+**`vercel.json`'s `/((?!api/).*)` rewrite** must not be broadened — widening it
+shadows `/api/*`.
 
-**`index.html`'s pre-paint script** duplicates `design/tokens/palette.js` on
-purpose — it applies the saved palette before React boots, which is the only way
-to avoid a flash of default colour, and it cannot import a module. If you change
-the colour maths in `palette.js`, change it here too. The storage keys it reads
-are listed in `shared/constants/storage.js`.
+**`src/app/providers.jsx`**: provider order is load-bearing. `ThemeProvider`
+sits outside `AuthProvider` so a signed-out visitor still gets their theme.
 
-**CSS class names** are a contract with no file to lock. Renaming one needs
-Antigravity (the stylesheet) and Codex (the markup) to move together.
-
-**`design/theme/ThemeContext.jsx`** is theme state welded to React context
-plumbing. Assigned to Antigravity because its entire purpose is visual. Codex
-consumes `useTheme()` and does not edit the file.
-
-**`design/primitives/Icon.jsx`** is SVG artwork inside a React component API.
-Antigravity owns the paths; Codex adds usages.
-
-**`frontend/pages/Settings.jsx`** was the worst file in the repo — password
-changes, data export, data deletion, theme, density, motion and consent in one
-component. It is now a shell that composes `@backend/services/account` and
-`@design/theme/AppearanceSettings`. Keep it that way: a new setting belongs in
-whichever layer owns it, not inlined back into the page.
+**`frontend/pages/Settings.jsx`** composes `@backend/services/account` and
+`@design/theme/AppearanceSettings`. A new setting belongs in whichever layer
+owns its logic, not inlined back into the page.
 
 ---
 
-## 5. Crossing into another agent's area
-
-If a task requires touching something you do not own:
-
-1. **Say so first.** Name the file and the boundary you are crossing.
-2. **Explain why** the change is necessary, in one or two sentences.
-3. **Change nothing else** in that file. No reformatting, no drive-by fixes, no
-   import reordering.
-4. **Prefer building in your own area.** Add an interface on your side rather
-   than reaching into an implementation on theirs:
-   - Need data? Ask for a service function; do not write a query in a page.
-   - Need a colour? Read a token; do not hard-code a hex.
-   - Need page state in a primitive? Take it as a prop; do not import a context.
-   - Need a different shape from a service? Ask for it; do not reshape it in the page.
-5. **Write it down** in § 8 below, so the owning agent finds it.
-
-Refusing to cross is usually wrong. Crossing silently always is.
-
----
-
-## 6. Dependencies, types and communication
+## 4. Dependencies and shared shapes
 
 **Dependencies.** Install with `npm install`, never by editing `package.json` by
-hand — concurrent hand-edits are how a lockfile gets corrupted. Client-side
-packages must earn their place in the bundle; a package used only by `api/` is
-still a normal dependency, because Vercel installs from the same manifest.
+hand. Client-side packages must earn their place in the bundle. A package used
+only by `api/` is still a normal dependency, because Vercel installs from the
+same manifest.
 
-**Shared shapes.** There is no TypeScript here, so `shared/contracts/index.js`
-holds JSDoc `@typedef`s: documentation with a machine-readable shape that
-editors and agents resolve, and that a reviewer can read. Nothing enforces them,
-so the rule is social — **adding a field is free; renaming or removing one is a
-cross-agent change**, because another agent's code is reading it.
-
-**Communication.** Append to § 8. One line per cross-boundary change: date, the
-agent, the file, and why.
+**Shared shapes.** There is no TypeScript, so `shared/contracts/index.js` holds
+JSDoc `@typedef`s: documentation with a machine-readable shape that editors
+resolve. Nothing enforces them, so keep them accurate when a service's return
+shape changes.
 
 ---
 
-## 7. Before you hand over
+## 5. Before calling a change finished
 
 ```bash
 node scripts/check-boundaries.mjs   # layers, database access, cycles
 npm run lint                        # 12 pre-existing warnings, no errors
 npm run build                       # must succeed
+supabase test db                    # when a migration changed (local stack)
 ```
 
 Run the app on seeded data — no Supabase project or credentials needed:
@@ -252,112 +162,52 @@ the human asks.
 
 ---
 
-## 8. Cross-agent change log
+## Archive: change log from the three-agent period
 
-Newest first. One line each: date · agent · file · why.
+Until 2026-09-25 this repository was split between three agents (Claude Code
+for the backend, Codex for the frontend, Antigravity for design), and every
+change that crossed an ownership line was logged here. That split and the
+logging requirement have ended. The entries are kept, unmaintained, because
+several of them record *why* a value is what it is.
 
-- 2026-09-18 · Claude (backend) · **`src/design/` only, authorised by the human
-  for this task** · the type and spacing scales deferred from the visual audit
-  earlier the same day. No file outside `src/design/` was touched.
-  - `tokens/tokens.css` · additive: `--text-3xs … --text-xl` (8 steps) and
-    `--space-1 … --space-8` (8 steps). Nothing renamed or removed.
-  - 22 sheets rewritten to read the scales: 292 literal values became tokens.
-    `font-size` and spacing properties only — never `letter-spacing`, a
-    dimension or an offset, verified by grep afterwards.
-  - The spacing grid is a quarter-rem run, chosen because half of all spacing
-    in the sheet already landed on it: 1.0 (x26), 1.25 (x24), 0.5 (x22),
-    1.5 (x17), 0.75 (x12) were the five most-used values before this pass.
-  - Twelve values stay literal by decision, not omission: `0.5rem`
-    (`.gauge-label` at ≤640px — snapping it equals the base value and would
-    silently delete the responsive shrink); `1.6 / 1.85 / 2.0 / 2.6rem`
-    (display type, each a one-off; the last two are one role at two sizes
-    chosen against each other); everything from `3.25rem` up (page rhythm);
-    and `1.75rem`, held back at the human's request until `/classes` and
-    `/admin` can be seen rendered. Minimums inside `clamp()` are also left
-    alone — they are tuned against their own maximums.
-  - Negative margins (`-0.6rem`, `-0.5rem`) stay literal: expressing them
-    would mean `calc(var(--space-2) * -1)`, which is more code for a worse
-    read.
-  - Still open: `1.75rem` (6 sites, only one of which is `.ledger-row`'s gap),
-    and `.swatch-custom`'s hardcoded gradient.
-- 2026-09-18 · Claude (backend) · **`src/design/` and three frontend files,
-  authorised by the human for this task because the design agent and Codex were
-  unavailable** · a visual audit of `/classes` and `/admin` and the fixes chosen
-  from it. What moved in other agents' areas:
-  - `src/design/styles/parts/24-classes-and-the-register-of-hands.css` (new):
-    `.ledger-label--name`, `.join-code`, `.ledger-row--roster`. Modifiers only —
-    part 17's ledger and the Settings page are untouched. Imported in
-    `app.css` **above** `23-responsive.css`, because responsive keeps the last
-    word; the number is authorship order, not cascade order.
-  - `src/design/tokens/tokens.css` · additive: `--danger-contrast` in both
-    themes. `.btn--danger:hover/:focus-visible` in `07-buttons.css` was
-    `color: #fff`, which is 3.17:1 on dark `--danger` and fails WCAG AA. Not
-    `--accent-contrast`: that is re-derived from a custom accent while
-    `--danger` stays fixed, which would drop it to 2.64:1.
-  - `src/design/primitives/Icon.jsx` · additive: a `cohort` glyph. `/habits` and
-    `/classes` were both using `register`, so the rail showed one icon twice.
-  - `src/frontend/components/IndexRail.jsx`: `/classes` now asks for `cohort`.
-  - `src/frontend/pages/Admin.jsx`: `.rail-tools` → `.ledger-controls` (the rail
-    class has no `flex-shrink` and no breakpoint, so row controls overflowed on
-    narrow viewports); `ledger-label--name` on the row holding an email address;
-    `ruled-skeleton--table` for tabular data. Class usage only.
-  - `src/frontend/pages/Classes.jsx`: same class changes, plus the file was
-    reformatted — it was written as single lines up to ~1,900 characters.
-    Formatting and `className` only; verified byte-identical after collapsing
-    whitespace apart from the class names and the skeleton variant.
-  - `src/frontend/components/ConfirmModal.jsx`: Tab is now trapped inside the
-    dialog and focus returns to whatever opened it. `aria-modal` already told
-    screen readers the page behind was inert; Tab did not honour it. Behaviour
-    only, no styling.
-  - Deliberately NOT done, and still open: the type scale (38 distinct font
-    sizes) and the spacing scale (39 distinct values) have no tokens and get
-    their own pass; `.swatch-custom` still hardcodes a gradient.
-- 2026-09-11 · Claude · **whole-repo change, authorised by the human for this
-  task, overriding the ownership split above** · frontend pages, backend
-  services, shared contracts, `api/`, docs. Summary, so the owning agents can
-  see what moved in their areas:
-  - `src/frontend/pages/Admin.jsx` (new) and a `/admin` route in
-    `src/app/App.jsx` guarded by `isAdmin`; a rail entry in
-    `src/frontend/components/IndexRail.jsx` shown only to administrators. The
-    guard is UX — every call is refused in the database for anyone else.
-  - `src/frontend/pages/Classes.jsx` now calls `listClassRoster` beside
-    `loadClassOverview`, so "nobody is enrolled" and "nobody has shared" are
-    told apart instead of both rendering as an empty list.
-  - `src/frontend/pages/Settings.jsx`: the teacher-visibility control is
-    disabled until the profile loads and syncs from it, and a save made before
-    then omits the field rather than writing `false`; new "Deactivate my
-    account" action; the four confirmation copies moved into one table.
-  - `src/backend/services/profile.js` · additive: `adminListUsers()`.
-    `src/backend/services/account.js` · additive: `deactivateMyAccount()`.
-  - `src/shared/contracts/index.js` · additive: `RosterEntry`, `DirectoryUser`,
-    `RoleChange` typedefs. Nothing renamed or removed.
-  - `src/backend/auth/AuthContext.jsx`: the auth redirect now defaults to
-    `<origin>/auth/callback` instead of `<origin>/`. `VITE_AUTH_REDIRECT_URL`
-    still overrides it.
-  - `api/_lib/auth.js`, `api/account.js`: `supabaseRestConfig()` refuses to
-    resolve when `SUPABASE_URL` and `VITE_SUPABASE_URL` name different Supabase
-    projects, and `api/account.js` now takes its URL from that one resolver
-    rather than reading the environment a second time.
-  - `supabase/MIGRATIONS.md`, `supabase/SECURITY.md`, `.env.example`: Mumbai
-    (`czvejcytunugftbspxmr`) recorded as production, Seoul
-    (`ydbhuynqjymfkqllijzc`) as deprecated; the `migration repair` step removed,
-    since it existed for the old project and is wrong for an empty one.
-- 2026-09-09 · Claude (backend) · `src/shared/constants/tables.js` · additive: four
-  table names for the roles/classes schema (`classes`, `class_teachers`,
-  `class_members`, `role_change_audit`). Nothing renamed or removed.
-- 2026-09-09 · Claude (backend) · `src/shared/contracts/index.js` · additive:
-  `Profile`, `ClassRoom` and `StudentOverview` typedefs, so the shapes the new
-  services return are documented where the frontend agent will look for them.
-- 2026-09-09 · Claude (backend) · **for Codex, no frontend files touched** ·
-  `useAuth()` gained `profile`, `role`, `isStudent`, `isTeacher`, `isAdmin`,
-  `refreshProfile`, `authError`, `clearAuthError`, `requestPasswordReset`,
-  `oauthProviders`, `signInWithOAuth`, `signInWithGoogle`, `signInWithApple`.
-  Every existing field and function is unchanged, so no page needs editing to
-  keep working. Three things need a page before they are reachable by a user:
-  the Google/Apple buttons (render one per `oauthProviders` entry), a place to
-  show `authError` on the sign-in page, and a call to
-  `deleteAccount()` from `@backend/services/account` next to the existing
-  "Delete data" control in Settings. Teacher and admin screens have services
-  ready in `@backend/services/classes` and `@backend/services/profile` and no UI
-  at all — see the handover notes rather than guessing at shapes.
-- 2026-09-08 · setup · repository reorganised into `app/frontend/design/backend/shared/config`; 28 database calls moved out of pages into `backend/services/*`; `App.css` split into 23 part files; a pre-existing `utm.js ↔ consent.js` import cycle broken by extracting `backend/utils/consentStore.js`.
+- 2026-09-18 · type and spacing scales. `tokens/tokens.css` gained
+  `--text-3xs … --text-xl` (8 steps) and `--space-1 … --space-8` (8 steps);
+  22 sheets were rewritten to read them (292 literal values became tokens,
+  `font-size` and spacing properties only). The spacing grid is a quarter-rem
+  run because half of all spacing already landed on it. Twelve values stay
+  literal by decision: `0.5rem` on `.gauge-label` at ≤640px (snapping it would
+  delete the responsive shrink); `1.6 / 1.85 / 2.0 / 2.6rem` (one-off display
+  sizes); everything from `3.25rem` up (page rhythm); `1.75rem` (held until
+  `/classes` and `/admin` could be seen rendered); minimums inside `clamp()`.
+  Negative margins stay literal. Still open then: `1.75rem` (6 sites) and
+  `.swatch-custom`'s hardcoded gradient.
+- 2026-09-18 · `/classes` and `/admin` visual fixes. New part
+  `24-classes-and-the-register-of-hands.css` (imported above
+  `23-responsive.css`). `--danger-contrast` added in both themes because
+  `.btn--danger:hover` used `#fff` at 3.17:1 on dark `--danger`, and
+  `--accent-contrast` could not be reused (it is re-derived from a custom
+  accent while `--danger` is fixed, which would drop it to 2.64:1). A `cohort`
+  glyph added so `/habits` and `/classes` stopped sharing an icon. `Admin.jsx`
+  moved to `.ledger-controls` (the rail class overflowed on narrow viewports).
+  `Classes.jsx` reformatted from ~1,900-character lines, verified
+  byte-identical after collapsing whitespace. `ConfirmModal.jsx` traps Tab and
+  restores focus.
+- 2026-09-11 · admin page, roster visibility, deactivation. `Admin.jsx` and an
+  `isAdmin`-guarded `/admin` route (UX only; the database refuses everyone
+  else). `Classes.jsx` calls `listClassRoster` beside `loadClassOverview` so
+  "nobody enrolled" and "nobody shared" differ. Settings' teacher-visibility
+  control is disabled until the profile loads and omits the field rather than
+  writing `false`. Auth redirect defaults to `<origin>/auth/callback`.
+  `supabaseRestConfig()` refuses mismatched `SUPABASE_URL` /
+  `VITE_SUPABASE_URL` projects. Mumbai recorded as production, Seoul as
+  deprecated.
+- 2026-09-09 · roles/classes schema: four table names added to
+  `shared/constants/tables.js`; `Profile`, `ClassRoom`, `StudentOverview`
+  typedefs; `useAuth()` gained `profile`, `role`, `isStudent`, `isTeacher`,
+  `isAdmin`, `refreshProfile`, `authError`, `requestPasswordReset`,
+  `oauthProviders` and the OAuth helpers.
+- 2026-09-08 · repository reorganised into
+  `app/frontend/design/backend/shared/config`; 28 database calls moved out of
+  pages into `backend/services/*`; `App.css` split into 23 part files; a
+  `utm.js ↔ consent.js` import cycle broken by extracting
+  `backend/utils/consentStore.js`.

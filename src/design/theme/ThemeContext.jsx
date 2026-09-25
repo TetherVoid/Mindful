@@ -6,7 +6,7 @@ const ThemeContext = createContext(null)
 
 // These four keys are also read by the pre-paint script in index.html, which
 // cannot import anything. Changing one here means changing it there too — see
-// AGENT_RULES.md § Files that cannot be separated.
+// AGENT_RULES.md § 3, Files that are coupled on purpose.
 const STORAGE_KEY = STORAGE_KEYS.theme
 const ACCENT_STORAGE_KEY = STORAGE_KEYS.accentColor
 const DENSITY_KEY = STORAGE_KEYS.density
