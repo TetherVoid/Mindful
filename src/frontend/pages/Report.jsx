@@ -30,7 +30,11 @@ function Figures({ insights }) {
   const items = []
 
   if (mood.count) {
-    items.push({ value: mood.mean, unit: '/ 5', label: `Mean mood over ${mood.count} entries` })
+    items.push({
+      value: mood.mean,
+      unit: '/ 5',
+      label: `Average day, over ${mood.days} ${mood.days === 1 ? 'day' : 'days'} of entries`,
+    })
     items.push({ value: mood.streak, unit: mood.streak === 1 ? 'day' : 'days', label: 'Current logging streak' })
   }
   if (habits.active) {

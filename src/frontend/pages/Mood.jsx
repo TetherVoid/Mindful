@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import {
   ResponsiveContainer,
   ComposedChart,
@@ -14,6 +14,7 @@ import { listRecentMoodsChronological, createMood } from '@backend/services/mood
 import { useAuth } from '@backend/auth/AuthContext'
 import useLiveAccentColor from '@design/theme/useLiveAccentColor'
 import { getMoodHistoryLength } from '@shared/utils/preferences'
+import { toLocalISODate, todayISO } from '@shared/utils/date'
 import FormSuccess from '@frontend/components/FormSuccess'
 import FormError from '@frontend/components/FormError'
 import Reveal from '@design/primitives/Reveal'
@@ -47,12 +48,32 @@ function average(values) {
   return values.reduce((sum, v) => sum + v, 0) / values.length
 }
 
+// The average DAY, not the average entry. A mood can change within a day and
+// can be logged more than once; five marks on one bad day should count as one
+// bad day, not five. Same rule as backend/services/report/insights.js.
+function averageOfDays(logs) {
+  const byDay = new Map()
+  for (const log of logs) {
+    const day = toLocalISODate(new Date(log.created_at))
+    if (!byDay.has(day)) byDay.set(day, [])
+    byDay.get(day).push(log.mood_score)
+  }
+  return average([...byDay.values()].map(average))
+}
+
 export default function Mood() {
   const { user } = useAuth()
   const accent = useLiveAccentColor()
   const [logs, setLogs] = useState([])
   const [loading, setLoading] = useState(true)
-  const [score, setScore] = useState(3)
+  // Nothing is chosen until the reader chooses. A preset middle score would be
+  // recorded by anyone who pressed the button without picking, and would pull
+  // every average toward "Even".
+  const [score, setScore] = useState(null)
+  const [submitting, setSubmitting] = useState(false)
+  // The state above drives the button; this ref is the actual guard. Two
+  // submits dispatched before React re-renders would both read the old state.
+  const submittingRef = useRef(false)
   const [note, setNote] = useState('')
   const [showSuccess, setShowSuccess] = useState(false)
   const [error, setError] = useState(null)
@@ -81,12 +102,19 @@ export default function Mood() {
 
   async function handleSubmit(e) {
     e.preventDefault()
+    // The in-flight guard: a quick double press would otherwise insert the
+    // same mark twice before the first request came back.
+    if (score == null || submittingRef.current) return
+    submittingRef.current = true
+    setSubmitting(true)
     setError(null)
     const { data, error: insertError } = await createMood({
       userId: user.id,
       moodScore: score,
       note,
     })
+    submittingRef.current = false
+    setSubmitting(false)
 
     if (insertError) {
       setError(insertError.message)
@@ -95,6 +123,8 @@ export default function Mood() {
 
     setLogs((prev) => [...prev, data].slice(-historyLength))
     setNote('')
+    // Cleared so the next mark is a fresh choice, not a repeat of this one.
+    setScore(null)
     setShowSuccess(true)
     setTimeout(() => setShowSuccess(false), 2500)
   }
@@ -106,7 +136,13 @@ export default function Mood() {
     note: l.note,
   }))
 
-  const mean = average(logs.map((l) => l.mood_score))
+  const mean = averageOfDays(logs)
+
+  // Today's marks so far, if any, so the page can say so instead of letting a
+  // second mark look like a mistake.
+  const today = todayISO()
+  const todaysLogs = logs.filter((l) => toLocalISODate(new Date(l.created_at)) === today)
+  const lastToday = todaysLogs[todaysLogs.length - 1]
 
   function renderDot(props) {
     const { key, cx, cy, payload } = props
@@ -142,7 +178,7 @@ export default function Mood() {
           </span>
           {mean !== null && (
             <span>
-              Mean <b>{mean.toFixed(1)}</b> / 5
+              Average day <b>{mean.toFixed(1)}</b> / 5
             </span>
           )}
         </div>
@@ -189,10 +225,28 @@ export default function Mood() {
           />
         </div>
 
-        <button type="submit" className="btn btn--solid">
+        {lastToday && (
+          <p className="panel-note">
+            Already marked today — {MOODS.find((m) => m.score === lastToday.mood_score)?.label},{' '}
+            {new Date(lastToday.created_at).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })}.
+            Add another if the day has changed; the figures use the day&rsquo;s average.
+          </p>
+        )}
+
+        <button
+          type="submit"
+          className="btn btn--solid"
+          disabled={score == null || submitting}
+          aria-describedby={score == null ? 'mood-pick-hint' : undefined}
+        >
           <Icon name="plus" size={15} />
-          Log this mood
+          {submitting ? 'Logging…' : 'Log this mood'}
         </button>
+        {score == null && (
+          <p className="panel-note" id="mood-pick-hint">
+            Pick one of the five marks first.
+          </p>
+        )}
         <FormSuccess visible={showSuccess} message="Today's mark is on the page." />
       </Reveal>
 

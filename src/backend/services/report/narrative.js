@@ -27,8 +27,10 @@ function moodSection(mood) {
   if (!mood.count) return null
 
   const parts = []
+  // Every average here is an average of days, not entries — see moodDays() in
+  // insights.js — so the prose says "day" wherever it quotes one.
   parts.push(
-    `${pluralise(mood.count, 'entry', 'entries')} across ${pluralise(mood.spanDays, 'day')}, averaging ${mood.mean} out of 5.`
+    `${pluralise(mood.count, 'entry', 'entries')} on ${pluralise(mood.days, 'day')} across ${pluralise(mood.spanDays, 'day')}; the average day comes to ${mood.mean} out of 5.`
   )
 
   if (mood.trend) {
@@ -36,7 +38,7 @@ function moodSection(mood) {
     parts.push(
       word === 'level'
         ? `The second half of that stretch sits level with the first (${mood.trend.earlier} then ${mood.trend.recent}).`
-        : `The most recent ${mood.trend.recentCount} entries average ${mood.trend.recent}, against ${mood.trend.earlier} for the ${mood.trend.earlierCount} before them — ${word} by ${Math.abs(mood.trend.delta)}.`
+        : `The most recent ${pluralise(mood.trend.recentCount, 'day')} average ${mood.trend.recent}, against ${mood.trend.earlier} for the ${pluralise(mood.trend.earlierCount, 'day')} before them — ${word} by ${Math.abs(mood.trend.delta)}.`
     )
   }
 
@@ -242,7 +244,7 @@ function buildSummary(insights) {
 
   const middle =
     mood.mean != null
-      ? ` The mood average sits at ${mood.mean} out of 5${
+      ? ` The average day sits at ${mood.mean} out of 5${
           mood.trend && mood.trend.direction !== 'steady'
             ? `, and has been ${trendWord(mood.trend)} lately`
             : ''

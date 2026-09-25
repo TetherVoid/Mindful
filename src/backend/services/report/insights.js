@@ -96,45 +96,69 @@ function loggingStreak(dateSet) {
   return streak
 }
 
+// Collapses entries to one value per local calendar day: the mean of that day's
+// scores. A mood can change within a day and can be logged more than once;
+// counting every entry would let five marks on one bad day outweigh four
+// ordinary days. Every average below is an average of DAYS for that reason.
+// Returned oldest first, with the day's weekday for the weekday split.
+function moodDays(rows) {
+  const byDate = new Map()
+  for (const r of rows) {
+    const date = toLocalISODate(new Date(r.created_at))
+    if (!byDate.has(date)) byDate.set(date, [])
+    byDate.get(date).push(r.mood_score)
+  }
+  return [...byDate.entries()]
+    .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))
+    .map(([date, scores]) => ({
+      date,
+      weekday: new Date(`${date}T00:00:00`).getDay(),
+      score: mean(scores),
+      entries: scores.length,
+    }))
+}
+
 function analyseMoods(moods) {
   const rows = [...moods]
     .filter((m) => typeof m.mood_score === 'number')
     .sort((a, b) => new Date(a.created_at) - new Date(b.created_at))
 
   if (!rows.length) {
-    return { count: 0, mean: null, latest: null, distribution: [], byWeekday: [], notes: 0 }
+    return { count: 0, days: 0, mean: null, latest: null, distribution: [], byWeekday: [], notes: 0 }
   }
 
-  const scores = rows.map((r) => r.mood_score)
-  const dates = rows.map((r) => toLocalISODate(new Date(r.created_at)))
-  const dateSet = new Set(dates)
+  const days = moodDays(rows)
+  const dayScores = days.map((d) => d.score)
+  const dateSet = new Set(days.map((d) => d.date))
 
+  // The distribution is the one figure left per entry: it answers "how often
+  // did you pick each mark", which is a question about entries.
   const counts = Object.fromEntries(MOOD_SCORES.map((s) => [s, 0]))
-  for (const score of scores) counts[score] += 1
+  for (const r of rows) counts[r.mood_score] += 1
 
-  // Weekday means are the figure most likely to be over-read, so a day needs
-  // MIN_SPLIT_SAMPLE entries before it gets an average at all.
+  // Weekday means are the figure most likely to be over-read, so a weekday
+  // needs MIN_SPLIT_SAMPLE days before it gets an average at all.
   const byWeekday = WEEKDAYS.map((label, index) => {
-    const dayScores = rows
-      .filter((r) => new Date(r.created_at).getDay() === index)
-      .map((r) => r.mood_score)
+    const scores = days.filter((d) => d.weekday === index).map((d) => d.score)
     return {
       day: label,
-      count: dayScores.length,
-      mean: dayScores.length >= MIN_SPLIT_SAMPLE ? round(mean(dayScores), 2) : null,
+      count: scores.length,
+      mean: scores.length >= MIN_SPLIT_SAMPLE ? round(mean(scores), 2) : null,
     }
   })
   const ranked = byWeekday.filter((d) => d.mean != null).sort((a, b) => b.mean - a.mean)
 
-  const first = dates[0]
-  const last = dates[dates.length - 1]
+  const first = days[0].date
+  const last = days[days.length - 1].date
   const span = daysBetween(first, last) + 1
+  const sortedDayScores = dayScores.slice().sort((a, b) => a - b)
 
   return {
     count: rows.length,
-    mean: round(mean(scores), 2),
-    median: round(scores.slice().sort((a, b) => a - b)[Math.floor(scores.length / 2)], 1),
-    spread: round(stdev(scores), 2),
+    days: days.length,
+    mean: round(mean(dayScores), 2),
+    median: round(sortedDayScores[Math.floor(sortedDayScores.length / 2)], 1),
+    spread: round(stdev(dayScores), 2),
     latest: { score: rows[rows.length - 1].mood_score, date: last },
     latestLabel: MOOD_LABELS[rows[rows.length - 1].mood_score],
     first,
@@ -144,7 +168,7 @@ function analyseMoods(moods) {
     coverage: round(dateSet.size / span, 2),
     streak: loggingStreak(dateSet),
     notes: rows.filter((r) => r.note && r.note.trim()).length,
-    trend: halvesTrend(rows, (r) => r.mood_score, 'up'),
+    trend: halvesTrend(days, (d) => d.score, 'up'),
     distribution: MOOD_SCORES.map((score) => ({
       score,
       label: MOOD_LABELS[score],
