@@ -13,10 +13,9 @@
    Add a new area as its own part file and append it here, before the
    responsive block. Do not grow an existing part with unrelated rules.
 
-   This is why 24-classes-and-the-register-of-hands.css and
-   25-support-line.css are imported above 23-responsive.css: the number is
-   their order of authorship, not their place in the cascade, and responsive
-   keeps the last word.
+   This is why parts 24 onward are imported above 23-responsive.css: the
+   number is their order of authorship, not their place in the cascade, and
+   responsive keeps the last word.
    ========================================================================== */
 
 @import './parts/01-shell.css';
@@ -43,4 +42,5 @@
 @import './parts/22-the-reading-generated-report.css';
 @import './parts/24-classes-and-the-register-of-hands.css';
 @import './parts/25-support-line.css';
+@import './parts/26-margin-notes-and-the-week.css';
 @import './parts/23-responsive.css';

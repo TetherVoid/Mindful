@@ -1,0 +1,95 @@
+/* ═══ 26. MARGIN NOTES AND THE WEEK ═══════════════════════════════════════ */
+
+/* One observation, set like a note pencilled in the margin: a red rule down
+   the left edge, the sentence in the reading face, and what it rests on in
+   small mono underneath. Used on the day sheet, the mood page and the
+   register. Tokens only. */
+
+.margin-note {
+  margin: 0 0 var(--space-6);
+  padding: var(--space-1) 0 var(--space-1) var(--space-5);
+  border-left: 2px solid var(--accent);
+}
+
+.margin-note-kicker {
+  margin: 0 0 var(--space-2);
+  font-family: var(--font-mono);
+  font-size: var(--text-3xs);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.margin-note-text {
+  margin: 0;
+  max-width: 44rem;
+  font-family: var(--font-display);
+  font-size: var(--text-md);
+  line-height: 1.45;
+  color: var(--text);
+}
+
+.margin-note-basis {
+  margin: var(--space-2) 0 0;
+  font-family: var(--font-mono);
+  font-size: var(--text-2xs);
+  letter-spacing: 0.06em;
+  color: var(--muted);
+}
+
+.margin-note-basis a {
+  color: var(--accent);
+}
+
+.margin-note + .margin-note {
+  margin-top: calc(var(--space-6) * -0.5);
+}
+
+/* The week, Monday to Sunday: each weekday's average day, or a dash until
+   that weekday has enough days behind it. */
+
+.week-strip {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  border-top: var(--hair) solid var(--rule);
+  border-bottom: var(--hair) solid var(--rule);
+  margin: var(--space-4) 0 var(--space-5);
+}
+
+.week-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-3) var(--space-1);
+  border-left: var(--hair) solid var(--rule);
+}
+
+.week-cell:first-child {
+  border-left: 0;
+}
+
+.week-cell-day {
+  font-family: var(--font-mono);
+  font-size: var(--text-3xs);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.week-cell-mean {
+  font-family: var(--font-mono);
+  font-size: var(--text-md);
+  font-weight: 500;
+  color: var(--text);
+}
+
+.week-cell-count {
+  font-family: var(--font-mono);
+  font-size: var(--text-3xs);
+  color: var(--muted);
+}
+
+.week-cell--bright .week-cell-mean {
+  color: var(--accent);
+}

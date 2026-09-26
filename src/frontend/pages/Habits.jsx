@@ -11,6 +11,9 @@ import ConfirmModal from '@frontend/components/ConfirmModal'
 import FormSuccess from '@frontend/components/FormSuccess'
 import FormError from '@frontend/components/FormError'
 import HabitHeatmap from '@frontend/components/HabitHeatmap'
+import MarginNote from '@frontend/components/MarginNote'
+import { loadInsights } from '@backend/services/report/data'
+import { habitObservations } from '@backend/services/report/observations'
 import Reveal from '@design/primitives/Reveal'
 import { StaggerGroup, StaggerItem } from '@design/primitives/Stagger'
 import Icon from '@design/primitives/Icon'
@@ -43,6 +46,14 @@ export default function Habits() {
   const [showSuccess, setShowSuccess] = useState(false)
   const [error, setError] = useState(null)
   const [pendingToggle, setPendingToggle] = useState(() => new Set())
+  // What the register and the mood log say together. Loaded separately, so
+  // the checklist never waits on it.
+  const [observations, setObservations] = useState([])
+
+  async function loadObservations() {
+    const { data } = await loadInsights()
+    if (data) setObservations(habitObservations(data))
+  }
 
   async function loadHabits() {
     setLoading(true)
@@ -63,6 +74,7 @@ export default function Habits() {
 
   useEffect(() => {
     loadHabits()
+    loadObservations()
   }, [])
 
   async function addHabit(e) {
@@ -232,6 +244,14 @@ export default function Habits() {
             )
           })}
         </StaggerGroup>
+      )}
+
+      {!loading && observations.length > 0 && (
+        <Reveal index={Math.min(habits.length, 6)}>
+          {observations.map((o, i) => (
+            <MarginNote key={o.kind} observation={o} kicker={i === 0 ? 'What the register shows' : null} />
+          ))}
+        </Reveal>
       )}
 
       {!loading && (

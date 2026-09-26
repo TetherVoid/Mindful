@@ -17,6 +17,9 @@ import { getMoodHistoryLength } from '@shared/utils/preferences'
 import { toLocalISODate, todayISO } from '@shared/utils/date'
 import FormSuccess from '@frontend/components/FormSuccess'
 import FormError from '@frontend/components/FormError'
+import MarginNote from '@frontend/components/MarginNote'
+import { loadInsights } from '@backend/services/report/data'
+import { weekdayStrip } from '@backend/services/report/observations'
 import Reveal from '@design/primitives/Reveal'
 import Icon, { MoodFace } from '@design/primitives/Icon'
 
@@ -78,8 +81,18 @@ export default function Mood() {
   const [showSuccess, setShowSuccess] = useState(false)
   const [error, setError] = useState(null)
   const [selectedLog, setSelectedLog] = useState(null)
+  // The weekday strip reads the same half-year window as the reading, not the
+  // chart's shorter one, so a weekday average means the same thing on both.
+  const [week, setWeek] = useState(null)
 
   const historyLength = getMoodHistoryLength()
+
+  async function loadWeek() {
+    const { data } = await loadInsights()
+    if (!data) return
+    const strip = weekdayStrip(data)
+    setWeek({ ...strip, bright: data.mood.brightest?.day ?? null })
+  }
 
   async function loadLogs() {
     setLoading(true)
@@ -98,6 +111,7 @@ export default function Mood() {
 
   useEffect(() => {
     loadLogs()
+    loadWeek()
   }, [])
 
   async function handleSubmit(e) {
@@ -125,6 +139,7 @@ export default function Mood() {
     setNote('')
     // Cleared so the next mark is a fresh choice, not a repeat of this one.
     setScore(null)
+    loadWeek()
     setShowSuccess(true)
     setTimeout(() => setShowSuccess(false), 2500)
   }
@@ -326,6 +341,35 @@ export default function Mood() {
           </>
         )}
       </Reveal>
+
+      {week && week.cells.some((c) => c.count > 0) && (
+        <Reveal as="section" className="panel" index={3}>
+          <div className="panel-head">
+            <span className="panel-head-num">§ 03</span>
+            <h2>The week</h2>
+            <span className="panel-head-note">Average day, by weekday</span>
+          </div>
+          <div className="week-strip" role="list" aria-label="Average mood by weekday">
+            {week.cells.map((c) => (
+              <div
+                role="listitem"
+                key={c.day}
+                className={`week-cell ${week.note.kind === 'weekday' && week.bright === c.day ? 'week-cell--bright' : ''}`}
+                aria-label={
+                  c.mean == null
+                    ? `${c.day}: ${c.count} ${c.count === 1 ? 'day' : 'days'} logged, not enough for an average yet`
+                    : `${c.day}: average ${c.mean} out of 5, over ${c.count} days`
+                }
+              >
+                <span className="week-cell-day">{c.short}</span>
+                <span className="week-cell-mean">{c.mean == null ? '—' : c.mean.toFixed(1)}</span>
+                <span className="week-cell-count">{c.count}d</span>
+              </div>
+            ))}
+          </div>
+          <MarginNote observation={week.note} kicker="Across the week" />
+        </Reveal>
+      )}
     </div>
   )
 }

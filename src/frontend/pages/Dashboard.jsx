@@ -2,6 +2,9 @@ import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts'
 import { loadDashboard } from '@backend/services/dashboard'
+import { loadInsights } from '@backend/services/report/data'
+import { dayObservation } from '@backend/services/report/observations'
+import MarginNote from '@frontend/components/MarginNote'
 import { useAuth } from '@backend/auth/AuthContext'
 import useLiveAccentColor from '@design/theme/useLiveAccentColor'
 import Reveal from '@design/primitives/Reveal'
@@ -42,6 +45,19 @@ export default function Dashboard() {
   const [thoughtCount, setThoughtCount] = useState(0)
   const [moodDistribution, setMoodDistribution] = useState([])
   const [error, setError] = useState(null)
+  // Loaded alongside the index rows but never holding them up: if it fails
+  // or is slow, the sheet simply has no margin note.
+  const [observation, setObservation] = useState(null)
+
+  useEffect(() => {
+    let cancelled = false
+    loadInsights().then(({ data }) => {
+      if (!cancelled && data) setObservation(dayObservation(data))
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   useEffect(() => {
     async function load() {
@@ -147,6 +163,8 @@ export default function Dashboard() {
   return (
     <div className="folio">
       {header}
+
+      {!isNewBook && <MarginNote observation={observation} showReadingLink />}
 
       <StaggerGroup className="index-table" base={0.05}>
         <StaggerItem index={0}>
