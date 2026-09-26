@@ -2,9 +2,20 @@
 //
 // The browser does the arithmetic (backend/services/report/insights.js) and
 // sends the result; this function only writes prose around numbers it is given.
-// It never reads the database, so the worst a forged request can do is spend
-// tokens — which is exactly what the auth check and the rate limit below are
-// for.
+// It never reads journal data from the database, so the worst a forged request
+// can do is spend tokens — which is exactly what the auth check and the two
+// limits below are for.
+//
+// Cost controls, in the order a request meets them:
+//   1. an in-memory limiter — a speed bump against a loop in one instance;
+//   2. claim_report_slot() in the database — the real ceiling: 3 readings per
+//      student and 300 per deployment in any 24 hours, shared by every
+//      instance, and failing CLOSED (no slot, no model call) if the database
+//      cannot be asked;
+//   3. the model call itself: Claude Sonnet 5 at low effort with max_tokens
+//      4000 — roughly $0.025 for a typical reading and about $0.06 at most.
+//      Token counts (never content) are logged so those estimates can be
+//      replaced with real numbers.
 //
 // One thing it does check against the database: if the caller says the figures
 // belong to somebody else (a teacher asking for a report about a student), the
@@ -29,12 +40,26 @@ import { verifyCaller, callRpcAsUser, createRateLimiter, sendJson } from './_lib
 
 export const config = { maxDuration: 60 }
 
-const MODEL = 'claude-opus-5'
+// Sonnet 5 rather than Opus: the page is a few hundred words of careful prose
+// around figures it is handed, and the judgement it needs — hedging by sample
+// size, never implying cause, the self-harm instruction — holds at this tier.
+const MODEL = 'claude-sonnet-5'
+const MAX_TOKENS = 4000
+const EFFORT = 'low'
 
-// Six an hour is plenty for a report over data that changes at the speed of a
-// journal. See createRateLimiter for what this limit is and is not worth.
+// The in-memory speed bump. See createRateLimiter for what it is and is not
+// worth; the database limit (claim_report_slot) is the one that counts.
 const RATE_LIMIT = { max: 6, windowMs: 60 * 60 * 1000 }
 const overRateLimit = createRateLimiter(RATE_LIMIT)
+
+// What claim_report_slot() can say no with, in the reader's words. Both point
+// at the browser-written reading, which has no limit because it costs nothing.
+const LIMIT_MESSAGES = {
+  user_limit:
+    'That is three readings today, which is as many as there can be in a day. “Write it here instead” still works, any time.',
+  global_limit:
+    'The writing service has reached its limit for today. “Write it here instead” still works, any time.',
+}
 
 const MAX_BODY_BYTES = 64 * 1024
 
@@ -170,6 +195,22 @@ export default async function handler(req, res) {
   const subject = await authoriseSubject(auth, body.subjectUserId)
   if (!subject.ok) return sendJson(res, subject.status, { error: subject.message })
 
+  // The spending ceiling. Asked last, after every check that could refuse the
+  // request for free, so a refused request never uses up a slot. Asked with
+  // the caller's own token, so the slot is charged to the caller and nobody
+  // else. A slot is spent even if the model call below then fails — that is
+  // what stops a failing request from being retried into a bill.
+  const slot = await callRpcAsUser(auth.token, 'claim_report_slot')
+  if (slot.error) {
+    // Fail closed: if the limit cannot be checked, no model is called. The
+    // reader gets the browser-written reading instead.
+    console.error('[report] could not claim a slot; not calling the model')
+    return sendJson(res, 503, { error: 'The writing service is unavailable.', fallback: true })
+  }
+  if (slot.data !== 'ok') {
+    return sendJson(res, 429, { error: LIMIT_MESSAGES[slot.data] ?? LIMIT_MESSAGES.global_limit })
+  }
+
   // body.excerpts is deliberately not read. See buildUserMessage.
   const prompt = buildUserMessage({ figures: body.figures })
 
@@ -178,15 +219,20 @@ export default async function handler(req, res) {
   try {
     const response = await client.messages.parse({
       model: MODEL,
-      max_tokens: 16000,
+      max_tokens: MAX_TOKENS,
       thinking: { type: 'adaptive' },
       system: SYSTEM_PROMPT,
       messages: [{ role: 'user', content: prompt }],
-      output_config: { format: zodOutputFormat(ReportSchema) },
+      output_config: { format: zodOutputFormat(ReportSchema), effort: EFFORT },
     })
 
-    // A safety decline returns HTTP 200 with no usable content, so the shape
-    // has to be checked before it is trusted.
+    // Counts only — never content, never who asked.
+    console.info(
+      `[report] model=${MODEL} stop=${response.stop_reason} input_tokens=${response.usage?.input_tokens} output_tokens=${response.usage?.output_tokens}`
+    )
+
+    // A safety decline returns HTTP 200 with no usable content, and a reading
+    // cut off at MAX_TOKENS will not parse; both fall back to the browser.
     if (response.stop_reason === 'refusal' || !response.parsed_output) {
       return sendJson(res, 422, {
         error: 'The report could not be written for this entry.',
