@@ -69,15 +69,28 @@ the remote database.
 
 - **`ANTHROPIC_API_KEY` is not set in Vercel.** `/api/report` returns 503 and
   the page falls back to the locally written reading, which uses the same
-  figures and is intentionally a first-class result, not an error page. Phase B
-  of the current plan adds cost controls (a cheaper model and a persistent
-  per-student limit) **before** the key is set.
-- **Consent governs all figure access** (migration `20260925000100`): teachers
-  and administrators both need the student's `share_with_teachers`. Teacher
-  reads return no habit names and no time of day in the mood series.
-- **Record wording is never sent to the AI** (turned off for everyone on
-  2026-09-25). Only figures go, and figures include habit names and emotion
-  labels.
+  figures and is intentionally a first-class result, not an error page. The cost
+  controls are in place for when it is set: Claude Sonnet 5 at low effort,
+  `max_tokens` 4000, and `claim_report_slot()` (3 per student, 300 per
+  deployment, per 24 hours; fails closed). Token counts are logged as
+  `[report] … input_tokens=… output_tokens=…` — read them in the first week to
+  replace the cost estimates (~$0.025 typical, ~$0.06 worst case per reading).
+- **Consent governs all figure access** (`20260925000100`): teachers and
+  administrators both need the student's `share_with_teachers`. Teacher reads
+  carry no habit names and no times of day anywhere (`20260926000100` made the
+  overview dates `date`).
+- **Nothing a student typed goes to the AI.** Habit names and emotion words go as
+  "Habit N" / "Emotion N"; the browser restores the names in the reading.
+  `api/_lib/figures.js` refuses any other text. A new text field in
+  `insights.js` must be added to that allowlist, or readings fall back to the
+  browser.
+- **Comparisons are gated** (`insights.js` top): 14 days a side, a gap of at
+  least 2 standard errors of the student's own spread and 0.3 points; 6 days
+  per weekday and 2.5 SE for brightest/heaviest. The heavy fixture shows no
+  weekday or habit comparison under these rules — that is correct.
+- **Local API testing:** `api/report.js` can be driven end to end with the
+  local Supabase stack and a stub for Anthropic via `ANTHROPIC_BASE_URL`, so no
+  key and no remote call are needed.
 - **Support line:** `src/shared/constants/support.js` holds Tele-MANAS 14416,
   Child Helpline 1098 and Emergency 112, each with its official source. It is
   shown on every page and never conditionally. **Re-verify every number at least
@@ -107,6 +120,19 @@ the remote database.
   in `insights.js` is now per day, not per entry.
 - Web app manifest, icons, theme-color, Open Graph and Twitter tags.
 
-Still to do: Phase B (comparison threshold, insights on the day sheet, AI cost
-controls, consistent counts) and Phase C (calendar reminder, removing Three.js,
-mobile tap targets, light-theme contrast, Settings.jsx formatting).
+**2026-09-26 — Phase B.**
+
+- Comparison thresholds raised and a noise floor added before any insight is
+  shown outside the reading.
+- Margin notes on the day sheet and the register, and a weekday panel on the
+  mood page (`services/report/observations.js`). The thought-record comparison
+  is kept off those pages because it is usually read backwards.
+- Migration `20260926000100`: `report_requests` + `claim_report_slot()`, and
+  date-only overview timestamps. 30 new pgTAP tests (157 in all).
+- `/api/report`: Sonnet 5, low effort, 4000 tokens, database limit, token
+  logging, and a server-side refusal of any student-typed text.
+- Counts agree across pages; `/thoughts` pages 20 at a time.
+- The storage notice no longer covers the support line.
+
+Still to do: Phase C (calendar reminder, removing Three.js, mobile tap targets,
+light-theme contrast, Settings.jsx formatting).
