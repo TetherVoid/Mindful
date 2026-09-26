@@ -42,6 +42,14 @@
   color: var(--muted);
 }
 
+/* While the storage notice is showing, CookieBanner.jsx publishes its height
+   as --notice-clearance, and the colophon keeps that much room beneath it, so
+   the support line can always be scrolled clear of the notice. Unset (0) the
+   rest of the time. */
+.colophon {
+  margin-bottom: var(--notice-clearance, 0px);
+}
+
 /* On the sign-in spread it follows the "Private by default" strapline. */
 .frontispiece-foot > p {
   margin: 0;
