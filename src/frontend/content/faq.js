@@ -48,7 +48,7 @@ export const faqItems = [
   {
     question: 'Does anything I write go to an AI?',
     answer:
-      'Only if you press “Write the reading” on The Reading page. Then the figures on that page — counts, averages, dates, your habit names and the emotion words you chose — are sent to Anthropic’s API to write it up, and are not stored by this app. The wording of your notes and thought records never leaves your device. “Write it here instead” makes the same page without sending anything at all.',
+      'Nothing you typed ever does. If you press “Write the reading” on The Reading page, numbers are sent to Anthropic’s API to write it up — counts, averages and dates — with your habits and emotions labelled “Habit 1”, “Emotion 2” and so on, never by the names you gave them. They are not stored by this app, and your own names are put back into the reading on your device. Your notes and thought records never leave your device at all. “Write it here instead” makes the same page without sending anything.',
   },
   {
     question: 'How do I download or delete everything?',

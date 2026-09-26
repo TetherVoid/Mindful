@@ -241,7 +241,12 @@ function analyseMoods(moods) {
 }
 
 function analyseHabits(habits, habitLogs) {
-  const active = habits.filter((h) => !h.archived)
+  // Oldest first, so each habit's `number` is stable: it is how a habit is
+  // named in anything that leaves the device ("Habit 2"), and it matches the
+  // numbering a teacher's habit summary uses.
+  const active = habits
+    .filter((h) => !h.archived)
+    .sort((a, b) => String(a.created_at ?? '').localeCompare(String(b.created_at ?? '')) || String(a.id).localeCompare(String(b.id)))
   const datesByHabit = new Map()
   for (const log of habitLogs) {
     if (!datesByHabit.has(log.habit_id)) datesByHabit.set(log.habit_id, new Set())
@@ -250,7 +255,7 @@ function analyseHabits(habits, habitLogs) {
 
   const windowStart = shiftISO(todayISO(), -(HABIT_RATE_WINDOW - 1))
 
-  const list = active.map((habit) => {
+  const list = active.map((habit, index) => {
     const dates = datesByHabit.get(habit.id) ?? new Set()
     const recent = [...dates].filter((d) => d >= windowStart)
     // A habit added four days ago has not "missed" the twenty-six before it,
@@ -260,6 +265,7 @@ function analyseHabits(habits, habitLogs) {
       : HABIT_RATE_WINDOW
     const denominator = Math.max(1, age)
     return {
+      number: index + 1,
       name: habit.name,
       streak: loggingStreak(dates),
       total: dates.size,
@@ -484,14 +490,50 @@ export function hasEnoughToReport(insights) {
  * verbatim before they press the button — what is disclosed and what is sent
  * are the same function's output, not two lists that can drift apart.
  *
- * Figures only. The wording of thought records and mood notes is never sent:
- * an opt-in that included it was removed on 2026-09-25, for every user, and
- * api/report.js no longer reads an `excerpts` field even if one arrives.
- * Bringing it back would need both ends changed and the privacy copy
- * rewritten, which is deliberate.
+ * The rule: nothing the student typed leaves the device. So the payload is
+ * figures only, and the two places where typed text appears in the figures
+ * are replaced before anything is sent —
+ *
+ *   habit names     → "Habit 1", "Habit 2" … numbered oldest first
+ *   emotion words   → "Emotion 1", "Emotion 2" … most frequent first
+ *
+ * — and the `gaps` sentences are dropped (they restate figures that are
+ * already there). The wording of thought records and mood notes was never in
+ * the figures and is not sent either. api/report.js checks every string in
+ * what arrives against the same list and refuses anything else, so this
+ * holds even if this function is changed by mistake.
+ *
+ * The mapping back from labels to names is returned separately as `labels`.
+ * It never leaves the browser: report/client.js uses it to put the student's
+ * own names back into the reading once it has been written.
  */
+export function anonymiseForReport(insights) {
+  const figures = structuredClone(insights)
+  const labels = {}
+
+  const habitLabel = (habit) => {
+    if (!habit) return habit
+    const label = `Habit ${habit.number}`
+    labels[label] = habit.name
+    return { ...habit, name: label }
+  }
+  figures.habits.list = figures.habits.list.map(habitLabel)
+  figures.habits.strongest = habitLabel(figures.habits.strongest)
+  figures.habits.weakest = habitLabel(figures.habits.weakest)
+
+  figures.thoughts.emotions = figures.thoughts.emotions.map((emotion, i) => {
+    const label = `Emotion ${i + 1}`
+    labels[label] = emotion.name
+    return { ...emotion, name: label }
+  })
+
+  delete figures.gaps
+  return { figures, labels }
+}
+
+/** Exactly what is sent, for "Show me exactly" and for the request itself. */
 export function buildReportPayload(insights) {
-  return { figures: insights }
+  return { figures: anonymiseForReport(insights).figures }
 }
 
 export { MOOD_LABELS }

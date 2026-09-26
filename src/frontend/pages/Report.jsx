@@ -282,10 +282,11 @@ export default function Report() {
               <span className="ledger-label">
                 <strong>What leaves this device</strong>
                 <p>
-                  Only the figures above — counts, averages, dates, habit names and emotion labels —
-                  and only when you press the button. The wording of your thought records and notes
-                  never leaves this device. The figures are sent to Anthropic&rsquo;s API to be
-                  written up, and are not stored by this app.
+                  Only numbers — counts, averages and dates — and only when you press the button.
+                  Your habits and emotions go as &ldquo;Habit 1&rdquo;, &ldquo;Emotion 2&rdquo; and so
+                  on, never by the names you gave them, and nothing you typed leaves this device.
+                  The figures are sent to Anthropic&rsquo;s API to be written up, and are not stored by
+                  this app. Your own names are put back into the reading here, on your device.
                 </p>
               </span>
               <button

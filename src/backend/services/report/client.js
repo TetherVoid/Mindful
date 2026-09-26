@@ -7,11 +7,19 @@
 // first.
 
 import { supabase } from '@backend/database/client'
-import { buildReportPayload } from './insights'
+import { anonymiseForReport } from './insights'
 import { writeLocalReport } from './narrative'
+import { restoreNames } from './names'
 
 const ENDPOINT = '/api/report'
 const TIMEOUT_MS = 60000
+
+// What a reader sees when the reading had to be written in the browser. The
+// server's own error text is for the logs, not the page — "No report service
+// configured" is a deployment detail, not something a student did.
+const FALLBACK_NOTICE =
+  "The writing service isn't available just now, so this reading was written in your browser instead."
+
 
 export function writeReportLocally(insights) {
   return { ...writeLocalReport(insights), source: 'local' }
@@ -53,7 +61,8 @@ export async function requestReport(insights, { subjectUserId = null } = {}) {
     }
   }
 
-  const payload = buildReportPayload(insights)
+  const { figures, labels } = anonymiseForReport(insights)
+  const payload = { figures }
   if (subjectUserId) payload.subjectUserId = subjectUserId
   const controller = new AbortController()
   const timer = setTimeout(() => controller.abort(), TIMEOUT_MS)
@@ -79,22 +88,12 @@ export async function requestReport(insights, { subjectUserId = null } = {}) {
       if (response.status === 403) {
         return { report: null, error: body.error ?? 'You do not have access to that record.' }
       }
-      return {
-        report: writeReportLocally(insights),
-        notice: `${body.error ?? 'The writing service was unreachable.'} This one was written in your browser instead.`,
-      }
+      return { report: writeReportLocally(insights), notice: FALLBACK_NOTICE }
     }
 
-    return { report: await response.json(), notice: null }
-  } catch (error) {
-    const reason =
-      error.name === 'AbortError'
-        ? 'The writing service took too long.'
-        : 'The writing service could not be reached.'
-    return {
-      report: writeReportLocally(insights),
-      notice: `${reason} This report was written in your browser instead.`,
-    }
+    return { report: restoreNames(await response.json(), labels), notice: null }
+  } catch {
+    return { report: writeReportLocally(insights), notice: FALLBACK_NOTICE }
   } finally {
     clearTimeout(timer)
   }

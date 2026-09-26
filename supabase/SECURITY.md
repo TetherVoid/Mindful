@@ -245,6 +245,37 @@ Note that the join code is not a secret from the class: a student's policy lets
 them read the row they are enrolled in, code included. Treat it as
 shared-within-the-class.
 
+## The AI reading: what reaches it, and how much of it there can be
+
+`/api/report` sends figures to Anthropic to be written up as prose. Two rules
+govern it, and each is enforced in two places.
+
+**Nothing a student typed reaches a prompt.** The browser replaces habit names
+and emotion words with numbered labels ("Habit 2", "Emotion 1") and drops the
+code-written `gaps` sentences before sending (`anonymiseForReport` in
+`src/backend/services/report/insights.js`). The mapping from labels back to
+names stays in the browser, which restores the student's own names in the
+reading once it returns. The server then checks every string in what arrives
+against a fixed list of labels the app generates (`api/_lib/figures.js`) and
+refuses the request — before any model is called — if anything else is there.
+It logs only the path of the offending field, never its value.
+
+**Readings are limited, in the database.** `report_requests` records a user id
+and a timestamp for each reading, and `claim_report_slot()` allows at most **3
+per student** and **300 per deployment** in any rolling 24 hours. The function
+takes no arguments (the caller is `auth.uid()`), refuses deactivated accounts,
+serialises claims under an advisory lock so two requests cannot both take the
+last slot, and prunes rows older than 48 hours on every call. RLS is on with no
+policies and every privilege revoked, so no role reads or writes the table
+directly; rows go with the account when it is deleted.
+
+`/api/report` claims a slot with the caller's own token after every free check
+has passed, and **fails closed**: if the claim cannot be made — the database is
+unreachable, or the migration has not been applied — no model is called and the
+student gets the reading written in their browser. A slot is spent even if the
+model call then fails, so a failing request cannot be retried into a bill.
+Changing either limit is a new migration.
+
 ## Bootstrapping
 
 There is deliberately no way to become the first administrator from inside the
