@@ -45,3 +45,6 @@ supabase/.temp
 .vercel
 .env*
 !.env.example
+
+# Claude desktop app preview configuration (machine-local)
+.claude/
