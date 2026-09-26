@@ -12,11 +12,35 @@ const MOOD_LABELS = { 1: 'Awful', 2: 'Low', 3: 'Even', 4: 'Good', 5: 'Bright' }
 const MOOD_SCORES = [1, 2, 3, 4, 5]
 const WEEKDAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
 
-// A comparison drawn from two or three entries is noise dressed as a finding.
-// Every split figure below is withheld until both sides clear this.
-const MIN_SPLIT_SAMPLE = 3
-const MIN_TREND_SAMPLE = 6
+// When a comparison is allowed to be shown.
+//
+// Mood runs 1–5 and a student's day-to-day spread is typically around 1.0.
+// The noise in a difference between two averages is roughly
+// spread × √(1/n₁ + 1/n₂): with three days a side that is about 0.8, so a
+// "one point lower" finding can be pure chance. With fourteen a side it falls
+// to about 0.38. So:
+//
+//   MIN_SPLIT_SAMPLE    days needed on EACH side of a comparison (a fortnight)
+//   NOISE_MULTIPLE      a gap must be at least this many standard errors wide,
+//                       measured from this student's own spread
+//   MIN_GAP             …and at least this many points, whatever the noise —
+//                       below it two averages are the same number rounded
+//                       differently
+//   MIN_WEEKDAY_SAMPLE  days needed before a weekday gets an average at all
+//   WEEKDAY_MULTIPLE    stricter, because "best vs worst of seven" picks the
+//                       extremes and so inflates the gap by chance alone
+//
+// This is a noise floor, not a significance test, and nothing shown to a
+// student claims otherwise. Every figure that fails it is withheld.
+const MIN_SPLIT_SAMPLE = 14
+const NOISE_MULTIPLE = 2
+const MIN_GAP = 0.3
+const MIN_WEEKDAY_SAMPLE = 6
+const WEEKDAY_MULTIPLE = 2.5
+const MIN_TREND_SAMPLE = 14
 const HABIT_RATE_WINDOW = 30
+
+export const THRESHOLDS = { MIN_SPLIT_SAMPLE, MIN_WEEKDAY_SAMPLE, MIN_TREND_SAMPLE }
 
 function mean(values) {
   if (!values.length) return null
@@ -35,6 +59,25 @@ function stdev(values) {
   return Math.sqrt(mean(values.map((v) => (v - m) ** 2)))
 }
 
+// Sample variance (n − 1), for the standard error below.
+function sampleVariance(values) {
+  if (values.length < 2) return 0
+  const m = mean(values)
+  return values.reduce((sum, v) => sum + (v - m) ** 2, 0) / (values.length - 1)
+}
+
+// Standard error of the difference between two means, each side with its own
+// variance (Welch). Uses the student's own spread, not an assumed one.
+function standardErrorOfDifference(a, b) {
+  return Math.sqrt(sampleVariance(a) / a.length + sampleVariance(b) / b.length)
+}
+
+// Whether the gap between two sets of day values is wide enough to show.
+function clearsNoise(a, b, multiple = NOISE_MULTIPLE) {
+  const gap = Math.abs(mean(a) - mean(b))
+  return gap >= MIN_GAP && gap >= multiple * standardErrorOfDifference(a, b)
+}
+
 function daysBetween(fromISO, toISO) {
   const ms = new Date(`${toISO}T00:00:00`) - new Date(`${fromISO}T00:00:00`)
   return Math.round(ms / 86400000)
@@ -51,11 +94,14 @@ function shiftISO(iso, days) {
 // different digits.
 const TREND_THRESHOLD = 0.25
 
-function describeTrend(earlier, recent, unit = 'up') {
+function describeTrend(earlier, recent, unit = 'up', clears = true) {
   if (earlier == null || recent == null) return null
   const delta = recent - earlier
+  // A gap that does not clear the noise floor reads as steady, whatever its
+  // size — "rising" on the strength of chance would be a claim about the
+  // student the figures cannot support.
   const direction =
-    Math.abs(delta) < TREND_THRESHOLD ? 'steady' : delta > 0 ? 'rising' : 'falling'
+    !clears || Math.abs(delta) < TREND_THRESHOLD ? 'steady' : delta > 0 ? 'rising' : 'falling'
   return {
     direction,
     // A rising intensity score is a worsening signal, a rising mood score an
@@ -77,7 +123,7 @@ function halvesTrend(sortedRows, valueOf, unit) {
   const earlier = values.slice(0, middle)
   const recent = values.slice(values.length - middle)
   return {
-    ...describeTrend(mean(earlier), mean(recent), unit),
+    ...describeTrend(mean(earlier), mean(recent), unit, clearsNoise(earlier, recent)),
     earlierCount: earlier.length,
     recentCount: recent.length,
   }
@@ -137,16 +183,30 @@ function analyseMoods(moods) {
   for (const r of rows) counts[r.mood_score] += 1
 
   // Weekday means are the figure most likely to be over-read, so a weekday
-  // needs MIN_SPLIT_SAMPLE days before it gets an average at all.
+  // needs MIN_WEEKDAY_SAMPLE days before it gets an average at all.
+  const weekdayScores = WEEKDAYS.map((_, index) =>
+    days.filter((d) => d.weekday === index).map((d) => d.score)
+  )
   const byWeekday = WEEKDAYS.map((label, index) => {
-    const scores = days.filter((d) => d.weekday === index).map((d) => d.score)
+    const scores = weekdayScores[index]
     return {
       day: label,
       count: scores.length,
-      mean: scores.length >= MIN_SPLIT_SAMPLE ? round(mean(scores), 2) : null,
+      mean: scores.length >= MIN_WEEKDAY_SAMPLE ? round(mean(scores), 2) : null,
     }
   })
-  const ranked = byWeekday.filter((d) => d.mean != null).sort((a, b) => b.mean - a.mean)
+  const ranked = byWeekday
+    .map((d, index) => ({ ...d, index }))
+    .filter((d) => d.mean != null)
+    .sort((a, b) => b.mean - a.mean)
+  // "Brightest" and "heaviest" are named only when the two days differ by more
+  // than picking the extremes of seven would produce by chance.
+  const top = ranked[0]
+  const bottom = ranked[ranked.length - 1]
+  const weekdayGapHolds =
+    ranked.length > 1 &&
+    clearsNoise(weekdayScores[top.index], weekdayScores[bottom.index], WEEKDAY_MULTIPLE)
+  const strip = ({ index: _index, ...rest }) => rest
 
   const first = days[0].date
   const last = days[days.length - 1].date
@@ -175,8 +235,8 @@ function analyseMoods(moods) {
       count: counts[score],
     })),
     byWeekday,
-    brightest: ranked[0] ?? null,
-    heaviest: ranked.length > 1 ? ranked[ranked.length - 1] : null,
+    brightest: weekdayGapHolds ? strip(top) : null,
+    heaviest: weekdayGapHolds ? strip(bottom) : null,
   }
 }
 
@@ -311,8 +371,11 @@ function analyseLinks(moods, habitLogs, thoughts) {
     ;(thoughtDates.has(date) ? wrote : didnt).push(dayMean)
   }
 
+  // Withheld (null) unless both sides have a fortnight of days AND the gap
+  // clears the noise floor. `progress` below says which of the two stopped it.
   function compare(a, b, labels) {
     if (a.length < MIN_SPLIT_SAMPLE || b.length < MIN_SPLIT_SAMPLE) return null
+    if (!clearsNoise(a, b)) return null
     return {
       ...labels,
       withMean: round(mean(a), 2),
@@ -334,11 +397,29 @@ function analyseLinks(moods, habitLogs, thoughts) {
       label: 'days a thought record was written',
       against: 'days none was',
     }),
+    // How close each comparison is to having enough days, so a page can say
+    // "not enough yet" honestly instead of going quiet. `ready` means both
+    // sides have the days; the gap may still be too small to show.
+    progress: {
+      needed: MIN_SPLIT_SAMPLE,
+      habitDays: { withDays: kept.length, withoutDays: missed.length,
+        ready: kept.length >= MIN_SPLIT_SAMPLE && missed.length >= MIN_SPLIT_SAMPLE },
+      thoughtDays: { withDays: wrote.length, withoutDays: didnt.length,
+        ready: wrote.length >= MIN_SPLIT_SAMPLE && didnt.length >= MIN_SPLIT_SAMPLE },
+    },
   }
 }
 
-function findGaps({ mood, habits, thoughts }) {
+function findGaps({ mood, habits, thoughts, links }) {
   const gaps = []
+  // A comparison held back for want of days is said out loud, so the page
+  // does not look as if nothing was worth comparing.
+  const habitProgress = links.progress.habitDays
+  if (mood.count && habits.active > 0 && !habitProgress.ready) {
+    gaps.push(
+      `Not enough days yet to compare days with a habit ticked and days without: that needs ${links.progress.needed} of each, and there are ${habitProgress.withDays} and ${habitProgress.withoutDays} so far.`
+    )
+  }
   if (mood.count && mood.coverage != null && mood.coverage < 0.4) {
     gaps.push(
       `Mood is logged on ${Math.round(mood.coverage * 100)}% of the days in this stretch, so the line between entries is guesswork.`
@@ -370,6 +451,7 @@ export function buildInsights({ moods = [], habits = [], habitLogs = [], thought
   const mood = analyseMoods(moods)
   const habitStats = analyseHabits(habits, habitLogs)
   const thoughtStats = analyseThoughts(thoughts)
+  const links = analyseLinks(moods, habitLogs, thoughts)
 
   return {
     generatedFor: todayISO(),
@@ -382,8 +464,8 @@ export function buildInsights({ moods = [], habits = [], habitLogs = [], thought
     mood,
     habits: habitStats,
     thoughts: thoughtStats,
-    links: analyseLinks(moods, habitLogs, thoughts),
-    gaps: findGaps({ mood, habits: habitStats, thoughts: thoughtStats }),
+    links,
+    gaps: findGaps({ mood, habits: habitStats, thoughts: thoughtStats, links }),
   }
 }
 
