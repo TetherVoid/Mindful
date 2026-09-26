@@ -43,6 +43,9 @@ supabase/migrations/
   20260911000800_admin_user_directory.sql       admin_list_users()
   20260925000100_consent_scoped_reads.sql       consent gates admins too; no habit
                                                 names or times of day in teacher reads
+  20260926000100_report_limits_and_date_only_activity.sql
+                                                3/student, 300/deployment AI readings
+                                                a day; overview dates, not times
 supabase/tests/                             pgTAP, run with `supabase test db`
 ```
 

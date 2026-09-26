@@ -57,7 +57,7 @@ tables that mentions either role. What they get instead is a set of
 
 | Function | Returns |
 |---|---|
-| `class_overview` | per student: entry counts, average mood, active habits, habit ticks, thought-record count, last-activity times |
+| `class_overview` | per student: entry counts, average mood, active habits, habit ticks, thought-record count, and the **dates** (not times) of the last mood and last activity |
 | `student_overview` | the same figures for one student |
 | `student_mood_series` | `(day, mood_score)` per entry — **no time of day** |
 | `student_habit_summary` | `(habit_number, ticks, last_tick)` — **no habit name, no habit id** |
@@ -71,9 +71,12 @@ logged eleven entries averaging 2.4 last month and ticked their second habit
 nine times. A teacher cannot see a word of what they said — and a habit's name
 *is* something they said, which is why `20260925000100` took it out.
 
-The same migration took `logged_at` out of `student_mood_series`. The day and
-the score draw the student's line; the time of day a child writes is
-behavioural detail that no reader of figures needs.
+The same migration took `logged_at` out of `student_mood_series`, and
+`20260926000100` finished the job: `last_mood_at` and `last_activity_at` in both
+overviews are now `date`, not `timestamptz` (the column names are kept so a
+deployed frontend keeps reading them). The day draws the student's line; the
+time of day a child writes is behavioural detail that no reader of figures
+needs.
 
 If a future feature needs a teacher to see more, the answer is another function
 returning more figures — not a `for select using (teaches_student(user_id))`

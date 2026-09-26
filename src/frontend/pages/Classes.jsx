@@ -262,7 +262,7 @@ export default function Classes() {
                       <div className="ledger-label ledger-label--name">
                         <strong>{studentDetail.display_name ?? 'Student'}’s authorised summary</strong>
                         <p>
-                          {studentDetail.mood_entries} mood entries · {studentDetail.habit_ticks} habit ticks · last active {studentDetail.last_activity_at ? new Date(studentDetail.last_activity_at).toLocaleDateString() : 'not recorded'}
+                          {studentDetail.mood_entries} mood entries · {studentDetail.habit_ticks} habit ticks · last active {studentDetail.last_activity_at ? new Date(`${studentDetail.last_activity_at}T00:00:00`).toLocaleDateString() : 'not recorded'}
                         </p>
                       </div>
                       <span className="mono">

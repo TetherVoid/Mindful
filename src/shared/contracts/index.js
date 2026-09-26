@@ -102,11 +102,11 @@
  * @property {string|null} display_name
  * @property {number}  mood_entries
  * @property {number|null} average_mood
- * @property {string|null} last_mood_at
+ * @property {string|null} last_mood_at      a calendar date, 'YYYY-MM-DD' — no time of day
  * @property {number}  active_habits
  * @property {number}  habit_ticks
  * @property {number}  thought_record_count
- * @property {string|null} last_activity_at
+ * @property {string|null} last_activity_at  a calendar date, 'YYYY-MM-DD' — no time of day
  */
 
 /**
