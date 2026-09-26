@@ -112,6 +112,13 @@ class QueryBuilder {
     return this
   }
 
+  // Inclusive at both ends, as PostgREST's range is: range(0, 19) is 20 rows.
+  range(from, to) {
+    this.skip = from
+    this.max = to - from + 1
+    return this
+  }
+
   single() {
     this.wantSingle = true
     return this
@@ -187,6 +194,7 @@ class QueryBuilder {
       })
     }
 
+    if (this.skip) result = result.slice(this.skip)
     if (this.max != null) result = result.slice(0, this.max)
     if (this.headOnly) return { data: null, error: null, count }
 

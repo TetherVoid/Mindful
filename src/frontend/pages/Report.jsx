@@ -25,15 +25,23 @@ function Figure({ value, unit, label }) {
 
 // The numbers the page can always show, with or without a written report.
 // They are the report's evidence, printed next to it rather than behind it.
-function Figures({ insights }) {
+//
+// `onFile` is how many entries and records exist in all. The figures read a
+// window (the latest 180 moods, 100 records); when that is less than
+// everything, the label says so, so no page implies the window is the whole.
+function Figures({ insights, onFile }) {
   const { mood, habits, thoughts } = insights
   const items = []
+  const moodsTruncated = onFile && onFile.moods > mood.count
+  const thoughtsTruncated = onFile && onFile.thoughts > thoughts.count
 
   if (mood.count) {
     items.push({
       value: mood.mean,
       unit: '/ 5',
-      label: `Average day, over ${mood.days} ${mood.days === 1 ? 'day' : 'days'} of entries`,
+      label: moodsTruncated
+        ? `Average day, over your latest ${mood.count} entries (${onFile.moods} in all)`
+        : `Average day, over ${mood.days} ${mood.days === 1 ? 'day' : 'days'} of entries`,
     })
     items.push({ value: mood.streak, unit: mood.streak === 1 ? 'day' : 'days', label: 'Current logging streak' })
   }
@@ -46,7 +54,9 @@ function Figures({ insights }) {
   if (thoughts.count) {
     items.push({
       value: thoughts.reframeRate != null ? `${Math.round(thoughts.reframeRate * 100)}%` : '—',
-      label: `Records reaching a balanced thought, of ${thoughts.count}`,
+      label: thoughtsTruncated
+        ? `Records reaching a balanced thought, of your latest ${thoughts.count} (${onFile.thoughts} on file)`
+        : `Records reaching a balanced thought, of ${thoughts.count}`,
     })
   }
 
@@ -260,7 +270,7 @@ export default function Report() {
           <h2>The figures</h2>
           <span className="panel-head-note">Worked out on this device</span>
         </div>
-        <Figures insights={insights} />
+        <Figures insights={insights} onFile={rows.onFile} />
         {insights.gaps.length > 0 && (
           <ul className="brief-list brief-list--gaps">
             {insights.gaps.map((gap) => (

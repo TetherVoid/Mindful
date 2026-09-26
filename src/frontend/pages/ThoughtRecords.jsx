@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import {
-  listThoughtRecords,
+  listThoughtRecordsPage,
   createThoughtRecord,
   deleteThoughtRecord,
 } from '@backend/services/thoughts'
@@ -12,9 +12,10 @@ import Reveal from '@design/primitives/Reveal'
 import { StaggerGroup, StaggerItem } from '@design/primitives/Stagger'
 import Icon from '@design/primitives/Icon'
 
-// How many records the page holds at once. The list is a reading surface, not
-// an archive browser — older records stay reachable through search.
-const RECORD_LIMIT = 100
+// Records are shown a page at a time, newest first. The header always gives
+// the true total on file — the same number the day sheet gives — however many
+// have been shown so far.
+const PAGE_SIZE = 20
 
 const emptyForm = {
   situation: '',
@@ -63,11 +64,13 @@ export default function ThoughtRecords() {
   const [copiedId, setCopiedId] = useState(null)
   const [showSuccess, setShowSuccess] = useState(false)
   const [error, setError] = useState(null)
+  const [total, setTotal] = useState(null)
+  const [loadingMore, setLoadingMore] = useState(false)
 
   async function loadRecords() {
     setLoading(true)
     setError(null)
-    const { data, error: loadError } = await listThoughtRecords(RECORD_LIMIT)
+    const { data, count, error: loadError } = await listThoughtRecordsPage({ offset: 0, limit: PAGE_SIZE })
 
     if (loadError) {
       setError(loadError.message)
@@ -76,7 +79,30 @@ export default function ThoughtRecords() {
     }
 
     setRecords(data ?? [])
+    setTotal(count ?? (data ?? []).length)
     setLoading(false)
+  }
+
+  // The next page starts where the list on screen ends. Records added or
+  // deleted on this page shift the server's list by the same amount as the
+  // local one, so the offset stays right; ids are de-duplicated regardless.
+  async function loadMore() {
+    setLoadingMore(true)
+    setError(null)
+    const { data, count, error: loadError } = await listThoughtRecordsPage({
+      offset: records.length,
+      limit: PAGE_SIZE,
+    })
+    setLoadingMore(false)
+    if (loadError) {
+      setError(loadError.message)
+      return
+    }
+    setRecords((prev) => {
+      const known = new Set(prev.map((r) => r.id))
+      return [...prev, ...(data ?? []).filter((r) => !known.has(r.id))]
+    })
+    if (count != null) setTotal(count)
   }
 
   useEffect(() => {
@@ -98,6 +124,7 @@ export default function ThoughtRecords() {
     }
 
     setRecords((prev) => [data, ...prev])
+    setTotal((t) => (t == null ? t : t + 1))
     setForm(emptyForm)
     setShowSuccess(true)
     setTimeout(() => setShowSuccess(false), 2500)
@@ -113,6 +140,7 @@ export default function ThoughtRecords() {
     }
 
     setRecords((prev) => prev.filter((r) => r.id !== pendingDelete.id))
+    setTotal((t) => (t == null ? t : Math.max(0, t - 1)))
     setPendingDelete(null)
   }
 
@@ -137,7 +165,7 @@ export default function ThoughtRecords() {
         </div>
         <div className="folio-meta">
           <span>
-            <b>{records.length}</b> on file
+            <b>{total ?? records.length}</b> on file
           </span>
           <span>Confidential</span>
         </div>
@@ -318,6 +346,17 @@ export default function ThoughtRecords() {
               </StaggerItem>
             ))}
           </StaggerGroup>
+        )}
+
+        {!loading && total != null && records.length < total && (
+          <div className="brief-actions">
+            <button type="button" className="btn btn--quiet" onClick={loadMore} disabled={loadingMore}>
+              {loadingMore ? 'Fetching…' : `Show ${Math.min(PAGE_SIZE, total - records.length)} more`}
+            </button>
+            <span className="panel-note" aria-live="polite">
+              Showing {records.length} of {total}
+            </span>
+          </div>
         )}
       </Reveal>
 

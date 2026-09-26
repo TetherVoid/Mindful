@@ -12,6 +12,20 @@ export function listThoughtRecords(limit, columns = '*') {
     .limit(limit)
 }
 
+/**
+ * One page of records, newest first, with the exact total on file. The total
+ * is what the page says; the page length is only how many are shown so far.
+ *
+ * @returns {Promise<import('@shared/contracts').ServiceResult<import('@shared/contracts').ThoughtRecord[]> & { count: number | null }>}
+ */
+export function listThoughtRecordsPage({ offset = 0, limit = 20 } = {}, columns = '*') {
+  return supabase
+    .from(TABLES.thoughtRecords)
+    .select(columns, { count: 'exact' })
+    .order('created_at', { ascending: false })
+    .range(offset, offset + limit - 1)
+}
+
 /** Rows plus an exact total, for a page that shows both a preview and a count. */
 export function listThoughtRecordsWithCount(limit, columns = '*') {
   return supabase

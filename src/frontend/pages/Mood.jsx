@@ -10,7 +10,7 @@ import {
   Tooltip,
   Brush,
 } from 'recharts'
-import { listRecentMoodsChronological, createMood } from '@backend/services/moods'
+import { listRecentMoodsChronological, createMood, countMoods } from '@backend/services/moods'
 import { useAuth } from '@backend/auth/AuthContext'
 import useLiveAccentColor from '@design/theme/useLiveAccentColor'
 import { getMoodHistoryLength } from '@shared/utils/preferences'
@@ -84,6 +84,9 @@ export default function Mood() {
   // The weekday strip reads the same half-year window as the reading, not the
   // chart's shorter one, so a weekday average means the same thing on both.
   const [week, setWeek] = useState(null)
+  // Every entry on file, not just the chart's window — the same total the
+  // day sheet and the reading work from.
+  const [totalMoods, setTotalMoods] = useState(null)
 
   const historyLength = getMoodHistoryLength()
 
@@ -97,7 +100,10 @@ export default function Mood() {
   async function loadLogs() {
     setLoading(true)
     setError(null)
-    const { data, error: loadError } = await listRecentMoodsChronological(historyLength)
+    const [{ data, error: loadError }, counted] = await Promise.all([
+      listRecentMoodsChronological(historyLength),
+      countMoods(),
+    ])
 
     if (loadError) {
       setError(loadError.message)
@@ -106,6 +112,7 @@ export default function Mood() {
     }
 
     setLogs(data ?? [])
+    setTotalMoods(counted.count ?? (data ?? []).length)
     setLoading(false)
   }
 
@@ -136,6 +143,7 @@ export default function Mood() {
     }
 
     setLogs((prev) => [...prev, data].slice(-historyLength))
+    setTotalMoods((t) => (t == null ? t : t + 1))
     setNote('')
     // Cleared so the next mark is a fresh choice, not a repeat of this one.
     setScore(null)
@@ -189,11 +197,11 @@ export default function Mood() {
         </div>
         <div className="folio-meta">
           <span>
-            <b>{logs.length}</b> entries held
+            <b>{totalMoods ?? logs.length}</b> {(totalMoods ?? logs.length) === 1 ? 'entry' : 'entries'} in all
           </span>
           {mean !== null && (
             <span>
-              Average day <b>{mean.toFixed(1)}</b> / 5
+              Average day <b>{mean.toFixed(1)}</b> / 5 · last {logs.length}
             </span>
           )}
         </div>

@@ -1,6 +1,6 @@
-import { listRecentMoods } from '../moods'
+import { listRecentMoods, countMoods } from '../moods'
 import { listHabits, listHabitLogs } from '../habits'
-import { listThoughtRecords } from '../thoughts'
+import { listThoughtRecordsWithCount } from '../thoughts'
 import { buildInsights } from './insights'
 
 // How much history the report reads. Half a year of moods is enough for a
@@ -19,14 +19,15 @@ export const THOUGHT_WINDOW = 100
  * }>>}
  */
 export async function loadReportData() {
-  const [moods, habits, habitLogs, thoughts] = await Promise.all([
+  const [moods, moodTotal, habits, habitLogs, thoughts] = await Promise.all([
     listRecentMoods(MOOD_WINDOW, 'mood_score, note, created_at'),
+    countMoods(),
     listHabits('id, name, archived, created_at'),
     listHabitLogs('habit_id, date'),
-    listThoughtRecords(THOUGHT_WINDOW, '*'),
+    listThoughtRecordsWithCount(THOUGHT_WINDOW, '*'),
   ])
 
-  const error = moods.error ?? habits.error ?? habitLogs.error ?? thoughts.error
+  const error = moods.error ?? moodTotal.error ?? habits.error ?? habitLogs.error ?? thoughts.error
   if (error) return { data: null, error }
 
   return {
@@ -35,6 +36,12 @@ export async function loadReportData() {
       habits: habits.data ?? [],
       habitLogs: habitLogs.data ?? [],
       thoughts: thoughts.data ?? [],
+      // How many are on file in all, so the page can say "your latest 100 of
+      // 214" rather than implying the window is everything.
+      onFile: {
+        moods: moodTotal.count ?? (moods.data ?? []).length,
+        thoughts: thoughts.count ?? (thoughts.data ?? []).length,
+      },
     },
     error: null,
   }

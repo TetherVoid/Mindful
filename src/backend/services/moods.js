@@ -32,6 +32,14 @@ export async function listRecentMoodsChronological(limit, columns) {
   return { data: (data ?? []).slice().reverse(), error: null }
 }
 
+/**
+ * How many mood entries the reader has in all. A count only — no rows come
+ * back — so a page can say "240 in all" beside a chart of the last 30.
+ */
+export function countMoods() {
+  return supabase.from(TABLES.moodLogs).select('id', { count: 'exact', head: true })
+}
+
 /** Scores only — enough to build a distribution, without pulling note text. */
 export function listMoodScores(limit) {
   return supabase
