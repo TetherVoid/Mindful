@@ -17,6 +17,7 @@ import { habitObservations } from '@backend/services/report/observations'
 import Reveal from '@design/primitives/Reveal'
 import { StaggerGroup, StaggerItem } from '@design/primitives/Stagger'
 import Icon from '@design/primitives/Icon'
+import { TEXT_LIMITS } from '@shared/constants/limits'
 
 const HOT_STREAK = 7
 
@@ -183,6 +184,7 @@ export default function Habits() {
           placeholder="Add a habit — e.g. ten minutes of quiet"
           value={newHabit}
           onChange={(e) => setNewHabit(e.target.value)}
+          maxLength={TEXT_LIMITS.habitName}
         />
         <button type="submit" className="btn btn--ink">
           <Icon name="plus" size={15} />

@@ -1,5 +1,6 @@
 import { supabase } from '../database/client'
 import { TABLES } from '@shared/constants/tables'
+import { withQuotaMessage } from '../utils/quota'
 
 // The habit register: habits, their ticks, and the counts the dashboard shows.
 
@@ -52,7 +53,7 @@ export function countActiveHabits() {
 }
 
 export function createHabit({ userId, name }) {
-  return supabase.from(TABLES.habits).insert({ user_id: userId, name }).select().single()
+  return withQuotaMessage(supabase.from(TABLES.habits).insert({ user_id: userId, name }).select().single())
 }
 
 /**
@@ -65,7 +66,7 @@ export function createHabit({ userId, name }) {
 export function setHabitDone({ habitId, userId, date, done }) {
   return done
     ? supabase.from(TABLES.habitLogs).delete().eq('habit_id', habitId).eq('date', date)
-    : supabase.from(TABLES.habitLogs).insert({ habit_id: habitId, user_id: userId, date })
+    : withQuotaMessage(supabase.from(TABLES.habitLogs).insert({ habit_id: habitId, user_id: userId, date }))
 }
 
 /**

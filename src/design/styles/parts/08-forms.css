@@ -31,6 +31,19 @@ label,
   font-weight: 700;
 }
 
+/* Character count under a text field — appears near the limit only. */
+.char-count {
+  align-self: flex-end;
+  font-family: var(--font-mono);
+  font-size: var(--text-3xs);
+  letter-spacing: 0.08em;
+  color: var(--muted);
+}
+
+.char-count--full {
+  color: var(--danger);
+}
+
 input,
 textarea,
 select {

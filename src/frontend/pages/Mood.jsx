@@ -22,6 +22,8 @@ import { loadInsights } from '@backend/services/report/data'
 import { weekdayStrip } from '@backend/services/report/observations'
 import Reveal from '@design/primitives/Reveal'
 import Icon, { MoodFace } from '@design/primitives/Icon'
+import CharCount from '@design/primitives/CharCount'
+import { TEXT_LIMITS } from '@shared/constants/limits'
 
 const MOODS = [
   { score: 1, label: 'Awful' },
@@ -244,8 +246,10 @@ export default function Mood() {
             placeholder="Optional. A sentence is plenty."
             value={note}
             onChange={(e) => setNote(e.target.value)}
+            maxLength={TEXT_LIMITS.moodNote}
             rows={3}
           />
+          <CharCount value={note} max={TEXT_LIMITS.moodNote} />
         </div>
 
         {lastToday && (

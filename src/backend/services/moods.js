@@ -1,5 +1,6 @@
 import { supabase } from '../database/client'
 import { TABLES } from '@shared/constants/tables'
+import { withQuotaMessage } from '../utils/quota'
 
 // Mood log reads and writes.
 //
@@ -50,9 +51,7 @@ export function listMoodScores(limit) {
 }
 
 export function createMood({ userId, moodScore, note }) {
-  return supabase
-    .from(TABLES.moodLogs)
-    .insert({ user_id: userId, mood_score: moodScore, note })
-    .select()
-    .single()
+  return withQuotaMessage(
+    supabase.from(TABLES.moodLogs).insert({ user_id: userId, mood_score: moodScore, note }).select().single()
+  )
 }

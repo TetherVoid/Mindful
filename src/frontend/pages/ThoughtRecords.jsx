@@ -11,6 +11,8 @@ import FormError from '@frontend/components/FormError'
 import Reveal from '@design/primitives/Reveal'
 import { StaggerGroup, StaggerItem } from '@design/primitives/Stagger'
 import Icon from '@design/primitives/Icon'
+import CharCount from '@design/primitives/CharCount'
+import { TEXT_LIMITS } from '@shared/constants/limits'
 
 // Records are shown a page at a time, newest first. The header always gives
 // the true total on file — the same number the day sheet gives — however many
@@ -191,7 +193,9 @@ export default function ThoughtRecords() {
             placeholder="Where you were and what happened."
             value={form.situation}
             onChange={(e) => updateField('situation', e.target.value)}
+            maxLength={TEXT_LIMITS.situation}
           />
+          <CharCount value={form.situation} max={TEXT_LIMITS.situation} />
         </div>
 
         <div className="field">
@@ -205,7 +209,9 @@ export default function ThoughtRecords() {
             placeholder="The sentence that arrived on its own."
             value={form.automatic_thought}
             onChange={(e) => updateField('automatic_thought', e.target.value)}
+            maxLength={TEXT_LIMITS.automaticThought}
           />
+          <CharCount value={form.automatic_thought} max={TEXT_LIMITS.automaticThought} />
         </div>
 
         <div className="field-row">
@@ -219,6 +225,7 @@ export default function ThoughtRecords() {
               placeholder="anxious"
               value={form.emotion}
               onChange={(e) => updateField('emotion', e.target.value)}
+              maxLength={TEXT_LIMITS.emotion}
             />
           </div>
           <div className="field">
@@ -246,7 +253,9 @@ export default function ThoughtRecords() {
             placeholder="Facts, not feelings."
             value={form.evidence_for}
             onChange={(e) => updateField('evidence_for', e.target.value)}
+            maxLength={TEXT_LIMITS.evidenceFor}
           />
+          <CharCount value={form.evidence_for} max={TEXT_LIMITS.evidenceFor} />
         </div>
 
         <div className="field">
@@ -259,7 +268,9 @@ export default function ThoughtRecords() {
             placeholder="What a fair witness would point out."
             value={form.evidence_against}
             onChange={(e) => updateField('evidence_against', e.target.value)}
+            maxLength={TEXT_LIMITS.evidenceAgainst}
           />
+          <CharCount value={form.evidence_against} max={TEXT_LIMITS.evidenceAgainst} />
         </div>
 
         <div className="field">
@@ -272,7 +283,9 @@ export default function ThoughtRecords() {
             placeholder="What you'd tell a friend in the same spot."
             value={form.balanced_thought}
             onChange={(e) => updateField('balanced_thought', e.target.value)}
+            maxLength={TEXT_LIMITS.balancedThought}
           />
+          <CharCount value={form.balanced_thought} max={TEXT_LIMITS.balancedThought} />
         </div>
 
         <button type="submit" className="btn btn--solid">

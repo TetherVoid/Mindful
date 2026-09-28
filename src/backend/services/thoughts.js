@@ -1,5 +1,6 @@
 import { supabase } from '../database/client'
 import { TABLES } from '@shared/constants/tables'
+import { withQuotaMessage } from '../utils/quota'
 
 // CBT thought records.
 
@@ -36,11 +37,9 @@ export function listThoughtRecordsWithCount(limit, columns = '*') {
 }
 
 export function createThoughtRecord({ userId, ...fields }) {
-  return supabase
-    .from(TABLES.thoughtRecords)
-    .insert({ user_id: userId, ...fields })
-    .select()
-    .single()
+  return withQuotaMessage(
+    supabase.from(TABLES.thoughtRecords).insert({ user_id: userId, ...fields }).select().single()
+  )
 }
 
 export function deleteThoughtRecord(id) {
