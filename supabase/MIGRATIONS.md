@@ -46,6 +46,11 @@ supabase/migrations/
   20260926000100_report_limits_and_date_only_activity.sql
                                                 3/student, 300/deployment AI readings
                                                 a day; overview dates, not times
+  20260927000100_text_limits_and_insert_quotas.sql
+                                                length limits on every free-text column,
+                                                daily insert quotas, server-set created_at
+  20260927000200_report_slot_eligibility.sql    AI readings need a confirmed account
+                                                at least a day old
 supabase/tests/                             pgTAP, run with `supabase test db`
 ```
 
@@ -236,6 +241,59 @@ Either way, a partial failure does not need a rollback. `db push` runs each
 migration in its own transaction, so one that fails leaves the database exactly
 as it was before that file, and the remote history records which ones succeeded.
 Fix the file and push again.
+
+## Auth email: who sends the confirmation links
+
+Supabase's built-in mailer only delivers to members of the project's team and
+is heavily rate-limited — it is for trying things out. Until a custom SMTP
+server is configured, **no student can confirm their email address**, which
+means no student can sign in. This is a dashboard setting, not a migration.
+
+### Current: a dedicated Gmail account (stopgap)
+
+Chosen 2026-09-27 because it costs nothing and needs no domain.
+
+- **Needs:** a Gmail account used for nothing else (not a personal one), with
+  2-Step Verification on.
+- **Limits:** about 500 recipients a day. Google may lock an account whose
+  sending looks automated; mail from `@gmail.com` relayed by a third party is
+  more likely to land in spam, school mail systems included. App passwords are
+  unavailable on accounts with Advanced Protection.
+- **Steps:**
+  1. Google Account → Security → 2-Step Verification → on.
+  2. Google Account → Security → App passwords → create one named
+     "Mindful Supabase". Copy the 16 characters; they are shown once.
+  3. Supabase → project `czvejcytunugftbspxmr` → Authentication → Emails →
+     SMTP Settings → **Enable custom SMTP**:
+     - Sender email: the Gmail address (it must be the same account)
+     - Sender name: `Mindful`
+     - Host: `smtp.gmail.com`, Port: `587`
+     - Username: the full Gmail address; Password: the app password
+  4. Authentication → Rate Limits → "Rate limit for sending emails": **20 per
+     hour**.
+  5. Check: sign up on the live site with an address outside the Supabase team.
+     The email should arrive within a minute; open its link in the **same
+     browser** (PKCE) and you land signed in.
+- If the app password is ever exposed, revoke it on the App passwords page and
+  create another — the Gmail password itself is never involved.
+
+### Later: Resend with a custom domain (the durable option)
+
+For when a domain exists. Not configured.
+
+- **Needs:** a domain you own (about ₹800–1,000 a year for `.in` or `.com`),
+  a Resend account, and access to the domain's DNS.
+- **Limits:** free plan 3,000 emails a month and 100 a day, one domain.
+- **Steps:**
+  1. Resend → Domains → Add, using a subdomain such as `mail.<domain>`.
+  2. Add the records Resend lists at the registrar: MX and SPF (TXT) on the
+     `send.` subdomain, DKIM (TXT) at `resend._domainkey`, and a DMARC TXT at
+     `_dmarc` (`v=DMARC1; p=none;`). Wait for **Verified**.
+  3. Resend → API Keys → Create, "Sending access", limited to that domain.
+  4. Supabase → Authentication → Emails → SMTP Settings: sender
+     `no-reply@mail.<domain>`, name `Mindful`, host `smtp.resend.com`, port
+     `465`, username `resend`, password the API key.
+  5. Rate Limits → emails: **30 per hour** (under Resend's 100 a day).
 
 ## `rls_auto_enable`
 

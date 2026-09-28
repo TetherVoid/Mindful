@@ -24,7 +24,9 @@ begin
     confirmation_token, recovery_token, email_change_token_new, email_change
   ) values (
     '00000000-0000-0000-0000-000000000000', p_id, 'authenticated', 'authenticated',
-    p_email, 'x', now(), now(), now(),
+    -- Created two days ago: since 20260927000200 an account needs to be a day
+    -- old before claim_report_slot() will grant it anything.
+    p_email, 'x', now(), now() - interval '2 days', now(),
     '{"provider":"email","providers":["email"]}'::jsonb, '{}'::jsonb,
     '', '', '', ''
   );

@@ -269,12 +269,49 @@ last slot, and prunes rows older than 48 hours on every call. RLS is on with no
 policies and every privilege revoked, so no role reads or writes the table
 directly; rows go with the account when it is deleted.
 
+Since `20260927000200` a slot also needs an account whose email address is
+**confirmed** and which is **at least 24 hours old**; otherwise the function
+answers `unconfirmed` or `account_too_new` and records nothing. Without it, a
+hundred throwaway sign-ups could take the deployment's 300 readings in an
+afternoon and leave every real student with "limit reached" until the next day.
+The day's wait also leaves time to notice a burst of sign-ups before it can
+spend anything.
+
 `/api/report` claims a slot with the caller's own token after every free check
 has passed, and **fails closed**: if the claim cannot be made — the database is
 unreachable, or the migration has not been applied — no model is called and the
 student gets the reading written in their browser. A slot is spent even if the
 model call then fails, so a failing request cannot be retried into a bill.
 Changing either limit is a new migration.
+
+## How much one account can write
+
+Before `20260927000100` one signed-in student could fill the free tier's 500 MB:
+the journal's text columns were unbounded and one request could insert
+thousands of rows. Three rules now bound it, and each needs the others.
+
+- **Length limits, in the database.** Mood note 2,000 characters; thought-record
+  situation, automatic thought and balanced thought 2,000 each; evidence for and
+  against 4,000 each; emotion 60; habit name 80; the five `first_utm_*` columns
+  200; the audit `reason` 500; and a join code is exactly ten upper-case hex
+  characters. `display_name` and `classes.name` stay at 120. The pages stop each
+  field at the same limit (`shared/constants/limits.js`), but the CHECK
+  constraints are the control. Students can no longer update their own UTM
+  columns at all — only the sign-up trigger writes them.
+- **Daily quotas per account.** In any 24 hours: 50 moods, 25 thought records,
+  20 new habits, 300 habit ticks. Checked once per INSERT statement, so one bulk
+  request is refused whole. Over the limit the database raises `PT429`, which
+  PostgREST returns as HTTP 429; `backend/utils/quota.js` turns that into a
+  sentence for the page. Quotas apply to the API roles only; the server
+  (migrations, the SQL Editor) is not limited.
+- **`created_at` is the server's.** On the four journal tables it is set to
+  `now()` on insert and cannot be changed afterwards, for API roles. Without
+  this the quota could be dodged by writing rows dated 2019, and a student could
+  backdate entries into the figures a teacher reads.
+
+Worst case per account is now roughly half a megabyte a day. What remains is
+many accounts at once, which is what CAPTCHA on sign-up and the day-old rule for
+AI readings are for.
 
 ## Bootstrapping
 
@@ -296,6 +333,10 @@ Stated plainly, so nobody assumes otherwise:
   does not record which teacher looked at which student's figures. If that
   matters for your deployment, it is a trigger on the definer functions in § 6
   and a table to write to.
+- **No per-IP limits.** The database cannot reliably see a client's address, so
+  limits here are per account. Per-IP limiting belongs in front of the site
+  (the Vercel firewall), and sign-up flooding is Supabase Auth's rate limits and
+  CAPTCHA.
 - **No rate limit on `join_class`.** The codes are 10 hex characters (40 bits),
   which is not brute-forceable at HTTP speeds, but there is nothing in the
   database stopping someone trying.

@@ -67,12 +67,13 @@ the remote database.
 
 ## Known state
 
-- **`ANTHROPIC_API_KEY` is not set in Vercel.** `/api/report` returns 503 and
-  the page falls back to the locally written reading, which uses the same
-  figures and is intentionally a first-class result, not an error page. The cost
-  controls are in place for when it is set: Claude Sonnet 5 at low effort,
-  `max_tokens` 4000, and `claim_report_slot()` (3 per student, 300 per
-  deployment, per 24 hours; fails closed). Token counts are logged as
+- **`ANTHROPIC_API_KEY` is set in Vercel** (production only, as a secret, since
+  2026-09-26). Without it `/api/report` returns 503 and the page falls back to
+  the locally written reading, which uses the same figures and is intentionally
+  a first-class result, not an error page. Cost controls: Claude Sonnet 5 at low
+  effort, `max_tokens` 4000, and `claim_report_slot()` (3 per student, 300 per
+  deployment, per 24 hours; fails closed; since `20260927000200` only for a
+  confirmed account at least a day old). Token counts are logged as
   `[report] … input_tokens=… output_tokens=…` — read them in the first week to
   replace the cost estimates (~$0.025 typical, ~$0.06 worst case per reading).
 - **Consent governs all figure access** (`20260925000100`): teachers and
@@ -133,6 +134,29 @@ the remote database.
   logging, and a server-side refusal of any student-typed text.
 - Counts agree across pages; `/thoughts` pages 20 at a time.
 - The storage notice no longer covers the support line.
+
+**2026-09-26/27 — security review.** A full audit of the backend (Supabase,
+`api/`, Vercel, secrets, dependencies), threat-modelled for an app used by
+minors. Git history and the live bundle hold no secrets; `npm audit` is clean;
+anonymous callers reach nothing. The Critical group, built and tested locally:
+
+- `20260927000100`: length limits on every free-text column, daily insert quotas
+  (50 moods, 25 thought records, 20 habits, 300 ticks per account), and
+  server-set `created_at` so the quota cannot be dodged. 36 pgTAP tests.
+- `20260927000200`: AI readings need a confirmed account at least a day old.
+  8 pgTAP tests; `070` fixtures now date their accounts two days back.
+- Journal fields stop at the database's limits and show a count near them; a
+  429 from the quota reads as a sentence, not an error.
+- `vercel.json`: functions in `bom1`; `X-Frame-Options: DENY`,
+  `frame-ancestors 'none'`, nosniff, Referrer-Policy. Checked by
+  `scripts/check-deploy-config.mjs`, which also has a `--live URL` mode.
+- Auth email is to go through a dedicated Gmail account (a dashboard step for the
+  human; stopgap; Resend documented
+  in `MIGRATIONS.md` for when a domain exists).
+
+Hardening and defence-in-depth items (env-var cleanup, class-owner fix, CSP,
+Turnstile, admin stats panel, grants, private helper schema) are planned and
+approved but not built yet.
 
 Still to do: Phase C (calendar reminder, removing Three.js, mobile tap targets,
 light-theme contrast, Settings.jsx formatting).
