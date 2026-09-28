@@ -102,8 +102,10 @@ export default function Mood() {
   async function loadLogs() {
     setLoading(true)
     setError(null)
+    // Read here rather than closing over historyLength, so the mount effect
+    // below depends on nothing reactive and stays a run-once load.
     const [{ data, error: loadError }, counted] = await Promise.all([
-      listRecentMoodsChronological(historyLength),
+      listRecentMoodsChronological(getMoodHistoryLength()),
       countMoods(),
     ])
 

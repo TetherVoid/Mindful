@@ -1,41 +1,41 @@
-# Claude Code
+# Mindful — Claude Code
 
-You are the only agent on Mindful and you own the whole repository. Read
-`AGENT_RULES.md` before you touch anything — it is the source of truth; this
-file is a summary.
+Student wellbeing journal (mood, habits, CBT thought records). Many users are
+under 18 and what they write is sensitive: privacy and consent are features.
+You are the only agent and own the repo. Full rules: `AGENT_RULES.md`. Access
+model: `supabase/SECURITY.md` (read the relevant part before changing who can
+see what). Current state and traps: `SESSION_NOTES.md`.
 
-Mindful is a student wellbeing journal. Many users are school students under
-18, and what they write is sensitive. Privacy and consent are product features:
-read `supabase/SECURITY.md` before changing anything that decides who can see
-what.
+Stack: Vite + React 19, plain JS and CSS, Supabase, Vercel functions in `api/`.
 
-## Architecture rules (enforced by `scripts/check-boundaries.mjs`)
+## Hard rules
 
-- Layers: `app` → `frontend` → `design` / `backend` → `shared` / `config`. See
-  the import table in `AGENT_RULES.md` § 1.
-- Nothing outside `src/backend/` may import `backend/database/client`. A page
-  that needs data calls a function in `src/backend/services/*`, and every
-  service returns Supabase's own `{ data, error }` shape.
-- `src/config/env.js` is the only file that reads `import.meta.env`.
-- Never give a secret a `VITE_` prefix. `VITE_` values are inlined into the
-  public bundle; server-only values come from `process.env` inside `api/`.
-
-## Database
-
-- Never edit an existing migration. New changes are new files in
-  `supabase/migrations/` with pgTAP tests in `supabase/tests/`, run with
-  `supabase test db` against the local stack.
-- Never run anything against the remote database. The human applies
-  migrations to production.
+- Commit locally at the end of a task; never push or touch the remote database
+  without my "go". For those, write an approval packet and I run the commands.
+- Layers: `app` → `frontend` → `design` / `backend` → `shared` / `config`.
+  Only `src/backend/` imports `backend/database/client`; pages call
+  `src/backend/services/*`, which return Supabase's `{ data, error }`.
+- `src/config/env.js` is the only reader of `import.meta.env`. Never give a
+  secret a `VITE_` prefix (it ships in the public bundle).
+- Never edit a committed migration. New file + pgTAP test, local stack only.
 - Never weaken RLS, consent or authorisation to make a feature easier.
+- Nothing a student typed may reach the AI, logs or URLs.
 
-## Before calling a change finished
+## Workflow (skill: `task-workflow`)
 
-```bash
-node scripts/check-boundaries.mjs   # layers, db access, import cycles
-node scripts/check-deploy-config.mjs  # bom1 region, frame protection, headers
-npm run lint                        # 12 pre-existing warnings, 0 errors
-npm run build
-```
+1. Scope: ordinary, or **gated** (`supabase/`, `api/`, `vercel.json`, auth,
+   consent, env).
+2. Unfamiliar code → `explorer` agent. Gated or >3 files → `planner`.
+3. Build the smallest diff. Migrations → `migration-checklist` skill.
+4. `npm run verify` until green (one summary line; lint may only go down).
+5. Review: `reviewer` (ordinary) or `gated-reviewer` (gated).
+6. Commit locally. Remote steps → `approval-packet` + `deploy-order`.
 
-Do not commit or push unless the human explicitly asks.
+Save tokens: `graphify query "<question>"` before grepping, subagents for
+reading, excerpts over whole files. Run `graphify update .` after big changes.
+
+Guards (`.claude/settings.json`, `scripts/hooks/`, `scripts/lint-baseline.json`)
+block pushes, remote Supabase/Vercel calls, edits to committed migrations and
+edits to the guards. They are mine: if one is wrong, tell me the fix; never
+work around it. Preview with `VITE_USE_FIXTURES=true`, because plain
+`npm run dev` reads `.env.local`, which points at production.

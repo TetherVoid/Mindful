@@ -46,5 +46,7 @@ supabase/.temp
 .env*
 !.env.example
 
-# Claude desktop app preview configuration (machine-local)
-.claude/
+# Claude Code: agents, skills and settings.json are shared and tracked; these two
+# are per-machine (the desktop app's preview config and personal overrides).
+.claude/launch.json
+.claude/settings.local.json

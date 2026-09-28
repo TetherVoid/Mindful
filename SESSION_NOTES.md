@@ -22,10 +22,10 @@ under 18. One agent (Claude Code) maintains the whole repository.
 
 ```bash
 VITE_USE_FIXTURES=true VITE_FIXTURE_SCENARIO=heavy npm run dev   # empty | week | heavy
-node scripts/check-boundaries.mjs && npm run lint && npm run build
+npm run verify                                                   # every check, one summary line
 ```
 
-Lint baseline: **12 warnings, 0 errors.** A clean build takes under a second; a
+Lint baseline: **11 warnings, 0 errors** (a ratchet — `npm run verify` lowers `scripts/lint-baseline.json` and fails if warnings rise). A clean build takes under a second; a
 slow "build" is `npm install` or a Vercel deploy, not Vite.
 
 Database, local only:
@@ -62,6 +62,9 @@ the remote database.
   with `--mode staging`.
 - **`vite build --outDir` outside the project does not empty the folder**, so
   old hashed chunks pile up there.
+- **Plain `npm run dev` talks to production.** `.env.local` holds the Mumbai
+  URL and anon key, so a dev server without `VITE_USE_FIXTURES=true` signs in
+  and reads against the live database. Preview with fixtures.
 
 ---
 
@@ -157,6 +160,20 @@ anonymous callers reach nothing. The Critical group, built and tested locally:
 Hardening and defence-in-depth items (env-var cleanup, class-owner fix, CSP,
 Turnstile, admin stats panel, grants, private helper schema) are planned and
 approved but not built yet.
+
+**2026-09-28 — Claude Code workflow.** `.claude/` is now tracked: four agents
+(explorer/haiku, planner/opus, reviewer/sonnet, gated-reviewer/opus), four
+skills (task-workflow, approval-packet, deploy-order, migration-checklist) and
+`settings.json` guards. `scripts/hooks/guard-migrations.mjs` blocks edits to
+committed migrations and to the guard files themselves; `guard-remote.mjs`
+blocks pushes and remote Supabase/Vercel commands and MCP calls. Both read Bash
+through a small shell tokenizer (`scripts/hooks/lib/shell.mjs`); 106 cases in
+`tests/guards.test.mjs`, several of them bypasses the gated-reviewer found.
+The guard files are the human's to edit. `npm run verify` runs every check, including the new
+`/api/report` stub test (`tests/`) and pgTAP when the stack is up. ECC is
+disabled for this repo (`docs/ecc.md`). CLAUDE.md is self-contained;
+AGENT_RULES.md slimmed, its archive now in `docs/archive/`. Commits are local
+at the end of each task; pushing stays with the human.
 
 Still to do: Phase C (calendar reminder, removing Three.js, mobile tap targets,
 light-theme contrast, Settings.jsx formatting).

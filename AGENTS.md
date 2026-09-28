@@ -14,10 +14,9 @@ Tailwind), Supabase, Vercel serverless functions in `api/`.
 Aliases: `@app @frontend @design @backend @shared @config`.
 
 ```bash
-node scripts/check-boundaries.mjs
-npm run lint          # 12 pre-existing warnings, 0 errors
-npm run build
+npm run verify        # boundaries, deploy config, lint ratchet, build, tests
 VITE_USE_FIXTURES=true VITE_FIXTURE_SCENARIO=heavy npm run dev
 ```
 
-Do not commit or push unless the human explicitly asks.
+Commit locally at the end of a task. Never push, and never run anything against
+the remote database, without the human's explicit "go".
