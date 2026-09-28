@@ -60,6 +60,12 @@ const LIMIT_MESSAGES = {
     'That is three readings today, which is as many as there can be in a day. “Write it here instead” still works, any time.',
   global_limit:
     'The writing service has reached its limit for today. “Write it here instead” still works, any time.',
+  // Since 20260927000200: a slot needs a confirmed account at least a day old,
+  // so a burst of new sign-ups cannot spend the deployment's allowance.
+  account_too_new:
+    'The written reading opens on your account’s second day. “Write it here instead” works now.',
+  unconfirmed:
+    'Confirm your email address first — the link is in your inbox. “Write it here instead” works now.',
 }
 
 const MAX_BODY_BYTES = 64 * 1024
