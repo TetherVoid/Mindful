@@ -33,6 +33,7 @@ what.
 
 ```bash
 node scripts/check-boundaries.mjs   # layers, db access, import cycles
+node scripts/check-deploy-config.mjs  # bom1 region, frame protection, headers
 npm run lint                        # 12 pre-existing warnings, 0 errors
 npm run build
 ```

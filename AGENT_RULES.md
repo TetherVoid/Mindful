@@ -116,7 +116,12 @@ to lock. Rename a class in the JSX and the stylesheet together.
 `23-responsive.css` must stay last.
 
 **`vercel.json`'s `/((?!api/).*)` rewrite** must not be broadened — widening it
-shadows `/api/*`.
+shadows `/api/*`. The same file pins functions to `bom1` and sets the
+frame-protection headers; `scripts/check-deploy-config.mjs` checks all three.
+
+**`shared/constants/limits.js`** mirrors the CHECK constraints in
+`20260927000100_text_limits_and_insert_quotas.sql`. The database enforces the
+limits; the constants only stop the fields there. Change them together.
 
 **`src/app/providers.jsx`**: provider order is load-bearing. `ThemeProvider`
 sits outside `AuthProvider` so a signed-out visitor still gets their theme.
@@ -145,6 +150,7 @@ shape changes.
 
 ```bash
 node scripts/check-boundaries.mjs   # layers, database access, cycles
+node scripts/check-deploy-config.mjs  # bom1 region, frame protection, headers
 npm run lint                        # 12 pre-existing warnings, no errors
 npm run build                       # must succeed
 supabase test db                    # when a migration changed (local stack)
