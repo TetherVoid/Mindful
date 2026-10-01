@@ -117,6 +117,11 @@
     display: inline;
   }
 
+  /* The short date fits beside two buttons at 320px only with tighter caps. */
+  .masthead-slug {
+    letter-spacing: 0.14em;
+  }
+
   .panel {
     padding: var(--space-5) var(--space-4);
   }

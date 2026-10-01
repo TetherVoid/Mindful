@@ -29,6 +29,9 @@
   // --- helpers --------------------------------------------------------------
   const cs = (el) => getComputedStyle(el)
   function visible(el) {
+    // checkVisibility also sees content-visibility: hidden — the closed part of
+    // a <details> stays in layout but is not drawn.
+    if (el.checkVisibility && !el.checkVisibility({ visibilityProperty: true, contentVisibilityAuto: true })) return false
     const s = cs(el)
     if (s.display === 'none' || s.visibility === 'hidden') return false
     const r = el.getBoundingClientRect()
@@ -118,7 +121,7 @@
 
   // --- 2. clipped and escaping text ------------------------------------------
   for (const el of vis) {
-    if (!hasOwnText(el)) continue
+    if (!hasOwnText(el) || el.matches('.visually-hidden')) continue
     const s = cs(el)
     const clips = /(hidden|clip)/.test(s.overflowX) || /(hidden|clip)/.test(s.overflowY)
     if (clips && (el.scrollWidth > el.clientWidth + 1 || el.scrollHeight > el.clientHeight + 1) && s.textOverflow !== 'ellipsis' && !/-webkit-box/.test(s.display)) {
@@ -128,7 +131,7 @@
   const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT)
   const range = document.createRange()
   for (let n = walker.nextNode(); n; n = walker.nextNode()) {
-    if (!n.textContent.trim() || !n.parentElement || !visible(n.parentElement)) continue
+    if (!n.textContent.trim() || !n.parentElement || !visible(n.parentElement) || n.parentElement.closest('.visually-hidden')) continue
     if (n.parentElement.closest('svg')) continue
     let box = n.parentElement
     while (box && cs(box).display.startsWith('inline')) box = box.parentElement
