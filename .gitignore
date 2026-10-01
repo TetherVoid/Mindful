@@ -50,3 +50,6 @@ supabase/.temp
 # are per-machine (the desktop app's preview config and personal overrides).
 .claude/launch.json
 .claude/settings.local.json
+
+# Visual sweep output (scripts/sweep/run.mjs)
+sweep-out/

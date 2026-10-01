@@ -231,9 +231,48 @@ const LOCAL_USER = {
 // same error a misconfigured project would, rather than a fabricated roster: a
 // teacher view that works on sample data and fails against a real project is a
 // worse lie than one that says up front it cannot be tried here.
-function mockRpc(store, fn) {
+//
+// The one exception is the teacher and admin scenarios (fixtures.js), which
+// exist so the visual sweep can lay out /classes and /admin with long names.
+// There, the read functions answer from the fixture tables with NO filtering —
+// consent, enrolment and role checks all live in the real database, and none
+// of them is imitated here. Writes still refuse.
+function mockRpc(store, fn, args = {}) {
   if (fn === 'my_profile') {
     return { data: store.profiles.map((row) => ({ ...row })), error: null }
+  }
+  const people = store.fixture_people
+  if (people) {
+    const inClass = (classId) => store.class_members.filter((m) => m.class_id === classId).map((m) => people.find((p) => p.id === m.user_id))
+    const figures = (p, i) => ({
+      user_id: p.id,
+      display_name: p.display_name,
+      mood_entries: 12 + i * 7,
+      average_mood: i % 4 === 3 ? null : 2.4 + (i % 5) * 0.4,
+      last_mood_at: i % 4 === 3 ? null : '2026-09-30',
+      active_habits: (i % 4) + 1,
+      habit_ticks: 30 + i * 11,
+      thought_record_count: i * 3,
+      last_activity_at: '2026-09-30',
+    })
+    if (fn === 'class_roster') {
+      return { data: inClass(args.p_class_id).map((p) => ({ user_id: p.id, display_name: p.display_name, share_with_teachers: p.share_with_teachers })), error: null }
+    }
+    if (fn === 'class_overview') {
+      return { data: inClass(args.p_class_id).filter((p) => p.share_with_teachers).map(figures), error: null }
+    }
+    if (fn === 'student_overview') {
+      const i = people.findIndex((p) => p.id === args.p_student_id)
+      return { data: i === -1 ? [] : [figures(people[i], i)], error: null }
+    }
+    if (fn === 'admin_list_users') {
+      // Same argument names as services/profile.js sends.
+      const q = String(args.search ?? '').toLowerCase()
+      const all = [{ ...store.profiles[0], email: LOCAL_USER.email }, ...people]
+      const rows = all.filter((p) => !q || `${p.display_name ?? ''} ${p.email ?? ''}`.toLowerCase().includes(q))
+      const offset = args.page_offset ?? 0
+      return { data: rows.slice(offset, offset + (args.page_limit ?? 25)), error: null }
+    }
   }
   return {
     data: null,
@@ -267,9 +306,9 @@ export function createMockClient(scenario, { startSignedIn = true, latencyMs } =
     from(table) {
       return new QueryBuilder(store, table)
     },
-    async rpc(fn) {
+    async rpc(fn, args) {
       await sleep(LATENCY_MS)
-      return mockRpc(store, fn)
+      return mockRpc(store, fn, args)
     },
     auth: {
       async getSession() {

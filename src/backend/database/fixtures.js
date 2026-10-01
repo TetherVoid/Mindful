@@ -8,6 +8,12 @@
 //   heavy  — a long-running account: 200+ records, deliberately long strings,
 //            notes with line breaks. This is where truncation, wrapping and
 //            list performance actually get tested.
+//   teacher, admin — heavy, plus that role, classes and a roster with long
+//            class and student names. FOR LAYOUT TESTING ONLY (the visual
+//            sweep, scripts/sweep/). There is no row-level security here, so
+//            these show rosters and user lists exactly as drawn, not as the
+//            database would filter them; nothing about access can be learned
+//            from them. See mockRpc in mockClient.js.
 //
 // Everything is generated from a fixed seed so two runs produce identical
 // data and screenshots stay comparable.
@@ -114,7 +120,7 @@ function buildScenario(name) {
     return { moodLogs, habits, habitLogs, thoughtRecords }
   }
 
-  const heavy = name === 'heavy'
+  const heavy = name === 'heavy' || name === 'teacher' || name === 'admin'
   const moodDays = heavy ? 240 : 11
   const habitCount = heavy ? 5 : 3
   const recordCount = heavy ? 214 : 4
@@ -189,7 +195,8 @@ function buildScenario(name) {
   return { moodLogs, habits, habitLogs, thoughtRecords }
 }
 
-export const SCENARIOS = ['empty', 'week', 'heavy']
+export const SCENARIOS = ['empty', 'week', 'heavy', 'teacher', 'admin']
+export const ROLE_SCENARIOS = ['teacher', 'admin']
 
 // The signed-in fixture user. Kept here rather than in mockClient because the
 // profiles row and the auth user have to agree on an id, and one of them has to
@@ -212,16 +219,58 @@ export function buildFixtureTables(scenario) {
     profiles: [
       {
         id: FIXTURE_USER_ID,
-        role: 'student',
+        role: ROLE_SCENARIOS.includes(name) ? name : 'student',
         display_name: 'Sam',
         share_with_teachers: true,
         deactivated_at: null,
         created_at: daysAgo(120).toISOString(),
       },
     ],
-    classes: [],
-    class_teachers: [],
-    class_members: [],
-    role_change_audit: [],
+    ...(ROLE_SCENARIOS.includes(name) ? buildRoleTables() : { classes: [], class_teachers: [], class_members: [], role_change_audit: [] }),
+  }
+}
+
+// Layout-testing data for the teacher and admin scenarios: long class names
+// (one with no spaces), long student names, students who do and do not share
+// figures, an archived class, and an audit trail.
+const LONG_CLASS = 'Year 11 Personal, Social, Health and Economic Education — Thursday afternoon group'
+const UNBROKEN_CLASS = 'Wellbeing-and-Mindfulness-Elective-Semester-Two-Combined-Cohort'
+const STUDENT_NAMES = [
+  'Aanya',
+  'Maximilian Alexander Featherstonehaugh-Wolstenholme',
+  'Priyanka Venkataraghavan',
+  null,
+  'Jo',
+  'Oluwaseyifunmi Adebayo-Ogunleye',
+  'Krishnamurthy-Subramaniam-Ramachandran',
+  'Li Wei',
+]
+
+function buildRoleTables() {
+  const classes = [
+    { id: 'class-1', name: LONG_CLASS, join_code: 'K7Q2-9XMB', owner_id: FIXTURE_USER_ID, archived: false, created_at: daysAgo(90).toISOString() },
+    { id: 'class-2', name: UNBROKEN_CLASS, join_code: 'P3RZ-4LWT', owner_id: FIXTURE_USER_ID, archived: false, created_at: daysAgo(60).toISOString() },
+    { id: 'class-3', name: '9C', join_code: 'M8DV-2HJN', owner_id: FIXTURE_USER_ID, archived: true, created_at: daysAgo(200).toISOString() },
+  ]
+  const students = STUDENT_NAMES.map((display_name, i) => ({
+    id: `student-${i + 1}`,
+    role: 'student',
+    display_name,
+    email: display_name ? `${display_name.toLowerCase().replace(/[^a-z]+/g, '.')}@pupils.example-school-district.edu` : `student${i + 1}@example.edu`,
+    share_with_teachers: i % 3 !== 2,
+    deactivated_at: i === 6 ? daysAgo(5).toISOString() : null,
+    created_at: daysAgo(100 - i).toISOString(),
+  }))
+  return {
+    classes,
+    class_teachers: classes.map((c) => ({ class_id: c.id, user_id: FIXTURE_USER_ID, added_by: FIXTURE_USER_ID, created_at: c.created_at })),
+    class_members: students.flatMap((st, i) => [{ class_id: 'class-1', user_id: st.id, joined_at: st.created_at }, ...(i < 3 ? [{ class_id: 'class-2', user_id: st.id, joined_at: st.created_at }] : [])]),
+    role_change_audit: [
+      { id: 'audit-1', target_user_id: 'student-2', previous_role: 'student', new_role: 'teacher', changed_by: FIXTURE_USER_ID, reason: 'Covering the Thursday group while Ms Featherstonehaugh-Wolstenholme is on leave for the rest of term', created_at: daysAgo(12).toISOString() },
+      { id: 'audit-2', target_user_id: 'student-2', previous_role: 'teacher', new_role: 'student', changed_by: FIXTURE_USER_ID, reason: null, created_at: daysAgo(3).toISOString() },
+    ],
+    // Extra people the admin directory and the rosters read. Not profiles rows,
+    // so the signed-in user's my_profile() still returns exactly one row.
+    fixture_people: students,
   }
 }
