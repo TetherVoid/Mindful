@@ -245,8 +245,13 @@
     position: relative;
   }
 
-  /* As wide as --target, and as tall as the line: taller would reach into
-     the next line's number, and a tap there must not land on this one. */
+  /* The support line's lines are --target tall on touch, so each number's
+     hit area can be a full 44×44 without reaching into the next line's. */
+  .support-line {
+    line-height: var(--target);
+  }
+
+  /* As wide as --target, and as tall as the line (now --target). */
   .support-line a::after {
     content: '';
     position: absolute;
