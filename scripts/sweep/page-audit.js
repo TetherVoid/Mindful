@@ -248,11 +248,24 @@
     if (el.matches('input[type=checkbox],input[type=radio]') && (Number(s.opacity) === 0 || el.getBoundingClientRect().width < 2)) {
       target = el.closest('label') ?? (el.id && document.querySelector(`label[for="${el.id}"]`)) ?? el
     }
-    const r = target.getBoundingClientRect()
+    let r = target.getBoundingClientRect()
     if (r.width >= 44 && r.height >= 44) continue
+    // A hit area can be larger than the box (a ::after around an inline link):
+    // probe 22px out from the centre in each direction.
+    target.scrollIntoView({ block: 'center', behavior: 'instant' })
+    r = target.getBoundingClientRect()
+    const cx = r.left + r.width / 2
+    const cy = r.top + r.height / 2
+    const hits = [[cx - 21.5, cy], [cx + 21.5, cy], [cx, cy - 21.5], [cx, cy + 21.5]].every(([x, y]) => {
+      const hit = document.elementFromPoint(x, y)
+      return hit && (hit === target || target.contains(hit))
+    })
+    if (hits) continue
     const inline = cs(target).display === 'inline' && target.parentElement && hasOwnText(target.parentElement)
     out.tap.push({ sel: label(target), w: Math.round(r.width), h: Math.round(r.height), inline: inline || undefined, text: text(target).slice(0, 30) || target.getAttribute('aria-label') })
   }
+
+  scrollTo(0, 0)
 
   // --- 7. near-miss alignment between siblings ------------------------------
   for (const parent of vis) {

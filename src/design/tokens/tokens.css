@@ -50,9 +50,10 @@
   --ease: cubic-bezier(0.2, 0.9, 0.3, 1);
   --tick: 140ms; /* everything is fast and mechanical */
 
-  /* Smallest touch target on a touch screen (WCAG 2.5.5), for components to
-     apply under (pointer: coarse), (max-width: 768px); a mouse keeps the
-     drawn sizes. */
+  /* Smallest touch target on a touch screen (WCAG 2.5.5). Controls apply it
+     under (pointer: coarse), (max-width: 768px) — see 23-responsive.css — and
+     a mouse keeps the drawn sizes; single-line fields use it at every width,
+     so a field and the .btn beside it are the same height. */
   --target: 44px;
 
   /* Focus indicator */

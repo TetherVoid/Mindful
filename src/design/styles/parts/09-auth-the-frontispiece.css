@@ -118,6 +118,10 @@
 }
 
 /* The form sits in a bordered plate with a heavy printed offset. */
+.plate > .btn + .btn {
+  margin-top: var(--space-3);
+}
+
 .plate {
   position: relative;
   width: 100%;

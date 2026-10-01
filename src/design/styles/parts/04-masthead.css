@@ -24,6 +24,14 @@
   letter-spacing: -0.02em;
 }
 
+.masthead-mark:hover {
+  color: var(--accent);
+}
+
+.masthead-mark:active {
+  color: var(--accent-hover);
+}
+
 .masthead-slug {
   flex: 1;
   min-width: 0;

@@ -32,6 +32,8 @@
   letter-spacing: 0.26em;
   text-transform: uppercase;
   color: var(--accent);
+  flex-wrap: wrap;
+  overflow-wrap: anywhere;
 }
 
 .folio-kicker::before {
@@ -43,6 +45,7 @@
 }
 
 .folio-title {
+  overflow-wrap: anywhere;
   font-size: clamp(2.6rem, 7vw, 4.6rem);
   line-height: 0.94;
   letter-spacing: -0.035em;
@@ -74,7 +77,9 @@
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--muted);
-  white-space: nowrap;
+  /* An email can be any length: wrap it rather than widen the column. */
+  max-width: min(40ch, 40vw);
+  overflow-wrap: anywhere;
 }
 
 .folio-meta b {

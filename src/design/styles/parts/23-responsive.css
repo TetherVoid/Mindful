@@ -63,6 +63,12 @@
     grid-area: value;
     padding-top: var(--space-2);
   }
+
+  /* The value row runs under the arrow column so the mood strip fits; the
+     excerpt lines stop short of it (1.5rem column + 1rem gap). */
+  .index-entry-value .excerpt-list {
+    padding-right: var(--space-8);
+  }
   .index-entry-arrow {
     grid-area: arrow;
     align-self: center;
@@ -98,6 +104,7 @@
   .folio-meta {
     align-items: flex-start;
     text-align: left;
+    max-width: none; /* stacked under the title, it has the full width */
   }
 
   .panel {
@@ -167,5 +174,71 @@
   .gauge-label {
     font-size: var(--text-3xs);
     letter-spacing: 0.06em;
+  }
+}
+
+/* ═══ Touch targets ═══════════════════════════════════════════════════════
+   On a touch screen every control is at least --target (44px) in each
+   direction. A mouse keeps the drawn sizes. */
+@media (pointer: coarse), (max-width: 768px) {
+  .icon-btn,
+  .rail-close,
+  .tick-box,
+  .swatch,
+  .swatch-custom {
+    min-width: var(--target);
+    min-height: var(--target);
+  }
+
+  .icon-btn,
+  .tick-box,
+  .swatch,
+  .swatch-custom {
+    width: var(--target);
+    height: var(--target);
+  }
+
+  .btn--sm,
+  .switch button,
+  .password-toggle,
+  .skip-to-content,
+  .streak,
+  .colophon-contact {
+    min-height: var(--target);
+  }
+
+  .colophon-contact,
+  .skip-to-content {
+    display: inline-flex;
+    align-items: center;
+  }
+
+  .masthead-mark {
+    line-height: var(--target);
+  }
+
+  /* The colour input fills the swatch inside its border, so the swatch is the
+     target plus that border. */
+  .swatch-custom {
+    width: calc(var(--target) + var(--hair) * 2);
+    height: calc(var(--target) + var(--hair) * 2);
+  }
+
+  /* Inline links in running text keep their line; the hit area grows around
+     them instead (the support line's numbers, mainly). */
+  .support-line a {
+    position: relative;
+  }
+
+  /* As wide as --target, and as tall as the line: taller would reach into
+     the next line's number, and a tap there must not land on this one. */
+  .support-line a::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: max(100%, var(--target));
+    height: 1lh;
+    transform: translate(-50%, -50%);
   }
 }

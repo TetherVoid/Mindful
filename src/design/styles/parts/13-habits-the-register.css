@@ -121,6 +121,10 @@
   outline-offset: var(--focus-offset);
 }
 
+.streak:active {
+  color: var(--accent-hover);
+}
+
 .streak.hot b {
   color: var(--accent);
 }

@@ -59,6 +59,13 @@ select {
     box-shadow var(--tick) var(--ease);
 }
 
+/* One field height everywhere, the same as a .btn beside it. */
+input:not([type='checkbox'], [type='radio'], [type='color']),
+select {
+  min-height: var(--target);
+  text-overflow: ellipsis;
+}
+
 textarea {
   resize: vertical;
   min-height: 3.4rem;

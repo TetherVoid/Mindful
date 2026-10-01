@@ -55,6 +55,10 @@
   margin: 0;
 }
 
+.frontispiece-foot > p + p {
+  margin-top: var(--space-3);
+}
+
 .support-line--frontispiece {
   margin: var(--space-3) 0 0;
 }

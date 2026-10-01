@@ -33,6 +33,14 @@
   color: var(--text);
 }
 
+.wordmark:hover .wordmark-name {
+  color: var(--accent);
+}
+
+.wordmark:active .wordmark-name {
+  color: var(--accent-hover);
+}
+
 .wordmark:focus-visible {
   outline: var(--focus-ring);
   outline-offset: var(--focus-offset);
@@ -70,6 +78,15 @@
   padding: var(--space-1);
   cursor: pointer;
   color: var(--muted);
+  transition: color var(--tick) var(--ease);
+}
+
+.rail-close:hover {
+  color: var(--text);
+}
+
+.rail-close:active {
+  color: var(--accent);
 }
 
 .rail-nav {
@@ -101,6 +118,11 @@
   letter-spacing: 0.1em;
   color: var(--muted);
   transition: color var(--tick) var(--ease);
+}
+
+.rail-link-num,
+.rail-link-label {
+  align-self: baseline;
 }
 
 .rail-link-label {

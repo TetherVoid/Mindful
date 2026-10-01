@@ -90,3 +90,11 @@
   text-transform: uppercase;
   color: var(--muted);
 }
+
+/* Month labels sit one per week column; a label wider than its column
+   ("Sept") runs into the empty columns after it, by design. */
+.heat-month {
+  width: 14px;
+  flex-shrink: 0;
+  white-space: nowrap;
+}

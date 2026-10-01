@@ -97,7 +97,7 @@ export default function HabitHeatmap({ habits, logsByHabit, id }) {
         <div>
           <div className="heat-grid" aria-hidden="true">
             {monthMarks.map((label, i) => (
-              <span className="heat-day" key={i} style={{ width: 14, flexShrink: 0 }}>
+              <span className="heat-day heat-month" key={i}>
                 {label}
               </span>
             ))}

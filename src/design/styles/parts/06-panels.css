@@ -29,6 +29,7 @@
 
 .panel-head {
   display: flex;
+  flex-wrap: wrap; /* the note drops below rather than squeeze the heading */
   align-items: baseline;
   gap: var(--space-3);
   padding-bottom: var(--space-3);
@@ -46,7 +47,7 @@
 
 .panel-head h2,
 .panel-head h3 {
-  flex: 1;
+  flex: 1 1 14ch;
   font-size: var(--text-lg);
   letter-spacing: -0.02em;
 }
@@ -59,8 +60,11 @@
   color: var(--muted);
 }
 
+/* A note sits below what it explains. Only directly under a panel head does
+   it tuck up into the head's bottom margin; anywhere else a negative margin
+   would pull it over the button or form before it. */
 .panel-note {
-  margin: -0.6rem 0 var(--space-5);
+  margin: var(--space-3) 0 var(--space-5);
   font-size: var(--text-sm);
   color: var(--muted);
   font-style: italic;
@@ -111,4 +115,13 @@
 .panel > .settings-form:last-child {
   border-bottom: 0;
   padding-bottom: 0;
+}
+
+.panel-head + .panel-note {
+  margin-top: calc(var(--space-5) * -0.5);
+}
+
+/* A ledger's top rule would double the panel head's. */
+.panel-head + .ledger {
+  border-top: 0;
 }
