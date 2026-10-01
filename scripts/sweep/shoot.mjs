@@ -38,16 +38,18 @@ for (const spot of spots) {
   if (spot.at === 'end') {
     await page.evaluate(`scrollTo(0, document.documentElement.scrollHeight); dispatchEvent(new Event('scroll'))`)
   } else if (spot.at && spot.at !== 'top') {
+    await page.evaluate(`document.querySelector(${JSON.stringify(spot.at)})?.scrollIntoView({ block: 'center', behavior: 'instant' }); dispatchEvent(new Event('scroll'))`)
+  }
+  await sleep(400)
+  // Measured after the scroll settles, in page coordinates (what the clip uses).
+  if (spot.at && !['top', 'end'].includes(spot.at)) {
     clip = await page.evaluate(`(() => {
       const el = document.querySelector(${JSON.stringify(spot.at)})
       if (!el) return null
-      el.scrollIntoView({ block: 'center' })
-      dispatchEvent(new Event('scroll'))
       const r = el.getBoundingClientRect()
-      return { x: Math.max(0, r.left - 24), y: Math.max(0, r.top - 24), width: Math.min(innerWidth, r.width + 48), height: Math.min(innerHeight, r.height + 48) }
+      return { x: Math.max(0, r.left + scrollX - 24), y: Math.max(0, r.top + scrollY - 24), width: Math.min(innerWidth, r.width + 48), height: Math.min(innerHeight, r.height + 48) }
     })()`)
   }
-  await sleep(400)
   const shot =
     spot.clip && clip
       ? Buffer.from((await page.send('Page.captureScreenshot', { format: 'png', clip: { ...clip, scale: 1 } })).data, 'base64')

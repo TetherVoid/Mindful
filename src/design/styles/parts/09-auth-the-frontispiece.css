@@ -177,5 +177,5 @@
 
 .plate-switch a:focus-visible {
   outline: var(--focus-ring);
-  outline-offset: 3px;
+  outline-offset: var(--focus-offset);
 }

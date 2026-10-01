@@ -39,8 +39,13 @@ function stripVars(value) {
   return v.trim()
 }
 
-function documented(kind, value, raw) {
+function documented(kind, value, raw, file = '', selector = '') {
   if (/clamp\(/.test(raw)) return 'clamp() bound'
+  // Deliberate literals listed in tokens.css ("Deliberately literal, and why").
+  if (file.includes('print.css')) return 'print (tokens.css)'
+  if (kind === 'font-size' && /^1[67]px$/.test(value) && /^body/.test(selector)) return 'root reading size (tokens.css)'
+  if (kind === 'spacing' && /^[23]px$/.test(value) && /mark-strip|heat-|intensity-bars/.test(selector)) return 'data-mark gap (tokens.css)'
+  if (kind === 'spacing' && /^\d*\.?\d+em$/.test(value)) return 'em-relative optical adjustment'
   if (kind === 'font-size' && /^(1\.6|1\.85|2|2\.0|2\.6)rem$/.test(value)) return 'display one-off (tokens.css)'
   if (kind === 'spacing') {
     const nums = [...value.matchAll(/(\d*\.?\d+)rem/g)].map((m) => parseFloat(m[1]))
@@ -63,11 +68,18 @@ for (const file of cssFiles) {
       const prop = decl[1]
       if (prop.startsWith('--')) continue
       const raw = decl[2].replace(/!important/, '').trim()
+      // calc() over tokens (calc(var(--hair) * -1)) and token-built shadows
+      // (0 0 0 var(--stroke) …) are token-derived: what is left is operators,
+      // multipliers and zeros.
       const literal = stripVars(raw)
+        .replace(/calc\([^()]*\)/g, '')
+        .replace(/(^|[\s,])0(?=[\s,]|$)/g, '$1')
+        .replace(/[\s,]+/g, ' ')
+        .trim()
       if (!literal) continue
       for (const k of KINDS) {
         if (!k.props.test(prop) || !k.bad(literal)) continue
-        findings.push({ file: `${rel}:${i + 1}`, selector, prop, value: raw, kind: k.kind, documented: documented(k.kind, literal, raw) ?? undefined })
+        findings.push({ file: `${rel}:${i + 1}`, selector, prop, value: raw, kind: k.kind, documented: documented(k.kind, literal, raw, rel, selector) ?? undefined })
         break
       }
     }

@@ -61,6 +61,19 @@ a {
   text-underline-offset: 0.22em;
 }
 
+/* Every link answers the pointer. :where() drops the a[href] part, so this
+   ties with a single-class component rule and loses to it by order (base.css
+   loads first); a link whose component sets its colour still gets the heavier
+   underline. */
+:where(a[href]):hover {
+  color: var(--accent);
+  text-decoration-thickness: var(--stroke);
+}
+
+:where(a[href]):active {
+  color: var(--accent-hover);
+}
+
 button {
   font: inherit;
   color: inherit;
@@ -94,7 +107,7 @@ button {
 
 ::-webkit-scrollbar-thumb {
   background: var(--border);
-  border: 1px solid var(--surface);
+  border: var(--hair) solid var(--surface);
 }
 
 ::-webkit-scrollbar-thumb:hover {
@@ -164,6 +177,7 @@ button {
   }
 }
 
+:root[data-motion='reduced'],
 :root[data-motion='reduced'] *,
 :root[data-motion='reduced'] *::before,
 :root[data-motion='reduced'] *::after {
@@ -207,7 +221,7 @@ button {
 }
 
 :root[data-density='compact'] .folio {
-  padding-block: 1.75rem 4rem;
+  padding-block: var(--space-7) 4rem;
 }
 
 :root[data-density='compact'] .btn,

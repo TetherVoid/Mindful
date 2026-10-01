@@ -33,7 +33,7 @@
   font-size: var(--text-2xs);
   font-weight: 700;
   letter-spacing: 0.1em;
-  color: var(--rule);
+  color: var(--muted);
 }
 
 .marginalia-q:hover .marginalia-num,

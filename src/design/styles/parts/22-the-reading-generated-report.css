@@ -26,7 +26,7 @@
 .brief-figures {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
-  gap: var(--space-6) 1.75rem;
+  gap: var(--space-6) var(--space-7);
 }
 
 .brief-figure {
@@ -81,7 +81,7 @@
   font-family: var(--font-mono);
   font-size: var(--text-3xs);
   letter-spacing: 0.12em;
-  color: var(--rule);
+  color: var(--muted);
 }
 
 .brief-list--asked li {

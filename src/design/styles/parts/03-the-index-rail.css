@@ -35,7 +35,7 @@
 
 .wordmark:focus-visible {
   outline: var(--focus-ring);
-  outline-offset: 3px;
+  outline-offset: var(--focus-offset);
 }
 
 .wordmark-name {
@@ -99,7 +99,7 @@
   font-size: var(--text-3xs);
   font-weight: 500;
   letter-spacing: 0.1em;
-  color: var(--rule);
+  color: var(--muted);
   transition: color var(--tick) var(--ease);
 }
 
@@ -125,7 +125,7 @@
 
 .rail-link:focus-visible {
   outline: var(--focus-ring);
-  outline-offset: -2px;
+  outline-offset: calc(var(--focus-offset) * -1);
   z-index: 1;
 }
 

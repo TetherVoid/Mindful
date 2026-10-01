@@ -53,15 +53,15 @@
 .btn--solid:hover:not(:disabled, [aria-disabled='true']) {
   background: var(--accent-hover);
   border-color: var(--accent-hover);
-  box-shadow: 3px 3px 0 var(--text);
+  box-shadow: var(--stamp-sm);
 }
 
 .btn--solid:focus-visible:not(:disabled, [aria-disabled='true']) {
   background: var(--accent-hover);
   border-color: var(--accent-hover);
-  box-shadow: 3px 3px 0 var(--text);
+  box-shadow: var(--stamp-sm);
   outline-color: var(--text);
-  outline-offset: 3px;
+  outline-offset: var(--focus-offset);
 }
 
 .btn--ink {
@@ -72,7 +72,7 @@
 
 .btn--ink:hover:not(:disabled, [aria-disabled='true']),
 .btn--ink:focus-visible:not(:disabled, [aria-disabled='true']) {
-  box-shadow: 3px 3px 0 var(--accent);
+  box-shadow: var(--offset-sm) var(--offset-sm) 0 var(--accent);
 }
 
 .btn--quiet {
@@ -95,7 +95,7 @@
 .btn--danger:focus-visible:not(:disabled, [aria-disabled='true']) {
   background: var(--danger);
   color: var(--danger-contrast);
-  box-shadow: 3px 3px 0 var(--text);
+  box-shadow: var(--stamp-sm);
   outline-color: var(--danger);
 }
 

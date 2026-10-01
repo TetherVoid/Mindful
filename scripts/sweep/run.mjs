@@ -141,7 +141,10 @@ for (const mode of run('motion') ? ['default', 'media', 'setting'] : []) {
   for (const route of SIGNED_IN_ROUTES) {
     await load(servers.week.origin + route, 120)
     const audit = await evaluate(auditSource)
-    record({ pass: 'motion', mode, route, hiddenMotion: audit.hiddenMotion, attr: await evaluate(`document.documentElement.dataset.motion`) })
+    // The viewport scrolls with the root element's scroll-behavior, which a
+    // `:root … *` rule does not reach; check it on <html> itself.
+    const scrollBehavior = await evaluate(`getComputedStyle(document.documentElement).scrollBehavior`)
+    record({ pass: 'motion', mode, route, hiddenMotion: audit.hiddenMotion, attr: await evaluate(`document.documentElement.dataset.motion`), scrollBehavior })
   }
 }
 progress('motion')

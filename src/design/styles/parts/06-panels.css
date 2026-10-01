@@ -4,7 +4,7 @@
   position: relative;
   background: var(--surface);
   border: var(--hair) solid var(--text);
-  padding: var(--space-6) 1.75rem;
+  padding: var(--space-6) var(--space-7);
   margin-bottom: var(--space-6);
 }
 

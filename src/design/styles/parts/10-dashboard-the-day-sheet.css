@@ -35,7 +35,7 @@
 
 .index-entry:focus-visible {
   outline: var(--focus-ring);
-  outline-offset: -1px;
+  outline-offset: calc(var(--focus-offset) * -1);
 }
 
 .index-entry-num {
@@ -44,7 +44,7 @@
   font-weight: 700;
   line-height: 1;
   letter-spacing: -0.04em;
-  color: var(--rule);
+  color: var(--muted);
   transition: color var(--tick) var(--ease);
 }
 

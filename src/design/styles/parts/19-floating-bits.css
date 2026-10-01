@@ -111,5 +111,5 @@
 .skip-to-content:focus-visible {
   left: 1rem;
   outline: var(--focus-ring);
-  outline-offset: 3px;
+  outline-offset: var(--focus-offset);
 }

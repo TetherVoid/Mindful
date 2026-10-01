@@ -165,7 +165,7 @@
   }
 
   .gauge-label {
-    font-size: 0.5rem;
+    font-size: var(--text-3xs);
     letter-spacing: 0.06em;
   }
 }

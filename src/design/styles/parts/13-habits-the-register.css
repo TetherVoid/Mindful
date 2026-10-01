@@ -44,7 +44,7 @@
 
 .tick-box:focus-visible:not(:disabled) {
   outline: var(--focus-ring);
-  outline-offset: 2px;
+  outline-offset: var(--focus-offset);
   transform: translate(-2px, -2px);
   box-shadow: var(--stamp-sm);
 }
@@ -118,7 +118,7 @@
 
 .streak:focus-visible {
   outline: var(--focus-ring);
-  outline-offset: 2px;
+  outline-offset: var(--focus-offset);
 }
 
 .streak.hot b {

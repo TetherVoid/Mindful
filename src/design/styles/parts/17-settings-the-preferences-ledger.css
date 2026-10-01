@@ -8,7 +8,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 1.75rem;
+  gap: var(--space-7);
   padding: var(--space-4) 0;
   border-bottom: var(--hair) solid var(--border);
 }
@@ -82,7 +82,7 @@
 
 .switch button:focus-visible {
   outline: var(--focus-ring);
-  outline-offset: -1px;
+  outline-offset: calc(var(--focus-offset) * -1);
   position: relative;
   z-index: 2;
 }
@@ -121,23 +121,24 @@
 
 .swatch:focus-visible {
   outline: var(--focus-ring);
-  outline-offset: 3px;
+  outline-offset: var(--focus-offset);
 }
 
 .swatch.selected {
-  box-shadow: 0 0 0 2px var(--surface), 0 0 0 4px var(--text);
+  box-shadow: 0 0 0 var(--stroke) var(--surface), 0 0 0 calc(var(--stroke) * 2) var(--text);
 }
 
 .swatch-custom {
   position: relative;
   overflow: hidden;
   display: inline-block;
-  background: linear-gradient(135deg, #b4472f 0 25%, #3f7d52 25% 50%, #2f6f8f 50% 75%, #7a4f9e 75%);
+  /* The app's own inks, quartered: 'mix your own'. */
+  background: linear-gradient(135deg, var(--accent) 0 25%, var(--accent-2) 25% 50%, var(--muted) 50% 75%, var(--text) 75%);
 }
 
 .swatch-custom:focus-within {
   outline: var(--focus-ring);
-  outline-offset: 3px;
+  outline-offset: var(--focus-offset);
   transform: translate(-2px, -2px);
   box-shadow: var(--stamp-sm);
 }

@@ -51,6 +51,9 @@ for (const r of rows) {
       if (!s.focusVisible) add('focus-not-visible-match', `${s.sel}`, where, s)
     }
   }
+  if (r.pass === 'motion' && r.mode !== 'default' && r.scrollBehavior === 'smooth') {
+    add(`motion-${r.mode}`, `${r.route} <html> still scrolls smoothly`, where, r)
+  }
   if (r.pass === 'motion' && r.mode !== 'default') {
     for (const f of r.hiddenMotion ?? []) add(`motion-${r.mode}`, `${r.route} ${f.sel} ${f.anim ?? ''} ${f.opacity ? `opacity ${f.opacity}` : ''}`, where, { ...f, attr: r.attr })
   }

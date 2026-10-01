@@ -46,7 +46,7 @@
 .heat-cell:hover:not([data-future='true']),
 .heat-cell:focus-visible:not([data-future='true']) {
   outline: var(--focus-ring);
-  outline-offset: 1px;
+  outline-offset: var(--focus-offset);
   position: relative;
   z-index: 2;
   transform: scale(1.15);

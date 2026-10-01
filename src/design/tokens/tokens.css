@@ -14,7 +14,8 @@
   --bg: #efece2; /* paper */
   --surface: #f8f6ef; /* panel — one shade brighter than the page */
   --text: #17150f; /* ink */
-  --muted: #6b6557; /* pencil */
+  --muted: #625d50; /* pencil — 5.55:1 on --bg, 6.07:1 on --surface (was #6b6557, 4.9:1).
+                       Also inlined in 08-forms.css's select chevron; change both. */
   --border: #d8d1bf; /* hairline inside panels */
   --rule: #a9a08a; /* structural divider */
 
@@ -38,15 +39,21 @@
   --hair: 1px; /* hairline */
   --stroke: 2px; /* structural stroke */
   --offset: 5px; /* hard drop-block offset for pressables */
+  --offset-sm: 3px; /* the small stamp's offset, for any ink */
   --radius: 0;
 
   /* The stamp: a hard, printed offset block. No blur, ever. */
   --stamp: var(--offset) var(--offset) 0 var(--text);
-  --stamp-sm: 3px 3px 0 var(--text);
+  --stamp-sm: var(--offset-sm) var(--offset-sm) 0 var(--text);
   --stamp-accent: var(--offset) var(--offset) 0 var(--accent);
 
   --ease: cubic-bezier(0.2, 0.9, 0.3, 1);
   --tick: 140ms; /* everything is fast and mechanical */
+
+  /* Smallest touch target on a touch screen (WCAG 2.5.5), for components to
+     apply under (pointer: coarse), (max-width: 768px); a mouse keeps the
+     drawn sizes. */
+  --target: 44px;
 
   /* Focus indicator */
   --focus-ring: var(--stroke) solid var(--accent);
@@ -93,6 +100,15 @@
   --space-6: 1.5rem;
   --space-7: 2rem;
   --space-8: 2.5rem;
+
+  /* Deliberately literal, and why (the token audit lists them as documented):
+     - body font-size 17px / 16px under 640px: the root reading size, which the
+       rem scale above is measured against (base.css, 23-responsive.css).
+     - 2–3px gaps inside data marks (mood strip, heat grid, intensity bars):
+       hairline gaps between cells, below the quarter-rem grid by design.
+     - print.css: black on white for paper, whatever the theme.
+     - The select chevron (08-forms.css) is an SVG data URI and cannot read a
+       custom property; its two strokes copy --muted for each theme. */
 
   /* --- Measure ------------------------------------------------------- */
   --rail: 232px;

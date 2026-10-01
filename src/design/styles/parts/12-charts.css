@@ -9,7 +9,7 @@
 
 .chart-frame .recharts-cartesian-axis-tick text {
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: var(--text-2xs);
   letter-spacing: 0.06em;
   fill: var(--muted);
 }
