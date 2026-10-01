@@ -2,7 +2,12 @@
 // PreToolUse guard: nothing leaves this machine without the human's "go".
 //
 // Wired in .claude/settings.json for Bash and for every MCP tool. It blocks:
-//   - git push, however it is invoked (sh -c, eval, $(…), a full path);
+//   - git push, however it is invoked (sh -c, eval, $(…), a heredoc to bash,
+//     find -exec, a full path, an alias);
+//   - commands piped into a shell or interpreter, which cannot be read, and
+//     heredoc code that plainly pushes or deploys;
+//   - a child `claude` session started without the project hooks (--bare,
+//     --safe-mode, --setting-sources, bypass permissions, hook-changing --settings);
 //   - any Supabase CLI command not on the local-only list, and any that names
 //     --linked, --db-url or --project-ref;
 //   - any Vercel CLI command other than local dev/build and read-only listing;
@@ -21,7 +26,7 @@
 // Exit 2 blocks the call and shows stderr to Claude. Unreadable input blocks.
 
 import { readFileSync } from 'node:fs'
-import { parseCommands, normalise } from './lib/shell.mjs'
+import { parseCommands, normalise, OPAQUE } from './lib/shell.mjs'
 
 function block(message) {
   process.stderr.write(`guard-remote: ${message} Ask the human to run it themselves after their "go".\n`)
@@ -128,11 +133,51 @@ function hostsOf(pgArgs) {
   return hosts
 }
 
+// A child Claude session that runs without the project's hooks is a way round
+// every guard here.
+function claudeDropsHooks(claudeArgs) {
+  const i = claudeArgs.indexOf('--permission-mode')
+  if (i !== -1 && /bypass/i.test(claudeArgs[i + 1] ?? '')) return true
+  if (claudeArgs.some((a) => /^--(bare|safe-mode|setting-sources|dangerously-skip-permissions)(=|$)/.test(a))) return true
+  const s = claudeArgs.findIndex((a) => a === '--settings' || a.startsWith('--settings='))
+  if (s === -1) return false
+  const value = claudeArgs[s].includes('=') ? claudeArgs[s].split('=').slice(1).join('=') : (claudeArgs[s + 1] ?? '')
+  let text = value
+  try {
+    text = readFileSync(value, 'utf8')
+  } catch {
+    // Inline JSON, not a file.
+  }
+  return /hooks/i.test(text)
+}
+
+// Code handed to an interpreter as a heredoc is checked for the obvious calls.
+const REMOTE_IN_CODE = [
+  /\bgit\b[\s\S]{0,80}\bpush\b/,
+  /\bsupabase\b[\s\S]{0,80}(\bpush\b|\blink\b|--linked|--db-url|\brepair\b|\bdeploy\b)/,
+  /\bvercel\b[\s\S]{0,40}(\bdeploy\b|--prod|\bpromote\b|\benv\s+(add|rm)\b)/,
+]
+
 for (const command of parseCommands(cmd)) {
-  const { name, args: rest } = normalise(command.words)
+  const { name, args: rest, wrappers } = normalise(command.words)
   const line = rest.join(' ')
 
-  if (name === 'git' && gitSubcommand(rest) === 'push') block("git push is the human's call.")
+  if (name === OPAQUE) block(`commands piped into ${rest[0]} cannot be checked; run them directly.`)
+  if (command.stdinCode && REMOTE_IN_CODE.some((re) => re.test(command.heredoc))) {
+    block(`the ${name} code in that heredoc pushes or reaches a remote.`)
+  }
+  if (wrappers.includes('xargs') && ['git', 'supabase', 'vercel', 'psql', 'pg_dump', 'claude'].includes(name)) {
+    block(`xargs hides the arguments ${name} would get; run it directly.`)
+  }
+  if (name === 'claude' && claudeDropsHooks(rest)) block('that starts a Claude session without the project hooks.')
+
+  if (name === 'git') {
+    if (gitSubcommand(rest) === 'push') block("git push is the human's call.")
+    // An alias can hide a push: git -c alias.x='push …' x, or git config alias.x push.
+    const aliasOpt = rest.some((a, i) => rest[i - 1] === '-c' && /^alias\./i.test(a))
+    const aliasSet = gitSubcommand(rest) === 'config' && rest.some((a) => /^alias\./i.test(a))
+    if (aliasOpt || (aliasSet && /\bpush\b|!/.test(line))) block('a git alias can hide a push.')
+  }
 
   if (name === 'supabase') {
     if (/--linked\b|--db-url\b|--project-ref\b/.test(line)) block('that Supabase command targets a remote project.')

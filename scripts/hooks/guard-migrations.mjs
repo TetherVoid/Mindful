@@ -17,7 +17,10 @@
 // Wired in .claude/settings.json for Edit, Write, MultiEdit, NotebookEdit and
 // Bash. For Bash, a command that names a protected file is allowed only if it
 // just reads it (cat, grep, git diff, cp *from* it, …); anything else that
-// names one is blocked, and so is a patch (git apply, patch) that touches one.
+// names one is blocked, and so is a patch (git apply, patch) that touches one,
+// `xargs` fed protected paths, `rm`/`git checkout`/`find -delete` on a folder
+// that holds them (`.`, `supabase`), and git commands that move HEAD or
+// rewrite history (checkout <ref>, reset --hard, revert, rebase, …).
 // Names are compared case-insensitively, as macOS resolves them.
 //
 // Exit 2 blocks the tool call and shows stderr to Claude. Anything unexpected
@@ -68,12 +71,22 @@ function rel(p, base = root) {
   return r.startsWith('..') ? null : r.toLowerCase()
 }
 
-/** What a path is to this guard: a guard file, a committed migration, the migrations dir, a new migration. */
-function classify(p, base) {
+/**
+ * What a path is to this guard: a guard file, a committed migration, the
+ * migrations dir, a new migration, or nothing. With `ancestors`, a directory
+ * that contains protected files (`.`, `supabase`, `scripts`, `.claude`) counts
+ * too — right for `rm -rf` or `git checkout -- .`, wrong for `graphify update .`.
+ */
+function classify(p, base, ancestors = false) {
   const r = rel(p, base)
   if (r == null) return null
   if (GUARD_FILES.includes(r) || GUARD_DIRS.some((d) => r.startsWith(d) || `${r}/` === d)) return 'guard'
-  if (r === '.claude' || r === 'scripts') return 'guard'
+  if (ancestors) {
+    const dir = r === '*' ? '' : r.replace(/\/\*$/, '')
+    const under = (p) => dir === '' || p.startsWith(`${dir}/`)
+    if ([...GUARD_FILES, ...GUARD_DIRS].some(under)) return 'guard'
+    if (under(`${DIR}/`)) return 'dir'
+  }
   if (r === DIR || r === `${DIR}/*` || r.startsWith(`${DIR}/*`)) return 'dir'
   if (r.startsWith(`${DIR}/`)) {
     const name = r.slice(DIR.length + 1)
@@ -113,18 +126,82 @@ function checkWriteTarget(p, base, what) {
 
 // Programs that only read the files they are given. Everything else that names
 // a protected path is assumed to be able to change it.
+// `claude` is here because a child session runs under these same hooks;
+// guard-remote refuses the flags that would start one without them.
 const READERS = new Set([
   'cat', 'head', 'tail', 'less', 'more', 'bat', 'grep', 'egrep', 'fgrep', 'rg', 'ag', 'wc', 'diff',
   'cmp', 'ls', 'stat', 'file', 'md5', 'shasum', 'sha256sum', 'sort', 'uniq', 'cut', 'jq', 'nl',
   'du', 'find', 'tree', 'realpath', 'readlink', 'basename', 'dirname', 'echo', 'printf', 'test',
-  '[', 'code', 'open', 'psql',
+  '[', 'code', 'open', 'psql', 'claude',
 ])
 const GIT_READERS = new Set(['diff', 'show', 'log', 'blame', 'status', 'ls-files', 'ls-tree', 'grep', 'cat-file', 'add', 'commit'])
+const GIT_VALUE_OPTS = new Set(['-C', '-c', '--git-dir', '--work-tree', '--namespace'])
+const FIND_ACTIONS = /^-(delete|exec|execdir|ok|okdir|fprint|fprint0|fprintf|fls)$/
+
+function gitSub(gitArgs) {
+  for (let i = 0; i < gitArgs.length; i += 1) {
+    if (GIT_VALUE_OPTS.has(gitArgs[i])) i += 1
+    else if (!gitArgs[i].startsWith('-')) return { sub: gitArgs[i], after: gitArgs.slice(i + 1) }
+  }
+  return { sub: null, after: [] }
+}
+
+/** Programs that change or remove the paths they are given — where `.` or `supabase` means everything under it. */
+function changesTree(name, rest) {
+  if (['rm', 'rmdir', 'mv', 'chmod', 'chown', 'chgrp', 'truncate', 'shred', 'unlink', 'rsync', 'touch'].includes(name)) return true
+  if (name === 'git') return ['checkout', 'restore', 'rm', 'clean', 'reset', 'mv', 'switch'].includes(gitSub(rest).sub)
+  if (name === 'find') return rest.some((a) => FIND_ACTIONS.test(a))
+  if (['sed', 'perl', 'ruby'].includes(name)) return rest.some((a) => /^-[a-zA-Z]*i/.test(a) || a === '--in-place')
+  if (name === 'tar') return rest.some((a) => /^-?[a-zA-Z]*x/.test(a))
+  return false
+}
+
+/**
+ * Moving HEAD or rewriting history puts older (or other) versions of every
+ * tracked file in place — committed migrations and the guards included.
+ */
+function checkGitHistory(rest, cwd) {
+  const { sub, after } = gitSub(rest)
+  const why = `git ${sub} moves HEAD or rewrites history, which can change committed migrations and the guards. Ask the human.`
+  if (['revert', 'rebase', 'cherry-pick', 'pull', 'merge'].includes(sub)) block(why)
+  if (sub === 'reset' && after.some((a) => /^--(hard|merge|keep)$/.test(a))) block(why)
+  if (sub === 'switch') {
+    const create = after.findIndex((a) => /^-[cC]$|^--(create|force-create)$/.test(a))
+    const operands = after.filter((a) => !a.startsWith('-'))
+    if (create === -1 || operands.length > 1) block(why)
+  }
+  if (sub === 'checkout') {
+    const dashes = after.indexOf('--')
+    if (dashes !== -1) return // paths follow; the path checks below cover them
+    const create = after.findIndex((a) => /^-[bB]$/.test(a))
+    const operands = after.filter((a) => !a.startsWith('-'))
+    if (create !== -1) {
+      if (operands.length > 1) block(why) // a start point other than HEAD
+      return
+    }
+    // Without --, an operand that is not a path on disk is a branch or commit.
+    if (operands.some((a) => !existsSync(path.resolve(cwd, a)))) block(why)
+  }
+}
+
+const tokensOf = (list) => list.flatMap((arg) => arg.split(/[\s'"(),=;]+/)).filter(Boolean)
 
 function checkBash(cmd) {
+  const commands = parseCommands(cmd)
+
+  // `ls supabase/migrations/*.sql | xargs rm`: the paths reach rm on stdin, so
+  // look for them anywhere in the call.
+  const mentionsProtected = commands.some((c) =>
+    tokensOf(normalise(c.words).args).some((t) => {
+      const kind = classify(t, root, true)
+      return kind && kind !== 'new'
+    })
+  )
+
   let cwd = root
-  for (const command of parseCommands(cmd)) {
-    const { name, args: rest } = normalise(command.words)
+  for (const command of commands) {
+    const { name, args: rest, wrappers } = normalise(command.words)
+    if (name === 'git') checkGitHistory(rest, cwd)
 
     // Track `cd` so relative paths resolve the way the shell would.
     if (name === 'cd' && rest[0]) {
@@ -161,10 +238,17 @@ function checkBash(cmd) {
     // its last argument and removes its sources.
     if (['cp', 'install', 'mv'].includes(name)) {
       const operands = rest.filter((a) => !a.startsWith('-'))
-      if (operands.length >= 2) checkWriteTarget(operands.at(-1), cwd, `${name} onto ${operands.at(-1)}`)
+      // A recursive copy onto `.` or `scripts` can overwrite what is under it.
+      const recursive = rest.some((a) => /^-[a-zA-Z]*[rRa]/.test(a))
+      if (operands.length >= 2) {
+        const target = operands.at(-1)
+        const kind = classify(target, cwd, recursive)
+        if (kind === 'new') checkNewName(target, cwd)
+        else refuse(kind, `${name} onto ${target}`)
+      }
       if (name === 'mv') {
         for (const source of operands.slice(0, -1)) {
-          const kind = classify(source, cwd)
+          const kind = classify(source, cwd, true)
           if (kind && kind !== 'new') refuse(kind, `mv ${source}`)
         }
       }
@@ -172,22 +256,26 @@ function checkBash(cmd) {
     }
 
     const reads =
-      READERS.has(name) ||
-      (name === 'git' && GIT_READERS.has(rest.find((a) => !a.startsWith('-')))) ||
+      (READERS.has(name) && !(name === 'find' && rest.some((a) => FIND_ACTIONS.test(a)))) ||
+      (name === 'git' && GIT_READERS.has(gitSub(rest).sub)) ||
       (name === 'sed' && !rest.some((a) => /^-[a-zA-Z]*i/.test(a) || a === '--in-place')) ||
       (name === 'awk' && !rest.some((a) => a === '-i' || a.startsWith('--inplace'))) ||
       (name === 'node' && rest[0] && !rest[0].startsWith('-'))
     if (reads) continue
 
+    if (wrappers.includes('xargs') && mentionsProtected) {
+      block(`xargs ${name} would get protected paths on stdin (committed migrations or guard files).`)
+    }
+
     // Any other program that names a protected path — interpreters, rm, mv,
     // chmod, truncate, git checkout/restore/rm — is assumed to change it. The
-    // path may sit inside an argument (python -c "open('…', 'w')").
-    for (const arg of rest) {
-      for (const token of arg.split(/[\s'"(),=;]+/)) {
-        if (!token) continue
-        const kind = classify(token, cwd)
-        if (kind && kind !== 'new') refuse(kind, `${name} on ${token}`)
-      }
+    // path may sit inside an argument (python -c "open('…', 'w')") or in the
+    // code an interpreter reads from a heredoc (python3 - <<EOF).
+    const ancestors = changesTree(name, rest)
+    const tokens = tokensOf(command.stdinCode ? [...rest, command.heredoc] : rest)
+    for (const token of tokens) {
+      const kind = classify(token, cwd, ancestors)
+      if (kind && kind !== 'new') refuse(kind, `${name} on ${token}`)
     }
   }
 }

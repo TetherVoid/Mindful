@@ -170,11 +170,10 @@ blocks pushes and remote Supabase/Vercel commands and MCP calls. Both read Bash
 through a small shell tokenizer (`scripts/hooks/lib/shell.mjs`); 106 cases in
 `tests/guards.test.mjs`, several of them bypasses the gated-reviewer found.
 The guard files are the human's to edit.
-**Pending for the human:** `guard-hardening.patch` (untracked, repo root) closes
-six more bypasses from the gated-reviewer's second pass (heredoc or pipe into a
-shell, `find -delete`, `xargs rm`, `git checkout <ref> -- .`, git aliases, child
-`claude --bare`). Apply with `git apply guard-hardening.patch && npm run verify`,
-then commit; Claude cannot, because the guards protect themselves. `npm run verify` runs every check, including the new
+Hardened on 2026-10-02 after the gated-reviewer's second pass: heredoc or pipe
+into a shell, `find -delete`, `xargs`, `git checkout <ref> -- .` and other
+HEAD moves, git aliases, and child `claude --bare` / `--safe-mode` sessions are
+refused (149 guard cases). `npm run verify` runs every check, including the new
 `/api/report` stub test (`tests/`) and pgTAP when the stack is up. ECC is
 disabled for this repo (`docs/ecc.md`). CLAUDE.md is self-contained;
 AGENT_RULES.md slimmed, its archive now in `docs/archive/`. Commits are local

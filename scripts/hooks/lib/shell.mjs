@@ -12,9 +12,11 @@
 const SEPARATORS = new Set([';', '&', '|', '\n', '(', ')'])
 
 /**
- * @returns {{words: string[], outs: string[], heredoc: string}[]}
+ * @returns {{words: string[], outs: string[], heredoc: string, piped: boolean, stdinCode?: boolean}[]}
  *   one entry per simple command, including those inside $(…), backticks,
- *   `sh -c '…'` and `eval …`. `outs` are redirect targets (> and >>).
+ *   `sh -c '…'`, `eval …`, `find -exec …` and a heredoc fed to a shell.
+ *   `outs` are redirect targets (> and >>); `piped` means stdin comes from the
+ *   previous command; `stdinCode` means an interpreter runs its heredoc.
  */
 export function parseCommands(input, depth = 0) {
   const commands = []
@@ -23,6 +25,7 @@ export function parseCommands(input, depth = 0) {
   let outs = []
   let heredocs = []
   let heredoc = ''
+  let piped = false
   let word = ''
   let inWord = false
   let quote = null
@@ -45,7 +48,10 @@ export function parseCommands(input, depth = 0) {
   }
   const endCommand = () => {
     endWord()
-    if (words.length || outs.length) commands.push({ words, outs, heredoc })
+    if (words.length || outs.length) {
+      commands.push({ words, outs, heredoc, piped })
+      piped = false
+    }
     words = []
     outs = []
     heredoc = ''
@@ -155,6 +161,8 @@ export function parseCommands(input, depth = 0) {
     }
     if (SEPARATORS.has(c)) {
       endCommand()
+      // A single | feeds the next command's stdin (|| is "or").
+      if (c === '|' && input[i + 1] !== '|' && input[i - 1] !== '|') piped = true
       continue
     }
     if (c === ' ' || c === '\t') {
@@ -166,28 +174,64 @@ export function parseCommands(input, depth = 0) {
   }
   endCommand()
 
-  // Look inside `sh -c '…'` and `eval …`.
+  // Look inside `sh -c '…'`, `eval …`, `find … -exec …`, and code fed to a
+  // shell or interpreter on stdin.
   const nested = []
   for (const command of commands) {
     const { name, args } = normalise(command.words)
-    if (['sh', 'bash', 'zsh', 'dash', 'ksh'].includes(name)) {
+    const operands = args.filter((a) => !a.startsWith('-'))
+    if (SHELLS.has(name)) {
       const flag = args.findIndex((a) => /^-[a-z]*c[a-z]*$/.test(a))
-      if (flag !== -1 && args[flag + 1] != null) nested.push(...parseCommands(args[flag + 1], depth + 1))
+      if (flag !== -1 && args[flag + 1] != null) {
+        nested.push(...parseCommands(args[flag + 1], depth + 1))
+      } else if (!operands.length && command.heredoc) {
+        // bash <<EOF … EOF: the body is the script.
+        nested.push(...parseCommands(command.heredoc, depth + 1))
+      } else if (!operands.length && command.piped) {
+        nested.push(opaque(name))
+      }
+    } else if (INTERPRETERS.has(name)) {
+      const inline = args.some((a) => /^-[a-zA-Z]*[ce]$|^--(eval|print)$/.test(a))
+      const fromStdin = !inline && operands.every((a) => a === '-')
+      if (fromStdin && command.heredoc) command.stdinCode = true
+      else if (fromStdin && command.piped) nested.push(opaque(name))
     } else if (name === 'eval') {
       nested.push(...parseCommands(args.join(' '), depth + 1))
+    } else if (name === 'find') {
+      for (let i = 0; i < args.length; i += 1) {
+        if (!/^-(exec|execdir|ok|okdir)$/.test(args[i])) continue
+        const end = args.findIndex((a, j) => j > i && (a === ';' || a === '+'))
+        const words = args.slice(i + 1, end === -1 ? undefined : end)
+        if (words.length) nested.push({ words, outs: [], heredoc: '', piped: false })
+        i = end === -1 ? args.length : end
+      }
     }
   }
   return [...commands, ...nested]
 }
+
+const SHELLS = new Set(['sh', 'bash', 'zsh', 'dash', 'ksh', 'fish'])
+const INTERPRETERS = new Set(['python', 'python3', 'node', 'ruby', 'perl', 'php', 'deno', 'bun', 'osascript'])
+
+/**
+ * Stands for code a guard cannot read: a program fed on stdin from another
+ * command (`printf … | bash`). Both guards refuse it.
+ */
+export const OPAQUE = '__code_on_stdin__'
+const opaque = (name) => ({ words: [OPAQUE, name], outs: [], heredoc: '', piped: false })
 
 // Programs that run another program: skip them (and their own flags) to find
 // the one that matters.
 const WRAPPERS = new Set(['sudo', 'env', 'command', 'exec', 'time', 'nohup', 'nice', 'xargs', 'npx', 'bunx', 'caffeinate'])
 const RUNNER_PAIRS = [['pnpm', 'dlx'], ['yarn', 'dlx'], ['npm', 'exec'], ['pnpm', 'exec'], ['bun', 'x']]
 
-/** The program that runs (basename, no @version) and its arguments. */
+/**
+ * The program that runs (basename, no @version), its arguments, and the
+ * wrappers stripped to find it (so a guard can tell `xargs rm` from `rm`).
+ */
 export function normalise(words) {
   let rest = [...words]
+  const wrappers = []
   for (let guard = 0; guard < 20 && rest.length; guard += 1) {
     const first = rest[0]
     if (/^[A-Za-z_][A-Za-z0-9_]*=/.test(first)) {
@@ -196,6 +240,7 @@ export function normalise(words) {
     }
     const base = first.split('/').at(-1)
     if (WRAPPERS.has(base)) {
+      wrappers.push(base)
       rest = rest.slice(1)
       // Drop the wrapper's own options (and sudo -u USER style values).
       while (rest.length && (rest[0].startsWith('-') || /^[A-Za-z_][A-Za-z0-9_]*=/.test(rest[0]))) {
@@ -214,5 +259,5 @@ export function normalise(words) {
     break
   }
   const name = (rest[0] ?? '').split('/').at(-1).replace(/@[^/]*$/, '')
-  return { name, args: rest.slice(1) }
+  return { name, args: rest.slice(1), wrappers }
 }
