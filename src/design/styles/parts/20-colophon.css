@@ -22,3 +22,26 @@
   color: var(--text);
   font-weight: 500;
 }
+
+/* "Get in touch": the colophon's own mono voice, set as a link. */
+.colophon-contact {
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  color: var(--text);
+  text-decoration: underline;
+  text-decoration-thickness: var(--hair);
+  text-underline-offset: 0.22em;
+  cursor: pointer;
+}
+
+.colophon-contact:hover {
+  color: var(--accent);
+}
+
+.colophon-contact:active {
+  color: var(--accent-hover);
+}

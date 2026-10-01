@@ -5,6 +5,7 @@ import Colophon from '@design/primitives/Colophon'
 import SkipToContent from '@design/primitives/SkipToContent'
 import ScrollProgressBar from '@design/primitives/ScrollProgressBar'
 import Dock from '@design/primitives/Dock'
+import ContactSheet from '@design/primitives/ContactSheet'
 import CookieBanner from '@frontend/components/CookieBanner'
 import SearchOverlay from '@frontend/components/SearchOverlay'
 import GridField from '@design/primitives/GridField'
@@ -24,6 +25,7 @@ function runningHead() {
 export default function AppLayout({ children }) {
   const [searchOpen, setSearchOpen] = useState(false)
   const [railOpen, setRailOpen] = useState(false)
+  const [contactOpen, setContactOpen] = useState(false)
 
   return (
     <>
@@ -66,12 +68,17 @@ export default function AppLayout({ children }) {
             </div>
           </header>
 
-          <main id="main-content">{children}</main>
-          <Colophon />
+          {/* The dock lives at the end of the page body so it stops above the
+              colophon; see Dock.jsx. */}
+          <div className="page-body">
+            <main id="main-content">{children}</main>
+            <Dock onContact={() => setContactOpen(true)} />
+          </div>
+          <Colophon onContact={() => setContactOpen(true)} />
         </div>
       </div>
 
-      <Dock />
+      <ContactSheet open={contactOpen} onClose={() => setContactOpen(false)} />
       <CookieBanner />
       <SearchOverlay open={searchOpen} onClose={() => setSearchOpen(false)} />
     </>

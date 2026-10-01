@@ -14,18 +14,14 @@
 // in /Applications. It runs headless with a throwaway profile in outDir, so
 // the user's own browser profile is never touched.
 
-import { spawn, spawnSync } from 'node:child_process'
-import { existsSync, mkdirSync, readFileSync, writeFileSync, appendFileSync, rmSync } from 'node:fs'
-import http from 'node:http'
+import { mkdirSync, readFileSync, writeFileSync, appendFileSync, rmSync } from 'node:fs'
 import path from 'node:path'
-import { fileURLToPath } from 'node:url'
-import { setTimeout as sleep } from 'node:timers/promises'
+import { root, sleep, TOUCH_MAX, buildAll, serveAll, openBrowser } from './lib.mjs'
 
-const root = fileURLToPath(new URL('../..', import.meta.url))
 const args = process.argv.slice(2)
 const outDir = path.resolve(args.find((a) => !a.startsWith('--')) ?? path.join(root, 'sweep-out'))
 const QUICK = args.includes('--quick')
-const PASSES = (args.find((a) => a.startsWith('--passes='))?.slice(9) ?? 'matrix,banner,focus,motion,loading,stress,dock,states,shots').split(',')
+const PASSES = (args.find((a) => a.startsWith('--passes='))?.slice(9) ?? 'matrix,banner,focus,motion,loading,stress,dock,helpline,states,shots').split(',')
 const run = (name) => PASSES.includes(name)
 const ONLY_BUILDS = args.find((a) => a.startsWith('--builds='))?.slice(9).split(',')
 const SHOTS = args.includes('--shots')
@@ -36,155 +32,21 @@ const record = (entry) => appendFileSync(rawFile, `${JSON.stringify(entry)}\n`)
 const auditSource = readFileSync(new URL('./page-audit.js', import.meta.url), 'utf8')
 
 const WIDTHS = QUICK ? [375, 1280] : [320, 375, 414, 768, 1024, 1280, 1440]
-const TOUCH_MAX = 768
 const THEMES = ['light', 'dark']
 const SIGNED_IN_ROUTES = ['/dashboard', '/mood', '/habits', '/thoughts', '/report', '/settings', '/classes', '/faq', '/admin', '/no-such-page']
 const SIGNED_OUT_ROUTES = ['/login', '/signup', '/faq', '/auth/callback', '/no-such-page']
 
-// --- builds ---------------------------------------------------------------
-const BUILDS = {
-  empty: { VITE_FIXTURE_SCENARIO: 'empty' },
-  week: { VITE_FIXTURE_SCENARIO: 'week' },
-  heavy: { VITE_FIXTURE_SCENARIO: 'heavy' },
-  signedout: { VITE_FIXTURE_SCENARIO: 'week', VITE_FIXTURE_SIGNED_OUT: 'true' },
-  slow: { VITE_FIXTURE_SCENARIO: 'week', VITE_FIXTURE_LATENCY: '4000' },
-  // Layout-only role scenarios (see fixtures.js): /classes and /admin with
-  // long class and student names.
-  teacher: { VITE_FIXTURE_SCENARIO: 'teacher' },
-  admin: { VITE_FIXTURE_SCENARIO: 'admin' },
-}
-for (const [name, env] of Object.entries(BUILDS)) {
-  const dir = path.join(outDir, 'builds', name)
-  const r = spawnSync('npx', ['vite', 'build', '--mode', 'development', '--outDir', dir, '--emptyOutDir', '--logLevel', 'error'], {
-    cwd: root,
-    env: { ...process.env, VITE_USE_FIXTURES: 'true', VITE_FIXTURE_LATENCY: '0', ...env },
-    encoding: 'utf8',
-  })
-  if (r.status !== 0) throw new Error(`build ${name} failed:\n${r.stderr}`)
-}
+// --- builds, servers, browser (lib.mjs) -------------------------------------
+buildAll(outDir)
+const servers = await serveAll(outDir)
+const { send, evaluate, setup, load, capture, close, version, browserPath } = await openBrowser(outDir)
 
-// --- static servers (SPA fallback) ------------------------------------------
-const TYPES = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.svg': 'image/svg+xml', '.png': 'image/png', '.json': 'application/json', '.woff2': 'font/woff2', '.webmanifest': 'application/manifest+json', '.ico': 'image/x-icon' }
-const servers = {}
-for (const name of Object.keys(BUILDS)) {
-  const dir = path.join(outDir, 'builds', name)
-  const server = http.createServer((req, res) => {
-    const url = decodeURIComponent(new URL(req.url, 'http://x').pathname)
-    let file = path.join(dir, url)
-    if (!file.startsWith(dir) || !existsSync(file) || url.endsWith('/')) file = path.join(dir, 'index.html')
-    res.writeHead(200, { 'Content-Type': TYPES[path.extname(file)] ?? 'application/octet-stream' })
-    res.end(readFileSync(file))
-  })
-  await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve))
-  servers[name] = { server, origin: `http://127.0.0.1:${server.address().port}` }
-}
-
-// --- browser ------------------------------------------------------------------
-const CANDIDATES = [
-  process.env.SWEEP_BROWSER,
-  '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
-  '/Applications/Chromium.app/Contents/MacOS/Chromium',
-  '/Applications/Brave Browser.app/Contents/MacOS/Brave Browser',
-  '/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge',
-].filter(Boolean)
-const browserPath = CANDIDATES.find((p) => existsSync(p))
-if (!browserPath) throw new Error('No Chromium-family browser found; set SWEEP_BROWSER.')
-const port = 9300 + Math.floor(Math.random() * 500)
-const profile = path.join(outDir, 'profile')
-const browser = spawn(browserPath, [
-  '--headless=new', `--remote-debugging-port=${port}`, `--user-data-dir=${profile}`,
-  '--no-first-run', '--no-default-browser-check', '--disable-extensions', '--hide-scrollbars', '--mute-audio',
-], { stdio: 'ignore' })
-const stop = () => browser.kill()
-process.on('exit', stop)
-process.on('uncaughtException', (error) => {
-  console.error(error)
-  stop()
-  process.exit(1)
-})
-let version
-for (let i = 0; i < 50 && !version; i += 1) {
-  await sleep(200)
-  version = await fetch(`http://127.0.0.1:${port}/json/version`).then((r) => r.json()).catch(() => null)
-}
-if (!version) throw new Error('browser did not start')
-
-const target = await fetch(`http://127.0.0.1:${port}/json/new?about:blank`, { method: 'PUT' }).then((r) => r.json())
-const ws = new WebSocket(target.webSocketDebuggerUrl)
-await new Promise((resolve, reject) => ((ws.onopen = resolve), (ws.onerror = reject)))
-let seq = 0
-const pending = new Map()
-const waiters = []
-ws.onmessage = (msg) => {
-  const data = JSON.parse(msg.data)
-  if (data.id && pending.has(data.id)) {
-    const { resolve, reject } = pending.get(data.id)
-    pending.delete(data.id)
-    if (data.error) reject(new Error(data.error.message))
-    else resolve(data.result)
-  } else if (data.method) {
-    for (const w of [...waiters]) {
-      if (w.method !== data.method) continue
-      waiters.splice(waiters.indexOf(w), 1)
-      w.resolve(data.params)
-    }
-  }
-}
-const send = (method, params = {}) =>
-  new Promise((resolve, reject) => {
-    const id = ++seq
-    pending.set(id, { resolve, reject })
-    ws.send(JSON.stringify({ id, method, params }))
-  })
-const once = (method, ms = 15000) =>
-  Promise.race([new Promise((resolve) => waiters.push({ method, resolve })), sleep(ms).then(() => null)])
-const evaluate = async (expression) => {
-  const r = await send('Runtime.evaluate', { expression, returnByValue: true, awaitPromise: true })
-  if (r.exceptionDetails) throw new Error(r.exceptionDetails.exception?.description ?? r.exceptionDetails.text)
-  return r.result.value
-}
-
-await send('Page.enable')
-await send('Runtime.enable')
-
-let preload = null
-async function setup({ width, theme, reduceMedia = false, storage = {} }) {
-  const mobile = width <= TOUCH_MAX
-  await send('Emulation.setDeviceMetricsOverride', { width, height: mobile ? 800 : 900, deviceScaleFactor: 1, mobile })
-  await send('Emulation.setTouchEmulationEnabled', mobile ? { enabled: true, maxTouchPoints: 5 } : { enabled: false })
-  await send('Emulation.setEmulatedMedia', {
-    features: [
-      { name: 'prefers-color-scheme', value: theme },
-      { name: 'prefers-reduced-motion', value: reduceMedia ? 'reduce' : 'no-preference' },
-    ],
-  })
-  if (preload) await send('Page.removeScriptToEvaluateOnNewDocument', { identifier: preload })
-  // reduceMotion renders every Reveal as a plain element, so content below the
-  // fold is measured too (otherwise it waits at opacity 0 for a scroll). The
-  // motion pass overrides this to test animation itself.
-  const items = { theme, cookie_consent: 'declined', reduceMotion: 'true', ...storage }
-  const source = `try{localStorage.clear();${Object.entries(items)
-    .filter(([, v]) => v != null)
-    .map(([k, v]) => `localStorage.setItem(${JSON.stringify(k)},${JSON.stringify(v)});`)
-    .join('')}}catch(e){}`
-  preload = (await send('Page.addScriptToEvaluateOnNewDocument', { source })).identifier
-}
-
-async function load(url, settle = 1200) {
-  const loaded = once('Page.loadEventFired')
-  await send('Page.navigate', { url })
-  await loaded
-  await sleep(settle)
-}
-
-// Viewport-sized captures only: a full-page capture resizes the viewport,
-// which changes every vh-based height and leaves fixed layers painted once.
+// Viewport-sized captures (see lib.mjs), at the top and optionally at the end.
 async function shot(name, { end = false } = {}) {
   if (!SHOTS) return
   mkdirSync(path.join(outDir, 'shots'), { recursive: true })
   const take = async (suffix) => {
-    const r = await send('Page.captureScreenshot', { format: 'png' })
-    writeFileSync(path.join(outDir, 'shots', `${name}${suffix}.png`), Buffer.from(r.data, 'base64'))
+    writeFileSync(path.join(outDir, 'shots', `${name}${suffix}.png`), await capture())
     shotCount += 1
   }
   await evaluate('scrollTo(0, 0)')
@@ -359,7 +221,7 @@ progress('stress')
 // this waits after each scroll before measuring what fixed controls cover.
 const dockProbe = `(() => {
   const vis = (e) => { const s = getComputedStyle(e); const r = e.getBoundingClientRect(); return s.display !== 'none' && s.visibility !== 'hidden' && Number(s.opacity) > 0.05 && r.width > 0 && r.height > 0 }
-  const fixed = [...document.querySelectorAll('body *')].filter((e) => getComputedStyle(e).position === 'fixed' && vis(e) && getComputedStyle(e).pointerEvents !== 'none' && e.querySelector('button,a'))
+  const fixed = [...document.querySelectorAll('body *')].filter((e) => /^(fixed|sticky)$/.test(getComputedStyle(e).position) && vis(e) && getComputedStyle(e).pointerEvents !== 'none' && e.querySelector('button,a'))
   const own = (e) => [...e.childNodes].some((n) => n.nodeType === 3 && n.textContent.trim())
   const texts = [...document.querySelectorAll('main *, footer *, .colophon *')].filter((e) => own(e) && vis(e) && !e.closest('[class*=dock]'))
   const out = []
@@ -368,7 +230,7 @@ const dockProbe = `(() => {
     const fr = b.getBoundingClientRect()
     for (const t of texts) for (const r of t.getClientRects()) {
       const w = Math.min(fr.right, r.right) - Math.max(fr.left, r.left), h = Math.min(fr.bottom, r.bottom) - Math.max(fr.top, r.top)
-      if (w > 2 && h > 2) { out.push({ control: (b.getAttribute('aria-label') || b.innerText).slice(0, 30), text: t.innerText.trim().slice(0, 40), sel: t.tagName.toLowerCase() + '.' + [...t.classList].join('.') }); break }
+      if (w > 2 && h > 2) { out.push({ control: (b.getAttribute('aria-label') || b.innerText).slice(0, 30), text: (t.innerText ?? t.textContent).trim().slice(0, 40), sel: t.tagName.toLowerCase() + '.' + [...t.classList].join('.') }); break }
     }
   }
   return { out, max: document.documentElement.scrollHeight - innerHeight }
@@ -383,12 +245,55 @@ for (const theme of run('dock') ? ['light'] : []) {
         for (const [where, y] of [['top', 0], ['end', max]]) {
           await evaluate(`scrollTo(0, ${Math.max(0, y)}); dispatchEvent(new Event('scroll'))`)
           await sleep(350)
+          // Reaching the end can make ↑ appear and the page grow; settle there.
+          if (where === 'end') {
+            await evaluate(`scrollTo(0, document.documentElement.scrollHeight); dispatchEvent(new Event('scroll'))`)
+            await sleep(350)
+          }
           const { out } = await evaluate(dockProbe)
           if (out.length) record({ pass: 'dock', build, theme, width, route, where, covered: out })
         }
       }
     }
     progress(`dock ${width}`)
+  }
+}
+
+// --- pass 7b: the support line is never under the dock, at any scroll -----
+// Scrolls every page in 120px steps and checks each stop. Also records whether
+// the ✉ button shows (it must not on phones) and that the colophon's
+// "Get in touch" opens the contact sheet.
+const helplineProbe = `(() => {
+  const vis = (e) => { const s = getComputedStyle(e); const r = e.getBoundingClientRect(); return s.display !== 'none' && s.visibility !== 'hidden' && r.width > 0 && r.height > 0 }
+  const dock = [...document.querySelectorAll('.dock button')].filter(vis).map((b) => b.getBoundingClientRect())
+  const lines = [...document.querySelectorAll('.support-line, .support-line *')].flatMap((e) => [...e.getClientRects()])
+  const hits = []
+  for (const d of dock) for (const r of lines) {
+    const w = Math.min(d.right, r.right) - Math.max(d.left, r.left), h = Math.min(d.bottom, r.bottom) - Math.max(d.top, r.top)
+    if (w > 0 && h > 0) { hits.push(Math.round(scrollY)); break }
+  }
+  return { hits, mail: !!document.querySelector('.dock-contact') && vis(document.querySelector('.dock-contact')), max: document.documentElement.scrollHeight - innerHeight }
+})()`
+if (run('helpline')) {
+  for (const width of WIDTHS) {
+    await setup({ width, theme: 'light' })
+    for (const { build, routes } of [{ build: 'heavy', routes: SIGNED_IN_ROUTES }, { build: 'empty', routes: SIGNED_IN_ROUTES }, { build: 'admin', routes: ['/admin', '/classes'] }]) {
+      for (const route of routes) {
+        await load(servers[build].origin + route)
+        const { max, mail } = await evaluate(helplineProbe)
+        const hits = []
+        for (let y = 0; y <= max + 120; y += 120) {
+          await evaluate(`scrollTo(0, ${Math.min(y, max)}); dispatchEvent(new Event('scroll'))`)
+          await sleep(60)
+          hits.push(...(await evaluate(helplineProbe)).hits)
+        }
+        const opens = await evaluate(`(() => { const b = document.querySelector('.colophon-contact'); if (!b) return false; b.click(); return true })()`)
+        await sleep(150)
+        const sheet = await evaluate(`!!document.querySelector('[role=dialog][aria-label="Get in touch"]')`)
+        record({ pass: 'helpline', build, width, route, covered: hits.length, at: hits.slice(0, 5), mailVisible: mail, footerLink: opens, sheetOpens: sheet })
+      }
+    }
+    progress(`helpline ${width}`)
   }
 }
 
@@ -455,8 +360,7 @@ if (SHOTS && run('shots')) {
   }
 }
 
-writeFileSync(path.join(outDir, 'meta.json'), JSON.stringify({ browser: browserPath, version: version.Browser, widths: WIDTHS, shots: shotCount, when: new Date().toISOString() }, null, 1))
-ws.close()
-browser.kill()
+writeFileSync(path.join(outDir, 'meta.json'), JSON.stringify({ browser: browserPath, version, widths: WIDTHS, shots: shotCount, when: new Date().toISOString() }, null, 1))
+close()
 for (const { server } of Object.values(servers)) server.close()
 progress(`done — ${shotCount} screenshots`)

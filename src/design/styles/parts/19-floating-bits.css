@@ -18,14 +18,43 @@
   transition: width 90ms linear;
 }
 
+/* The page body ends where the colophon begins. The dock is the last thing in
+   it, sticky to the bottom of the viewport: it floats in the corner while the
+   page scrolls and stops above the colophon, so it never covers the support
+   line and, at the end of the page, takes its own room instead of covering
+   the last of the content. */
+.page-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.page-body > main {
+  flex: 1;
+}
+
 .dock {
-  position: fixed;
-  right: clamp(0.85rem, 2vw, 1.5rem);
+  position: sticky;
   bottom: clamp(0.85rem, 2vw, 1.5rem);
   z-index: 90;
+  align-self: flex-end;
+  margin: var(--space-6) clamp(0.85rem, 2vw, 1.5rem) clamp(0.85rem, 2vw, 1.5rem) 0;
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
+}
+
+/* Phones: no ✉ in the corner. "Get in touch" is in the colophon. Until ↑
+   appears the dock is then empty, so it takes no room either. */
+@media (max-width: 640px) {
+  .dock-contact,
+  .dock:has(> .dock-contact:only-child) {
+    display: none;
+  }
+}
+
+.sheet-cta {
+  margin-top: var(--space-5);
 }
 
 .dock .icon-btn {
