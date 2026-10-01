@@ -22,6 +22,12 @@ function runningHead() {
   })
 }
 
+// Phones get the short form: the long one cannot fit beside the masthead's
+// two buttons and was cut to "THURSDAY, 1 OCTO…".
+function shortRunningHead() {
+  return new Date().toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' })
+}
+
 export default function AppLayout({ children }) {
   const [searchOpen, setSearchOpen] = useState(false)
   const [railOpen, setRailOpen] = useState(false)
@@ -54,7 +60,9 @@ export default function AppLayout({ children }) {
               Mindful
             </Link>
             <p className="masthead-slug">
-              <b>{runningHead()}</b> · Vol. I
+              <b className="masthead-date-long">{runningHead()}</b>
+              <b className="masthead-date-short">{shortRunningHead()}</b>
+              <span className="masthead-vol"> · Vol. I</span>
             </p>
             <div className="masthead-tools">
               <button

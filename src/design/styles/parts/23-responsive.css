@@ -107,6 +107,16 @@
     max-width: none; /* stacked under the title, it has the full width */
   }
 
+  /* The running head: the short date, and no volume, beside two buttons. */
+  .masthead-date-long,
+  .masthead-vol {
+    display: none;
+  }
+
+  .masthead-date-short {
+    display: inline;
+  }
+
   .panel {
     padding: var(--space-5) var(--space-4);
   }

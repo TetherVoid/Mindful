@@ -119,7 +119,7 @@ export default function Dashboard() {
             : "Everything you've written down lately, on one page. Pick a line to open it."}
         </p>
         {isNewBook && (
-          <Link to="/mood" className="btn btn--solid" style={{ marginTop: '1.4rem' }}>
+          <Link to="/mood" className="btn btn--solid folio-cta">
             <Icon name="plus" size={15} />
             Log your first mood
           </Link>
@@ -293,9 +293,9 @@ export default function Dashboard() {
               </BarChart>
             </ResponsiveContainer>
           </div>
-          <div className="heat-legend" style={{ justifyContent: 'space-between' }}>
+          <div className="heat-legend heat-legend--spread">
             <span>Click a column to open the mood page</span>
-            <span aria-hidden="true" style={{ display: 'flex', gap: '0.4rem', color: 'var(--rule)' }}>
+            <span aria-hidden="true" className="mood-faces">
               {MOOD_SCORES.map((s) => (
                 <MoodFace key={s} score={s} size={16} />
               ))}

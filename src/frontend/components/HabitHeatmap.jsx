@@ -1,5 +1,6 @@
 import { useMemo } from 'react'
 import { toLocalISODate } from '@shared/utils/date'
+import useTouchLayout from '@design/theme/useTouchLayout'
 
 const WEEKS_TO_SHOW = 12
 const DAYS_TO_SHOW = WEEKS_TO_SHOW * 7
@@ -15,9 +16,14 @@ function bucket(count, maxCount) {
 }
 
 const MONTH_FMT = new Intl.DateTimeFormat(undefined, { month: 'short' })
+const DAY_FMT = new Intl.DateTimeFormat(undefined, { weekday: 'short', day: 'numeric', month: 'short' })
 
+// On a touch screen the 14px cells are display-only — too small to tap, and a
+// tooltip needs a pointer — and the same day-by-day detail is offered as text
+// in "Read the calendar as a list" beneath them.
 export default function HabitHeatmap({ habits, logsByHabit, id }) {
-  const { weeks, maxCount, totalMarks, monthMarks } = useMemo(() => {
+  const touch = useTouchLayout()
+  const { days, weeks, maxCount, totalMarks, monthMarks } = useMemo(() => {
     const byDate = {}
     for (const habit of habits) {
       for (const date of logsByHabit[habit.id] ?? []) {
@@ -64,6 +70,7 @@ export default function HabitHeatmap({ habits, logsByHabit, id }) {
     })
 
     return {
+      days,
       weeks,
       maxCount: Math.max(1, ...days.map((d) => d.count)),
       totalMarks: days.reduce((sum, d) => sum + d.count, 0),
@@ -83,6 +90,7 @@ export default function HabitHeatmap({ habits, logsByHabit, id }) {
 
       <div
         className="heat"
+        data-static={touch ? 'true' : undefined}
         role="img"
         aria-label={`Habit completion calendar for the last ${WEEKS_TO_SHOW} weeks, ${totalMarks} marks in total`}
       >
@@ -112,11 +120,11 @@ export default function HabitHeatmap({ habits, logsByHabit, id }) {
                     data-level={day.isFuture ? undefined : bucket(day.count, maxCount)}
                     data-future={day.isFuture ? 'true' : undefined}
                     title={
-                      day.isFuture
+                      day.isFuture || touch
                         ? undefined
                         : `${day.date}: ${day.count === 0 ? 'nothing logged' : day.names.join(', ')}`
                     }
-                    tabIndex={day.isFuture ? -1 : 0}
+                    tabIndex={day.isFuture ? -1 : touch ? undefined : 0}
                   />
                 ))}
               </div>
@@ -124,6 +132,24 @@ export default function HabitHeatmap({ habits, logsByHabit, id }) {
           </div>
         </div>
       </div>
+
+      {touch && (
+        <details className="heat-list">
+          <summary>Read the calendar as a list</summary>
+          <ol>
+            {days
+              .filter((day) => !day.isFuture && day.count > 0)
+              .reverse()
+              .map((day) => (
+                <li key={day.date}>
+                  <span className="heat-list-date">{DAY_FMT.format(day.day)}</span>
+                  <span>{day.names.join(', ')}</span>
+                </li>
+              ))}
+          </ol>
+          <p className="heat-list-note">Days not listed: nothing ticked.</p>
+        </details>
+      )}
 
       <div className="heat-legend">
         <span>Fewer</span>

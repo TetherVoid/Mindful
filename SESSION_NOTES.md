@@ -100,10 +100,16 @@ the remote database.
   shown on every page and never conditionally. **Re-verify every number at least
   once a year** — next check due **2027-09**. KIRAN (1800-599-0019) was merged
   into Tele-MANAS in 2024 and must not be re-added.
-- **Share image and icons** are rendered from
-  `src/design/assets/sources/*.svg` with macOS `sips`, which cannot draw italic
-  and has no Newsreader, so the OG image uses Georgia and an upright accent
-  word. Regenerate from the sources if either becomes available.
+- **Share image:** `node scripts/render-og-image.mjs` renders
+  `src/design/assets/sources/og-image.svg` to `public/og-image.png` in the
+  sweep's headless browser, in Newsreader and JetBrains Mono (from Google
+  Fonts) with the accent word in italic. Icons are still `sips` renders.
+- **Visual sweep:** `npm run sweep` (scripts/sweep/) measures every route,
+  scenario, theme and seven widths; `scripts/sweep/shoot.mjs` takes targeted
+  before/after screenshots. Fixture scenarios `teacher` and `admin` exist only
+  so /classes and /admin can be laid out with long names — they answer the
+  class and directory functions with no filtering, so they say nothing about
+  access.
 
 ---
 

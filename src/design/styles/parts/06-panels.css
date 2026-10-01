@@ -125,3 +125,7 @@
 .panel-head + .ledger {
   border-top: 0;
 }
+
+.panel-head--ruled {
+  border-bottom-color: var(--text);
+}

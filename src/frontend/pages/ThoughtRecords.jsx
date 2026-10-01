@@ -296,7 +296,7 @@ export default function ThoughtRecords() {
       </Reveal>
 
       <Reveal as="section" index={2}>
-        <div className="panel-head" style={{ borderBottomColor: 'var(--text)' }}>
+        <div className="panel-head panel-head--ruled">
           <span className="panel-head-num">§ 02</span>
           <h2>On file</h2>
           <span className="panel-head-note">Newest first</span>
@@ -321,7 +321,7 @@ export default function ThoughtRecords() {
                   </span>
                 </div>
 
-                <dl style={{ margin: 0 }}>
+                <dl className="note-body">
                   <div className="note-line">
                     <dt>Thought</dt>
                     <dd className="note-quote">"{r.automatic_thought}"</dd>

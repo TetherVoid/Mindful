@@ -228,7 +228,7 @@ export default function Report() {
     return (
       <div className="folio">
         {header}
-        <FormError message={loadError} />
+        <FormError message={loadError} label="The reading" />
       </div>
     )
   }

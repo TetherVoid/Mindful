@@ -183,3 +183,16 @@
   outline: var(--focus-ring);
   outline-offset: var(--focus-offset);
 }
+
+.plate-body {
+  margin-top: 0;
+  color: var(--muted);
+}
+
+.plate-body strong {
+  color: var(--text);
+}
+
+.plate-body + .btn {
+  margin-top: var(--space-5);
+}

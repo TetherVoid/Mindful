@@ -163,9 +163,7 @@ export default function Habits() {
         </div>
         <div className="folio-meta">
           <span>
-            <b>
-              {doneCount}/{habits.length}
-            </b>{' '}
+            <b>{loading ? '—' : `${doneCount}/${habits.length}`}</b>{' '}
             done today
           </span>
           <span>{new Date().toLocaleDateString(undefined, { day: '2-digit', month: 'short' })}</span>
@@ -175,7 +173,7 @@ export default function Habits() {
       <FormError message={error} label="Register" />
 
       <Reveal as="form" className="inline-form" index={1} onSubmit={addHabit}>
-        <label className="mono" htmlFor="new-habit" style={{ position: 'absolute', left: -9999 }}>
+        <label className="mono visually-hidden" htmlFor="new-habit">
           New habit
         </label>
         <input

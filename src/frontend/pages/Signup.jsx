@@ -45,16 +45,16 @@ export default function Signup() {
       <Frontispiece>
         <Reveal className="plate" index={1} y={18}>
           <div className="plate-head">
-            <p className="mono" style={{ color: 'var(--accent)', margin: '0 0 0.5rem' }}>
+            <p className="mono">
               Page one
             </p>
             <h1>Your book is open</h1>
           </div>
-          <p style={{ color: 'var(--muted)', marginTop: 0 }}>
-            Registered to <strong style={{ color: 'var(--text)' }}>{email}</strong>. If email
+          <p className="plate-body">
+            Registered to <strong>{email}</strong>. If email
             confirmation is switched on for this project, confirm from your inbox before signing in.
           </p>
-          <Link className="btn btn--solid btn--block" to="/login" style={{ marginTop: '1.25rem' }}>
+          <Link className="btn btn--solid btn--block" to="/login">
             Go to sign in
           </Link>
         </Reveal>
@@ -66,7 +66,7 @@ export default function Signup() {
     <Frontispiece>
       <Reveal as="form" className="plate" index={1} y={18} onSubmit={handleSubmit}>
         <div className="plate-head">
-          <p className="mono" style={{ color: 'var(--accent)', margin: '0 0 0.5rem' }}>
+          <p className="mono">
             New volume
           </p>
           <h1>Start your book</h1>

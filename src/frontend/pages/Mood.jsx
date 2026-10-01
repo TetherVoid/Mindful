@@ -13,6 +13,7 @@ import {
 import { listRecentMoodsChronological, createMood, countMoods } from '@backend/services/moods'
 import { useAuth } from '@backend/auth/AuthContext'
 import useLiveAccentColor from '@design/theme/useLiveAccentColor'
+import useTouchLayout from '@design/theme/useTouchLayout'
 import { getMoodHistoryLength } from '@shared/utils/preferences'
 import { toLocalISODate, todayISO } from '@shared/utils/date'
 import FormSuccess from '@frontend/components/FormSuccess'
@@ -69,6 +70,7 @@ function averageOfDays(logs) {
 export default function Mood() {
   const { user } = useAuth()
   const accent = useLiveAccentColor()
+  const touch = useTouchLayout()
   const [logs, setLogs] = useState([])
   const [loading, setLoading] = useState(true)
   // Nothing is chosen until the reader chooses. A preset middle score would be
@@ -324,10 +326,10 @@ export default function Mood() {
                   {chartData.length > BRUSH_THRESHOLD && (
                     <Brush
                       dataKey="date"
-                      height={22}
+                      height={touch ? 44 : 22}
                       stroke={accent}
                       fill="transparent"
-                      travellerWidth={8}
+                      travellerWidth={touch ? 24 : 8}
                     />
                   )}
                 </ComposedChart>

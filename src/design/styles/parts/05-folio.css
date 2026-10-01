@@ -86,3 +86,7 @@
   color: var(--text);
   font-weight: 500;
 }
+
+.folio-cta {
+  margin-top: var(--space-6);
+}

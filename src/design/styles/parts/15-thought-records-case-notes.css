@@ -121,3 +121,7 @@
   letter-spacing: 0.1em;
   color: var(--muted);
 }
+
+.note-body {
+  margin: 0;
+}
