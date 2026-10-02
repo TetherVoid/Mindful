@@ -185,5 +185,34 @@ disabled for this repo (`docs/ecc.md`). CLAUDE.md is self-contained;
 AGENT_RULES.md slimmed, its archive now in `docs/archive/`. Commits are local
 at the end of each task; pushing stays with the human.
 
-Still to do: Phase C (calendar reminder, removing Three.js, mobile tap targets,
-light-theme contrast, Settings.jsx formatting).
+**2026-10-02 — design pass.** A scripted sweep (`npm run sweep`: every route,
+scenario, theme and seven widths) found the defects; four batches and two
+follow-ups fixed them, each verified, re-swept and reviewed. Against the first
+sweep: overflow 12 → 0, overlaps 6 → 0, text contrast failures 8 → 0, field
+borders under 3:1 14 → 0, undocumented literals outside the tokens 49 → 0.
+
+- New tokens `--target` (44px) and `--offset-sm`; light `--muted` darkened to
+  about 5.5:1. Touch targets are 44px in the touch block of
+  `23-responsive.css`, mirrored in JavaScript by `useTouchLayout.js`.
+- The dock is sticky inside `.page-body`, which ends before the colophon, so it
+  never covers the support line (checked at every width). On phones the ✉
+  button is hidden; "Get in touch" lives in the colophon.
+- On touch the habit calendar's cells are display-only, with the same
+  information under "Read the calendar as a list".
+- Reduced motion now reaches `<html>` (smooth scrolling stopped). The share
+  image's accent word is italic (`scripts/render-og-image.mjs`).
+- The support line's lines are 44px tall on touch, so each number has a full
+  44×44 tap area. No copy changed anywhere.
+- Left as decided: 24px chart handles, one heading widow, the desktop ✉ over
+  content mid-scroll. Undecided: C3 (hatched disabled buttons), C4 (n/5 scores
+  hidden on phones), C6 (empty states as margin notes), the custom-ink swatch;
+  previews in `sweep-out/c-previews/` (gitignored, local only). C5 rejected:
+  a red mark for an unlogged entry conflicts with the no-guilt principle.
+- Inline text links under 44px are left as WCAG allows; the 404 page's "Read
+  the marginalia" is queued as a follow-up.
+
+Pushed and smoke-tested on production signed out: every route loads, protected
+routes go to `/login`, the support line is on every page, the live headers pass.
+
+Still to do: Phase C (calendar reminder, removing Three.js, Settings.jsx
+formatting).
