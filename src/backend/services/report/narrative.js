@@ -70,9 +70,7 @@ function habitSection(habits) {
 
   if (habits.strongest && habits.strongest.rate > 0) {
     parts.push(
-      `“${habits.strongest.name}” is the most consistent at ${PERCENT(habits.strongest.rate)}${
-        habits.strongest.streak > 1 ? `, currently ${pluralise(habits.strongest.streak, 'day')} unbroken` : ''
-      }.`
+      `“${habits.strongest.name}” is the most consistent at ${PERCENT(habits.strongest.rate)}.`
     )
   }
 
@@ -80,10 +78,6 @@ function habitSection(habits) {
     parts.push(
       `“${habits.weakest.name}” is the one slipping, ticked on ${PERCENT(habits.weakest.rate)} of its days.`
     )
-  }
-
-  if (habits.longestStreak >= 7) {
-    parts.push(`The longest run standing right now is ${pluralise(habits.longestStreak, 'day')}.`)
   }
 
   return { heading: 'The register', body: parts.join(' ') }
@@ -154,19 +148,15 @@ function linkSection(links) {
 }
 
 function buildNoticed(insights) {
-  const { mood, habits, thoughts, links } = insights
+  const { mood, thoughts, links } = insights
   const noticed = []
 
-  if (mood.streak >= 3) noticed.push(`Mood logged ${pluralise(mood.streak, 'day')} running.`)
   if (mood.coverage != null && mood.count >= 5) {
     noticed.push(`${PERCENT(mood.coverage)} of the days in this stretch have a mood on them.`)
   }
   if (mood.distribution.length) {
     const top = [...mood.distribution].sort((a, b) => b.count - a.count)[0]
     if (top.count) noticed.push(`“${top.label}” is the most frequent score, ${pluralise(top.count, 'time')}.`)
-  }
-  if (habits.longestStreak) {
-    noticed.push(`Longest habit streak standing: ${pluralise(habits.longestStreak, 'day')}.`)
   }
   if (thoughts.meanIntensity != null) {
     noticed.push(`Average recorded emotion intensity is ${thoughts.meanIntensity}/10.`)
@@ -212,21 +202,17 @@ function buildQuestions(insights) {
     if (busiest?.count >= 2) {
       questions.push(`“${busiest.label}” is where most days land. What does an ordinary one look like?`)
     }
-    if (mood.streak >= 2) {
-      questions.push('What made it easy to keep logging this week — and what usually breaks it?')
-    }
   }
 
   return questions.slice(0, 3)
 }
 
 function buildTitle(insights) {
-  const { mood, thoughts, habits } = insights
+  const { mood, thoughts } = insights
   if (mood.trend && mood.trend.direction !== 'steady') {
     return mood.trend.direction === 'rising' ? 'The line is turning up' : 'A heavier stretch'
   }
   if (mood.count >= 5 && mood.spread != null && mood.spread < 0.7) return 'A steady stretch'
-  if (habits.longestStreak >= 7) return 'The register is holding'
   if (thoughts.count >= 3) return 'Notes worth rereading'
   return 'Early pages'
 }

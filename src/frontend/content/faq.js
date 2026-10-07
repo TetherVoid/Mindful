@@ -26,11 +26,6 @@ export const faqItems = [
       'Each mood entry is a 1–5 self-rating plus an optional note. Over time these build into a trend line on the Mood page so you can spot patterns in how you feel.',
   },
   {
-    question: 'How are habit streaks calculated?',
-    answer:
-      'A streak counts the number of consecutive days (ending today or yesterday) where you checked off a habit. Missing a day resets the streak to zero.',
-  },
-  {
     question: 'Who can see my data?',
     answer:
       'Only you can read what you write. Your mood notes, your thought records and the names of your habits are never shown to any other person — not your teachers, and not the school’s administrators. If you switch on “Share figures with teachers” in Preferences, then while you are in a class, its teachers and the school’s administrators can see figures about your record: how many moods you logged, the score of each one and the day it was on, your average, how many habits you have and how often you ticked each, how many thought records you wrote, and the day you last wrote something — never the time. They never see your words. Sharing is off until you switch it on, and switching it off stops it straight away. When a class is archived, its teachers stop seeing figures through it.',

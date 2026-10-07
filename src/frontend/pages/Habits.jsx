@@ -6,7 +6,7 @@ import {
   archiveHabit,
 } from '@backend/services/habits'
 import { useAuth } from '@backend/auth/AuthContext'
-import { toLocalISODate, todayISO } from '@shared/utils/date'
+import { todayISO } from '@shared/utils/date'
 import ConfirmModal from '@frontend/components/ConfirmModal'
 import FormSuccess from '@frontend/components/FormSuccess'
 import FormError from '@frontend/components/FormError'
@@ -18,24 +18,6 @@ import Reveal from '@design/primitives/Reveal'
 import { StaggerGroup, StaggerItem } from '@design/primitives/Stagger'
 import Icon from '@design/primitives/Icon'
 import { TEXT_LIMITS } from '@shared/constants/limits'
-
-const HOT_STREAK = 7
-
-function computeStreak(dates) {
-  const set = new Set(dates)
-  let streak = 0
-  let cursor = new Date()
-  // If today isn't logged yet, start counting from yesterday so an
-  // unchecked "today" doesn't zero out an otherwise-intact streak.
-  if (!set.has(todayISO())) {
-    cursor.setDate(cursor.getDate() - 1)
-  }
-  while (set.has(toLocalISODate(cursor))) {
-    streak += 1
-    cursor.setDate(cursor.getDate() - 1)
-  }
-  return streak
-}
 
 export default function Habits() {
   const { user } = useAuth()
@@ -200,7 +182,6 @@ export default function Habits() {
           {habits.map((habit, i) => {
             const dates = logsByHabit[habit.id] ?? []
             const doneToday = dates.includes(todayISO())
-            const streak = computeStreak(dates)
             return (
               <StaggerItem className={`register-row ${doneToday ? 'done' : ''}`} index={i} key={habit.id}>
                 <button
@@ -215,20 +196,6 @@ export default function Habits() {
                 </button>
 
                 <span className="register-name">{habit.name}</span>
-
-                <button
-                  type="button"
-                  className={`streak ${streak >= HOT_STREAK ? 'hot' : ''}`}
-                  onClick={() =>
-                    document
-                      .getElementById('habit-heatmap')
-                      ?.scrollIntoView({ behavior: 'smooth', block: 'center' })
-                  }
-                  aria-label={`${streak} day streak — show on the calendar`}
-                >
-                  <b>{String(streak).padStart(2, '0')}</b>
-                  <span>day{streak === 1 ? '' : 's'}</span>
-                </button>
 
                 <span className="register-actions">
                   <button
