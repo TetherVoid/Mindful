@@ -17,12 +17,11 @@
 //      Token counts (never content) are logged so those estimates can be
 //      replaced with real numbers.
 //
-// One thing it does check against the database: if the caller says the figures
-// belong to somebody else (a teacher asking for a report about a student), the
-// claim is put to may_view_student() using the CALLER'S OWN token, so the
-// answer comes from the same authorisation rules the browser is subject to.
-// Without that check a teacher could paste any student id into the request and
-// have a report written under that name.
+// A reading is only ever about the caller. The endpoint once accepted a
+// `subjectUserId` so a teacher could ask for a reading of a student's figures;
+// no page used it, and it meant a student's figures could be sent to the model
+// without the student pressing anything. A request that names a subject is now
+// refused outright, before a slot is claimed.
 //
 // Environment:
 //   ANTHROPIC_API_KEY   required. Server-side only — a VITE_ prefix would inline
@@ -115,36 +114,7 @@ You see figures only — never anything the reader typed. Habits and emotions ap
 // Everything below is caller-supplied. The figures are computed in the browser,
 // so they are already untrusted input — the model is told to describe them, and
 // nothing acts on them, but they still get bounded before they reach a prompt.
-const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-9a-f][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
-
-/**
- * Whether the caller may have a report written about `subjectUserId`.
- *
- * Absent or equal to the caller: yes, trivially. Anything else is a claim about
- * someone else's record, and the claim is settled by may_view_student() run
- * under the caller's own token — the same function, the same rules, the same
- * answer the browser would get.
- */
-async function authoriseSubject(auth, subjectUserId) {
-  if (subjectUserId == null || subjectUserId === auth.userId) {
-    return { ok: true, subjectUserId: auth.userId }
-  }
-  if (typeof subjectUserId !== 'string' || !UUID.test(subjectUserId)) {
-    return { ok: false, status: 400, message: 'That is not a user id.' }
-  }
-
-  const { data, error } = await callRpcAsUser(auth.token, 'may_view_student', {
-    p_student_id: subjectUserId,
-  })
-  if (error) return { ok: false, status: 502, message: 'Could not check who that record belongs to.' }
-  if (data !== true) {
-    // Same answer whether the student does not exist or the caller simply may
-    // not see them, so this cannot be used to test which ids are real.
-    return { ok: false, status: 403, message: 'You do not have access to that record.' }
-  }
-  return { ok: true, subjectUserId }
-}
-
+//
 // Figures only. The wording of thought records and mood notes is never part of
 // this prompt: the opt-in that once sent it was removed for every user on
 // 2026-09-25, and the handler does not read an `excerpts` field even if a
@@ -208,8 +178,9 @@ export default async function handler(req, res) {
     return sendJson(res, 400, { error: 'That request carried text the reading does not accept.', fallback: true })
   }
 
-  const subject = await authoriseSubject(auth, body.subjectUserId)
-  if (!subject.ok) return sendJson(res, subject.status, { error: subject.message })
+  if ('subjectUserId' in body) {
+    return sendJson(res, 400, { error: 'A reading can only be about your own record.' })
+  }
 
   // The spending ceiling. Asked last, after every check that could refuse the
   // request for free, so a refused request never uses up a slot. Asked with

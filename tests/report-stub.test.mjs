@@ -164,11 +164,14 @@ test('an oversized body is 413', async () => {
   assert.equal(calls.anthropic.length, 0)
 })
 
-test('a report about someone the caller may not view is 403, and costs no slot', async () => {
-  reset({ mayView: false })
+test('a reading is only ever about the caller: naming any subject is 400, costs no slot, calls no model', async () => {
+  // Even a teacher the database would let see the student's figures: the
+  // endpoint no longer takes a subject at all.
+  reset({ mayView: true })
   const res = await call({ user: 'teacher', body: { figures, subjectUserId: OTHER_STUDENT } })
-  assert.equal(res.statusCode, 403)
+  assert.equal(res.statusCode, 400)
   assert.equal(calls.slots, 0)
+  assert.equal(calls.anthropic.length, 0)
 })
 
 test('an exhausted slot is 429 with the reader-facing sentence, and no model call', async () => {
