@@ -97,6 +97,9 @@ export default function Signup() {
         <p className="plate-switch">
           Already keeping one? <Link to="/login">Sign in</Link>
         </p>
+        <p className="plate-switch">
+          <Link to="/privacy">What Mindful stores and who can see it</Link>
+        </p>
       </Reveal>
     </Frontispiece>
   )

@@ -53,3 +53,7 @@ supabase/.temp
 
 # Visual sweep output (scripts/sweep/run.mjs)
 sweep-out/
+
+# Database dumps hold every journal; they belong in ~/mindful-backups
+# (scripts/backup-production.sh), never here.
+backup-*.sql

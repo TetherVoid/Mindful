@@ -10,6 +10,7 @@ import Colophon from '@design/primitives/Colophon'
 import Login from '@frontend/pages/Login'
 import Signup from '@frontend/pages/Signup'
 import FAQ from '@frontend/pages/FAQ'
+import Privacy from '@frontend/pages/Privacy'
 import NotFound from '@frontend/pages/NotFound'
 import AuthCallback from '@frontend/pages/AuthCallback'
 
@@ -82,10 +83,11 @@ function withSuspense(Component) {
   )
 }
 
-function FaqRoute() {
+// A page anyone can read, signed in or not: the FAQ and the privacy page.
+function PublicRoute({ children }) {
   const { user, loading } = useAuth()
   if (loading) return <AuthLoading />
-  // Signed out, the FAQ is a standalone spread with its own page furniture —
+  // Signed out, the page is a standalone spread with its own page furniture —
   // there's no index rail to hang it inside.
   if (!user) {
     return (
@@ -93,17 +95,13 @@ function FaqRoute() {
         <SkipToContent />
         <GridField />
         <main id="main-content" className="standalone">
-          <FAQ />
+          {children}
         </main>
         <Colophon />
       </>
     )
   }
-  return (
-    <AppLayout>
-      <FAQ />
-    </AppLayout>
-  )
+  return <AppLayout>{children}</AppLayout>
 }
 
 function App() {
@@ -127,7 +125,8 @@ function App() {
         }
       />
       <Route path="/auth/callback" element={<AuthCallback />} />
-      <Route path="/faq" element={<FaqRoute />} />
+      <Route path="/faq" element={<PublicRoute><FAQ /></PublicRoute>} />
+      <Route path="/privacy" element={<PublicRoute><Privacy /></PublicRoute>} />
 
       <Route element={<ProtectedRoute />}>
         <Route path="/dashboard" element={withSuspense(Dashboard)} />

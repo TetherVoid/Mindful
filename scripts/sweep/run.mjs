@@ -34,8 +34,8 @@ const auditSource = readFileSync(new URL('./page-audit.js', import.meta.url), 'u
 const WIDTHS_ARG = args.find((a) => a.startsWith('--widths='))?.slice(9).split(',').map(Number)
 const WIDTHS = WIDTHS_ARG ?? (QUICK ? [375, 1280] : [320, 375, 414, 768, 1024, 1280, 1440])
 const THEMES = ['light', 'dark']
-const SIGNED_IN_ROUTES = ['/dashboard', '/mood', '/habits', '/thoughts', '/report', '/settings', '/classes', '/faq', '/admin', '/no-such-page']
-const SIGNED_OUT_ROUTES = ['/login', '/signup', '/faq', '/auth/callback', '/no-such-page']
+const SIGNED_IN_ROUTES = ['/dashboard', '/mood', '/habits', '/thoughts', '/report', '/settings', '/classes', '/faq', '/privacy', '/admin', '/no-such-page']
+const SIGNED_OUT_ROUTES = ['/login', '/signup', '/faq', '/privacy', '/auth/callback', '/no-such-page']
 
 // --- builds, servers, browser (lib.mjs) -------------------------------------
 buildAll(outDir)
