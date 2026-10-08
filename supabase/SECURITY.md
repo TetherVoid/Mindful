@@ -133,6 +133,23 @@ Reactivation stays with `set_account_active()`, and a deactivated account fails
 `is_admin()` whatever its role — so a suspended administrator cannot lift their
 own suspension either.
 
+After deactivation, by either route, the profile is read-only: "profiles: owner
+update" carries `not is_deactivated()` (`20261009000100`), so a suspended
+account cannot rename itself or change its sharing choice. The privileged
+functions run as the table owner and are not affected by that policy.
+
+### A class belongs to a teacher only while they are one
+
+`is_class_teacher()` and `is_class_owner()` require `is_teacher()` — the
+teacher or admin role, not suspended — as well as ownership or a
+`class_teachers` row (`20261009000100`). A demoted or suspended owner or
+co-teacher therefore loses the roster, the overview, the join code, renaming,
+archiving, removing students, managing co-teachers and deleting the class.
+Nothing is deleted on demotion, so restoring the role restores the access;
+suspension does delete co-teacher rows, so a reactivated co-teacher has to be
+added again. Until then only an administrator can manage the class. There is no
+ownership transfer.
+
 ### Visibility is opt-in, per student, for teachers and administrators alike
 
 `profiles.share_with_teachers` defaults to **false**. A teacher who creates a
@@ -228,6 +245,11 @@ only if they hold the teacher role, are not suspended, and teach a live
 they are not suspended and the student is enrolled in at least one live class.
 A student always passes for themselves. Archiving a class ends access with it —
 that is what archiving is for.
+
+Suspension is checked before all of that (`20261009000100`). A suspended
+student is visible to nobody, even if an administrator enrols them again, and
+a suspended caller gets false for everyone, themselves included, so the definer
+read functions are no way round the journal lockout.
 
 ## Enrolment is by code
 
@@ -328,7 +350,12 @@ Stated plainly, so nobody assumes otherwise:
   before any of this runs. Suspension takes effect on the first authenticated
   query — RLS denies the four journal tables, and `AuthContext` ends the session
   on the next page load. A suspended user's token stays technically valid until
-  it expires; it just cannot read anything.
+  it expires; it cannot read anything, edit its profile, or use any class power.
+- **No ownership transfer**, and `join_class` still enrols into a class whose
+  owner is demoted or suspended. An administrator should archive such a class or
+  rotate its code. `teaches_student()` does not check the caller's role, so a
+  demoted teacher can still ask whether a known student id is in their old
+  class; it reveals no figures.
 - **No audit of reads.** `role_change_audit` records who changed whose role. It
   does not record which teacher looked at which student's figures. If that
   matters for your deployment, it is a trigger on the definer functions in § 6

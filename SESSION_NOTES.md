@@ -86,6 +86,12 @@ the remote database.
   exists in `~/mindful-backups`. Treat them as **not applied** until the
   owner's migration list says otherwise. The 2026-09-26/27 entry below calling
   them "built and tested locally" was written before the git push.
+- **`20261009000100` (local, not applied):**
+  - Class powers need an active teacher: a demoted or suspended owner or co-teacher loses roster, code, archive, removal, co-teachers and delete.
+  - A suspended student is visible to nobody, and a suspended caller to no one, self included.
+  - A suspended profile is read-only.
+  - Test `100`, 45 assertions.
+  - Applying it pushes the two `20260927` files too; run `supabase/preflight/20261009_before_push.sql` first.
 - **The privacy page is a promise about the database** (`/privacy`,
   `src/frontend/content/privacy.js`): every statement lists the files it was
   checked against, and `tests/privacy-copy.test.mjs` keeps those files real. An
