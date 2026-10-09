@@ -88,6 +88,12 @@ the remote database.
   - A suspended profile is read-only.
   - Test `100`, 45 assertions.
   - It is the only pending file; run `supabase/preflight/20261009_before_push.sql` first.
+- **Display mods (`agent-bar`, `flow-map`):**
+  - Source lives in its own repo, `~/claude-mods`, not here. They are read-only observers: no command, no file, no network. They need Claude Code 2.1.287+ in a terminal, or the desktop app.
+  - They load at user level from `CLAUDE_CODE_PLUGIN_DIRS` in `~/.claude/settings.json` `env`.
+  - **Off switch:** delete that `env` entry (or one of its two paths) and start a new session.
+  - In a session that loaded them through hot reload, delete the two links in `~/.claude/dev-mods/<session id>/`.
+  - `~/claude-mods/README.md` lists exactly what they read.
 - **The privacy page is a promise about the database** (`/privacy`,
   `src/frontend/content/privacy.js`): every statement lists the files it was
   checked against, and `tests/privacy-copy.test.mjs` keeps those files real. An
