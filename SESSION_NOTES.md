@@ -79,19 +79,15 @@ the remote database.
   confirmed account at least a day old). Token counts are logged as
   `[report] … input_tokens=… output_tokens=…` — read them in the first week to
   replace the cost estimates (~$0.025 typical, ~$0.06 worst case per reading).
-- **Production database state (checked 2026-10-09 from git and the earlier
-  session's record, not against the database):** `20260927000100` and
-  `20260927000200` are pushed to git and their code is deployed, but there is
-  no record of them being applied to the database, and no `pre-20260927` backup
-  exists in `~/mindful-backups`. Treat them as **not applied** until the
-  owner's migration list says otherwise. The 2026-09-26/27 entry below calling
-  them "built and tested locally" was written before the git push.
+- **Production database state (confirmed by the owner, 2026-10-09):**
+  everything up to and including `20260927000200` is applied. The 2026-09-26/27
+  entry below calling them "built and tested locally" predates that.
 - **`20261009000100` (local, not applied):**
   - Class powers need an active teacher: a demoted or suspended owner or co-teacher loses roster, code, archive, removal, co-teachers and delete.
   - A suspended student is visible to nobody, and a suspended caller to no one, self included.
   - A suspended profile is read-only.
   - Test `100`, 45 assertions.
-  - Applying it pushes the two `20260927` files too; run `supabase/preflight/20261009_before_push.sql` first.
+  - It is the only pending file; run `supabase/preflight/20261009_before_push.sql` first.
 - **The privacy page is a promise about the database** (`/privacy`,
   `src/frontend/content/privacy.js`): every statement lists the files it was
   checked against, and `tests/privacy-copy.test.mjs` keeps those files real. An
