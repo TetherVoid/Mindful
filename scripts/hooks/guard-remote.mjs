@@ -5,7 +5,7 @@
 //   - git push, however it is invoked (sh -c, eval, $(…), a heredoc to bash,
 //     find -exec, a full path, an alias);
 //   - commands piped into a shell or interpreter, which cannot be read, and
-//     heredoc code that plainly pushes or deploys;
+//     interpreter code (a heredoc, -c, -e) that plainly pushes or deploys;
 //   - a child `claude` session started without the project hooks (--bare,
 //     --safe-mode, --setting-sources, bypass permissions, hook-changing --settings);
 //   - any Supabase CLI command not on the local-only list, and any that names
@@ -151,7 +151,8 @@ function claudeDropsHooks(claudeArgs) {
   return /hooks/i.test(text)
 }
 
-// Code handed to an interpreter as a heredoc is checked for the obvious calls.
+// Code handed to an interpreter (a heredoc, or -c / -e) is checked for the
+// obvious calls.
 const REMOTE_IN_CODE = [
   /\bgit\b[\s\S]{0,80}\bpush\b/,
   /\bsupabase\b[\s\S]{0,80}(\bpush\b|\blink\b|--linked|--db-url|\brepair\b|\bdeploy\b)/,
@@ -163,6 +164,9 @@ for (const command of parseCommands(cmd)) {
   const line = rest.join(' ')
 
   if (name === OPAQUE) block(`commands piped into ${rest[0]} cannot be checked; run them directly.`)
+  if (command.inlineCode != null && REMOTE_IN_CODE.some((re) => re.test(command.inlineCode))) {
+    block(`the ${name} code on that command line pushes or reaches a remote.`)
+  }
   if (command.stdinCode && REMOTE_IN_CODE.some((re) => re.test(command.heredoc))) {
     block(`the ${name} code in that heredoc pushes or reaches a remote.`)
   }
