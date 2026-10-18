@@ -12,11 +12,13 @@
 const SEPARATORS = new Set([';', '&', '|', '\n', '(', ')'])
 
 /**
- * @returns {{words: string[], outs: string[], heredoc: string, piped: boolean, stdinCode?: boolean}[]}
+ * @returns {{words: string[], outs: string[], heredoc: string, piped: boolean, stdinCode?: boolean,
+ *   inlineCode?: string}[]}
  *   one entry per simple command, including those inside $(…), backticks,
  *   `sh -c '…'`, `eval …`, `find -exec …` and a heredoc fed to a shell.
  *   `outs` are redirect targets (> and >>); `piped` means stdin comes from the
- *   previous command; `stdinCode` means an interpreter runs its heredoc.
+ *   previous command; `stdinCode` means an interpreter runs its heredoc;
+ *   `inlineCode` is the code given to an interpreter with -c / -e / --eval / --print.
  */
 export function parseCommands(input, depth = 0) {
   const commands = []
@@ -31,11 +33,15 @@ export function parseCommands(input, depth = 0) {
   let quote = null
   let nextIsOut = false
   let nextIsHeredocTag = false
+  let nextHeredocDash = false
 
   const endWord = () => {
     if (!inWord) return
     if (nextIsHeredocTag) {
-      heredocs.push(word)
+      // <<$(…) or <<`…`: where the body ends cannot be known, so neither can
+      // what follows it.
+      if (word.includes('$SUB')) commands.push(opaque('a heredoc whose tag is computed'))
+      heredocs.push({ tag: word, dash: nextHeredocDash })
       nextIsHeredocTag = false
     } else if (nextIsOut) {
       outs.push(word)
@@ -116,7 +122,8 @@ export function parseCommands(input, depth = 0) {
     }
     if (c === '<' && input[i + 1] === '<' && input[i + 2] !== '<') {
       endWord()
-      i += input[i + 2] === '-' ? 2 : 1
+      nextHeredocDash = input[i + 2] === '-'
+      i += nextHeredocDash ? 2 : 1
       nextIsHeredocTag = true
       continue
     }
@@ -147,9 +154,11 @@ export function parseCommands(input, depth = 0) {
       endCommand()
       let rest = input.slice(i + 1)
       let body = ''
-      for (const tag of heredocs) {
+      for (const { tag, dash } of heredocs) {
         const lines = rest.split('\n')
-        const stop = lines.findIndex((line) => line.trim() === tag)
+        // The body ends only at a line that is exactly the tag; <<- also strips
+        // leading tabs (not spaces), as the shell does.
+        const stop = lines.findIndex((line) => (dash ? line.replace(/^\t+/, '') : line) === tag)
         const taken = stop === -1 ? lines : lines.slice(0, stop)
         body += `${taken.join('\n')}\n`
         rest = stop === -1 ? '' : lines.slice(stop + 1).join('\n')
@@ -190,8 +199,10 @@ export function parseCommands(input, depth = 0) {
       } else if (!operands.length && command.piped) {
         nested.push(opaque(name))
       }
-    } else if (INTERPRETERS.has(name)) {
-      const inline = args.some((a) => /^-[a-zA-Z]*[ce]$|^--(eval|print)$/.test(a))
+    } else if (INTERPRETERS.has(name) || VERSIONED_INTERPRETER.test(name)) {
+      const flag = args.findIndex((a) => /^-[a-zA-Z]*[ce]$|^--(eval|print)$/.test(a))
+      const inline = flag !== -1
+      if (inline) command.inlineCode = args[flag + 1] ?? ''
       const fromStdin = !inline && operands.every((a) => a === '-')
       if (fromStdin && command.heredoc) command.stdinCode = true
       else if (fromStdin && command.piped) nested.push(opaque(name))
@@ -212,6 +223,8 @@ export function parseCommands(input, depth = 0) {
 
 const SHELLS = new Set(['sh', 'bash', 'zsh', 'dash', 'ksh', 'fish'])
 const INTERPRETERS = new Set(['python', 'python3', 'node', 'ruby', 'perl', 'php', 'deno', 'bun', 'osascript'])
+// python3.12, node22, perl5.34: the same interpreters under a versioned name.
+const VERSIONED_INTERPRETER = /^(python|node|ruby|perl)[\d.]*$/
 
 /**
  * Stands for code a guard cannot read: a program fed on stdin from another
@@ -224,6 +237,9 @@ const opaque = (name) => ({ words: [OPAQUE, name], outs: [], heredoc: '', piped:
 // the one that matters.
 const WRAPPERS = new Set(['sudo', 'env', 'command', 'exec', 'time', 'nohup', 'nice', 'xargs', 'npx', 'bunx', 'caffeinate'])
 const RUNNER_PAIRS = [['pnpm', 'dlx'], ['yarn', 'dlx'], ['npm', 'exec'], ['pnpm', 'exec'], ['bun', 'x']]
+// Shell words that start a command inside a compound one: `do rm x`,
+// `then git push`, `{ git push; }`. The program is the word after them.
+const RESERVED = new Set(['do', 'then', 'else', 'elif', 'if', 'while', 'until', '!', '{'])
 
 /**
  * The program that runs (basename, no @version), its arguments, and the
@@ -234,6 +250,10 @@ export function normalise(words) {
   const wrappers = []
   for (let guard = 0; guard < 20 && rest.length; guard += 1) {
     const first = rest[0]
+    if (RESERVED.has(first)) {
+      rest = rest.slice(1)
+      continue
+    }
     if (/^[A-Za-z_][A-Za-z0-9_]*=/.test(first)) {
       rest = rest.slice(1)
       continue

@@ -37,13 +37,10 @@ async function accessToken() {
  * used, and carries the reason in the reader's language — the page says why it
  * is showing a locally written report rather than quietly showing a worse one.
  *
- * `subjectUserId` names whose record the figures describe. Leave it unset for
- * the ordinary case, a reader looking at their own. Setting it to somebody else
- * is a claim, and the endpoint settles that claim against the database before
- * writing a word — so passing a student's id is not a way to obtain a report
- * about a student you do not teach.
+ * A reading is always about the signed-in reader's own record; /api/report
+ * refuses a request that names anyone else.
  */
-export async function requestReport(insights, { subjectUserId = null } = {}) {
+export async function requestReport(insights) {
   // Fixtures mode has no real session to authenticate with, so there is nothing
   // to try. Say so rather than firing a request that is certain to 401.
   if (supabase.__isFixtureClient) {
@@ -63,7 +60,6 @@ export async function requestReport(insights, { subjectUserId = null } = {}) {
 
   const { figures, labels } = anonymiseForReport(insights)
   const payload = { figures }
-  if (subjectUserId) payload.subjectUserId = subjectUserId
   const controller = new AbortController()
   const timer = setTimeout(() => controller.abort(), TIMEOUT_MS)
 

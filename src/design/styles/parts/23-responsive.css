@@ -131,25 +131,7 @@
   }
 
   .register-row {
-    grid-template-columns: auto minmax(0, 1fr);
-    grid-template-areas:
-      'tick name'
-      'streak actions';
-    gap: var(--space-3) var(--space-3);
-  }
-
-  .register-row .tick-box {
-    grid-area: tick;
-  }
-  .register-row .register-name {
-    grid-area: name;
-  }
-  .register-row .streak {
-    grid-area: streak;
-  }
-  .register-row .register-actions {
-    grid-area: actions;
-    justify-self: end;
+    gap: var(--space-3);
   }
 
   .note-line {
@@ -217,7 +199,6 @@
   .switch button,
   .password-toggle,
   .skip-to-content,
-  .streak,
   .colophon-contact {
     min-height: var(--target);
   }

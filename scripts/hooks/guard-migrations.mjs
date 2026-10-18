@@ -90,6 +90,9 @@ function classify(p, base, ancestors = false) {
   if (r === DIR || r === `${DIR}/*` || r.startsWith(`${DIR}/*`)) return 'dir'
   if (r.startsWith(`${DIR}/`)) {
     const name = r.slice(DIR.length + 1)
+    // A glob, a variable or a command substitution ($SUB) can stand for any
+    // file in the folder: supabase/migrations/2026*.sql.
+    if (/[*?[$]/.test(name)) return 'dir'
     if (committed.has(name)) return 'committed'
     return name.includes('/') ? null : 'new'
   }
@@ -185,31 +188,230 @@ function checkGitHistory(rest, cwd) {
 }
 
 const tokensOf = (list) => list.flatMap((arg) => arg.split(/[\s'"(),=;]+/)).filter(Boolean)
+const isProtected = (t, base = root) => {
+  const kind = classify(t, base, true)
+  return kind && kind !== 'new'
+}
+const SHELL_KEYWORD = /^(do|done|then|else|elif|if|while|until|fi|!|\{|\})$/
+
+function readsOnly(name, rest) {
+  return (
+    (READERS.has(name) && !(name === 'find' && rest.some((a) => FIND_ACTIONS.test(a)))) ||
+    (name === 'git' && GIT_READERS.has(gitSub(rest).sub)) ||
+    (name === 'sed' && !rest.some((a) => /^-[a-zA-Z]*i/.test(a) || a === '--in-place')) ||
+    (name === 'awk' && !rest.some((a) => a === '-i' || a.startsWith('--inplace'))) ||
+    (name === 'node' && rest[0] && !rest[0].startsWith('-'))
+  )
+}
+
+/**
+ * `for f in LIST; do BODY; done`: the shell runs BODY once per word of LIST
+ * with $f set to it. `body` is the range of commands from `do` to the
+ * matching `done` (to the end of the call if there is none).
+ */
+function loopsOf(commands) {
+  const loops = []
+  commands.forEach((c, i) => {
+    const { name, args, wrappers } = normalise(c.words)
+    if (name !== 'for' || wrappers.length || args[1] !== 'in' || !/^[A-Za-z_]\w*$/.test(args[0] ?? '')) return
+    let depth = 0
+    let end = commands.length
+    for (let j = i + 1; j < commands.length; j += 1) {
+      const first = commands[j].words[0]
+      if (first === 'do') depth += 1
+      else if (first === 'done' && (depth -= 1) <= 0) {
+        end = j
+        break
+      }
+    }
+    // An empty list leaves $f unknown, like a command substitution.
+    const values = args.slice(2).length ? args.slice(2) : ['$SUB']
+    loops.push({ at: i, variable: args[0], values, body: [i + 1, end] })
+  })
+  return loops
+}
+
+/**
+ * One copy of the command per value of each loop variable it uses. Inner
+ * loops first, so `for g in $f` inside `for f in …` ends up with real paths.
+ */
+function expandLoops(command, loops) {
+  let variants = [command]
+  for (const { variable, values } of [...loops].reverse()) {
+    const ref = `\\$(\\{${variable}\\}|${variable}(?![A-Za-z0-9_]))`
+    const uses = (c) => [...c.words, ...c.outs, c.heredoc].some((w) => new RegExp(ref).test(w))
+    const put = (w, v) => w.replace(new RegExp(ref, 'g'), () => v)
+    variants = variants.flatMap((c) =>
+      uses(c)
+        ? values.map((v) => ({
+            ...c,
+            words: c.words.map((w) => put(w, v)),
+            outs: c.outs.map((w) => put(w, v)),
+            heredoc: put(c.heredoc, v),
+          }))
+        : [c]
+    )
+    if (variants.length > 500) block('that loop expands to too many commands to check; name the files directly.')
+  }
+  return variants
+}
+
+/** `cd DIR` with one plain target: no option, $, ~ or -, and no assignment in front. */
+function plainCd(words) {
+  const args = words.slice(1)
+  return words[0] === 'cd' && args.length === 1 && !/^-|[$~]/.test(args[0])
+}
+
+// The only programs a read-only loop may run. Narrower than READERS on
+// purpose: awk, sort -o, rg --pre, git diff --output, tree -o, uniq OUT and
+// sed's w command can all write, so none of them is here. sed is allowed only
+// as `sed -n 1,3p FILE…`.
+const LOOP_READERS = new Set([
+  'cat', 'head', 'tail', 'wc', 'grep', 'egrep', 'fgrep', 'ls', 'stat', 'diff', 'cmp', 'md5',
+  'shasum', 'sha256sum', 'cut', 'nl', 'basename', 'dirname', 'realpath', 'readlink', 'echo', 'printf',
+  'test', '[',
+])
+function loopReads(name, args) {
+  if (name === 'printf') return !args.some((a) => a.startsWith('-v'))
+  if (LOOP_READERS.has(name)) return true
+  if (name !== 'sed') return false
+  // Script (the first operand): only N,Mp. Every other argument is -n or a
+  // file; GNU sed also reads options after the script (`1p -e 'w x'`).
+  const script = args.findIndex((a) => !a.startsWith('-'))
+  return (
+    script !== -1 &&
+    /^[0-9,]+p$/.test(args[script]) &&
+    args.every((a, i) => i === script || a === '-n' || !a.startsWith('-'))
+  )
+}
+const FORBIDDEN = new Set(['eval', 'source', '.', 'alias', 'pushd', 'popd', 'exec', 'xargs', 'read', 'function'])
+
+/** The text of every $(…) and `…` in the call (more than the shell would run, never less). */
+function substitutions(cmd) {
+  const found = []
+  for (let i = 0; i < cmd.length; i += 1) {
+    if (cmd[i] === '`') {
+      const end = cmd.indexOf('`', i + 1)
+      if (end === -1) return null
+      found.push(cmd.slice(i + 1, end))
+      i = end
+    } else if (cmd[i] === '$' && cmd[i + 1] === '(') {
+      let level = 1
+      let j = i + 2
+      for (; j < cmd.length && level; j += 1) {
+        if (cmd[j] === '(') level += 1
+        else if (cmd[j] === ')') level -= 1
+      }
+      if (level) return null
+      found.push(cmd.slice(i + 2, j - 1))
+      i = j - 1
+    }
+  }
+  return found
+}
+
+/**
+ * A loop over protected paths is allowed only when the WHOLE call can do
+ * nothing but read: every command is a reader, a plain `cd`, `cp`/`install`
+ * (whose target is checked as usual), the loop header, or a bare keyword; no
+ * functions, assignments, IFS/CDPATH, eval/source/alias/pushd/popd/exec/
+ * xargs/read/printf -v; no quoted or escaped do/done (which would end the body
+ * where bash does not); and no $ other than the loop variables and $(ls …) /
+ * $(find …) without actions. Anything it cannot tell, it refuses.
+ */
+function readOnlyLoopCall(cmd, commands, loops) {
+  const variables = new Set(loops.map((l) => l.variable))
+  if (/\b(IFS|CDPATH)\b/.test(cmd)) return false
+  if (/\bfunction\b|[A-Za-z_][\w.:-]*\s*\(\s*\)/.test(cmd)) return false
+  // "done", 'do', \done, a line continuation before done, or `done)` in a case.
+  if (/(['"]|\\\n?)[ \t]*(do|done)\b|\b(do|done)[ \t]*['"]|\bdone[ \t]*\)/.test(cmd)) return false
+  if ((cmd.match(/\bdone\b/g) ?? []).length !== loops.length) return false
+  if ((cmd.match(/\bdo\b/g) ?? []).length !== loops.length) return false
+  for (const [, use] of cmd.matchAll(/\$(\{[^}]*\}?|[A-Za-z_]\w*|\(|.?)/g)) {
+    if (use === '(') continue
+    const plain = use.replace(/^\{(.*)\}$/, '$1')
+    if (!variables.has(plain)) return false
+  }
+  const subs = substitutions(cmd)
+  if (subs == null) return false
+  for (const sub of subs) {
+    for (const c of parseCommands(sub)) {
+      const { name, args, wrappers } = normalise(c.words)
+      if (wrappers.length || c.outs.length) return false
+      if (name === 'ls') continue
+      if (name === 'find' && !args.some((a) => FIND_ACTIONS.test(a))) continue
+      return false
+    }
+  }
+  for (const c of commands) {
+    if (c.words.every((w) => ['for', 'do', 'done', 'in'].includes(w))) continue
+    const words = c.words.filter((w) => !SHELL_KEYWORD.test(w))
+    if (/^[A-Za-z_]\w*=/.test(words[0] ?? '')) return false // NAME=… (alone or before a command)
+    const { name, args, wrappers } = normalise(c.words)
+    if (wrappers.length || FORBIDDEN.has(name)) return false
+    if (name === 'printf' && args.some((a) => a.startsWith('-v'))) return false
+    if (name === 'for' && args[1] === 'in' && variables.has(args[0])) continue
+    if (name === 'done') continue
+    if (name === 'cd') {
+      if (plainCd(words)) continue
+      return false
+    }
+    if (['cp', 'install'].includes(name)) continue
+    if (!loopReads(name, args)) return false
+  }
+  return true
+}
 
 function checkBash(cmd) {
   const commands = parseCommands(cmd)
 
   // `ls supabase/migrations/*.sql | xargs rm`: the paths reach rm on stdin, so
   // look for them anywhere in the call.
-  const mentionsProtected = commands.some((c) =>
-    tokensOf(normalise(c.words).args).some((t) => {
-      const kind = classify(t, root, true)
-      return kind && kind !== 'new'
-    })
+  const mentionsProtected = commands.some((c) => tokensOf(normalise(c.words).args).some((t) => isProtected(t)))
+  // The same, but not counting the repo root (`npx oxlint . $(…)` is ordinary).
+  const namesProtected = commands.some((c) =>
+    tokensOf(normalise(c.words).args).some((t) => rel(t) !== '' && rel(t) !== '*' && isProtected(t))
   )
 
+  const loops = loopsOf(commands)
+  // A loop over protected paths is refused, as it always was, unless the whole
+  // call only reads (readOnlyLoopCall).
+  const loopWaived = loops.length > 0 && readOnlyLoopCall(cmd, commands, loops)
+  // pushd/popd and CDPATH move the shell in ways `cd` tracking cannot follow.
+  let cwdUnknown = /\b(pushd|popd|CDPATH)\b/.test(cmd)
+
   let cwd = root
-  for (const command of commands) {
+  for (const command of commands.flatMap((c) => expandLoops(c, loops))) {
     const { name, args: rest, wrappers } = normalise(command.words)
     if (name === 'git') checkGitHistory(rest, cwd)
 
-    // Track `cd` so relative paths resolve the way the shell would.
+    // Track `cd` so relative paths resolve the way the shell would. A target
+    // that cannot be read (an option, $VAR, ~, -, or more than one) or a `cd`
+    // with an assignment in front leaves the folder unknown.
     if (name === 'cd' && rest[0]) {
+      if (!plainCd(command.words)) cwdUnknown = true
       cwd = path.resolve(cwd, rest[0])
       continue
     }
 
+    // `rm $(ls supabase/migrations/*.sql)`: the paths come from a command
+    // substitution ($SUB), which, like xargs, hides them.
+    const fromSub = (list) => namesProtected && list.some((a) => a.includes('$SUB'))
+    if (fromSub(command.outs)) block('a redirect to a path from $(…) in a call that names protected paths cannot be checked.')
     for (const out of command.outs) checkWriteTarget(out, cwd, `writing to ${out}`)
+
+    // A loop header is checked like any other command below (its list names
+    // the paths), and also from the repo root and when the folder is unknown,
+    // unless the whole call only reads.
+    if (name === 'for') {
+      if (loopWaived) continue
+      const list = tokensOf(rest.slice(2))
+      if (cwdUnknown && list.length) refuse('dir', `a loop after a change of folder the guard cannot follow`)
+      for (const token of list) {
+        const kind = classify(token, root)
+        if (kind && kind !== 'new') refuse(kind, `${name} on ${token}`)
+      }
+    }
 
     if (name === 'tee') rest.filter((a) => !a.startsWith('-')).forEach((a) => checkWriteTarget(a, cwd, `tee ${a}`))
     if (name === 'dd') rest.filter((a) => a.startsWith('of=')).forEach((a) => checkWriteTarget(a.slice(3), cwd, a))
@@ -238,6 +440,9 @@ function checkBash(cmd) {
     // its last argument and removes its sources.
     if (['cp', 'install', 'mv'].includes(name)) {
       const operands = rest.filter((a) => !a.startsWith('-'))
+      if (fromSub(name === 'mv' ? operands : operands.slice(-1))) {
+        block(`${name} with a path from $(…) in a call that names protected paths cannot be checked.`)
+      }
       // A recursive copy onto `.` or `scripts` can overwrite what is under it.
       const recursive = rest.some((a) => /^-[a-zA-Z]*[rRa]/.test(a))
       if (operands.length >= 2) {
@@ -255,17 +460,12 @@ function checkBash(cmd) {
       continue
     }
 
-    const reads =
-      (READERS.has(name) && !(name === 'find' && rest.some((a) => FIND_ACTIONS.test(a)))) ||
-      (name === 'git' && GIT_READERS.has(gitSub(rest).sub)) ||
-      (name === 'sed' && !rest.some((a) => /^-[a-zA-Z]*i/.test(a) || a === '--in-place')) ||
-      (name === 'awk' && !rest.some((a) => a === '-i' || a.startsWith('--inplace'))) ||
-      (name === 'node' && rest[0] && !rest[0].startsWith('-'))
-    if (reads) continue
+    if (readsOnly(name, rest)) continue
 
     if (wrappers.includes('xargs') && mentionsProtected) {
       block(`xargs ${name} would get protected paths on stdin (committed migrations or guard files).`)
     }
+    if (fromSub(rest)) block(`${name} would get paths from $(…) in a call that names protected paths; name them directly.`)
 
     // Any other program that names a protected path — interpreters, rm, mv,
     // chmod, truncate, git checkout/restore/rm — is assumed to change it. The

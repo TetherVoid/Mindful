@@ -26,19 +26,14 @@ export const faqItems = [
       'Each mood entry is a 1–5 self-rating plus an optional note. Over time these build into a trend line on the Mood page so you can spot patterns in how you feel.',
   },
   {
-    question: 'How are habit streaks calculated?',
-    answer:
-      'A streak counts the number of consecutive days (ending today or yesterday) where you checked off a habit. Missing a day resets the streak to zero.',
-  },
-  {
     question: 'Who can see my data?',
     answer:
-      'Only you can read what you write. Your mood notes, your thought records and the names of your habits are never shown to any other person — not your teachers, and not the school’s administrators. If you switch on “Share figures with teachers” in Preferences, then while you are in a class, its teachers and the school’s administrators can see figures about your record: how many moods you logged, the score of each one and the day it was on, your average, how many habits you have and how often you ticked each, how many thought records you wrote, and the day you last wrote something — never the time. They never see your words. Sharing is off until you switch it on, and switching it off stops it straight away. When a class is archived, its teachers stop seeing figures through it.',
+      'Only you can read what you write. Your mood notes, your thought records and the names of your habits are never shown to any other person — not your teachers, and not the school’s administrators. If you switch on “Share figures with teachers” in Preferences, then while you are in a class, its teachers and the school’s administrators can see figures about your record: how many moods you logged, the score of each one and the day it was on, your average, how many habits you have and how often you ticked each, how many thought records you wrote, and the day you last wrote something — never the time. They never see your words. Sharing is off until you switch it on, and switching it off stops it straight away. When a class is archived, its teachers stop seeing figures through it. Whatever you choose, the teachers of your classes and the school’s administrators can see your display name, the day you joined, and whether you share. The privacy page sets out everything Mindful stores and exactly who can see it, administrators included.',
   },
   {
     question: 'Can my teacher see what I write?',
     answer:
-      'No. Teachers never see your notes, your thought records or the names of your habits. If you have switched sharing on, they see only the figures described under “Who can see my data?” — and if you have not, they see nothing about you except that you have joined their class.',
+      'No. Teachers never see your notes, your thought records or the names of your habits. If you have switched sharing on, they see only the figures described under “Who can see my data?” — and if you have not, they see only your display name, the day you joined their class, and that sharing is off.',
   },
   {
     question: 'How do I stop sharing with teachers?',
@@ -48,7 +43,7 @@ export const faqItems = [
   {
     question: 'Does anything I write go to an AI?',
     answer:
-      'Nothing you typed ever does. If you press “Write the reading” on The Reading page, numbers are sent to Anthropic’s API to write it up — counts, averages and dates — with your habits and emotions labelled “Habit 1”, “Emotion 2” and so on, never by the names you gave them. They are not stored by this app, and your own names are put back into the reading on your device. Your notes and thought records never leave your device at all. “Write it here instead” makes the same page without sending anything.',
+      'Nothing you typed ever does. If you press “Write the reading” on The Reading page, numbers are sent to Anthropic’s API to write it up — counts, averages and dates — with your habits and emotions labelled “Habit 1”, “Emotion 2” and so on, never by the names you gave them. They are not stored by this app, and your own names are put back into the reading on your device. Your notes and thought records are stored in your account so you can read them on any device, but they are never sent to the AI. “Write it here instead” makes the same page without sending anything.',
   },
   {
     question: 'How do I download or delete everything?',

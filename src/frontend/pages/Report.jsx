@@ -43,7 +43,6 @@ function Figures({ insights, onFile }) {
         ? `Average day, over your latest ${mood.count} entries (${onFile.moods} in all)`
         : `Average day, over ${mood.days} ${mood.days === 1 ? 'day' : 'days'} of entries`,
     })
-    items.push({ value: mood.streak, unit: mood.streak === 1 ? 'day' : 'days', label: 'Current logging streak' })
   }
   if (habits.active) {
     items.push({

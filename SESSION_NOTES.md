@@ -79,6 +79,33 @@ the remote database.
   confirmed account at least a day old). Token counts are logged as
   `[report] … input_tokens=… output_tokens=…` — read them in the first week to
   replace the cost estimates (~$0.025 typical, ~$0.06 worst case per reading).
+- **Production database state (confirmed by the owner, 2026-10-09):**
+  everything up to and including `20260927000200` is applied. The 2026-09-26/27
+  entry below calling them "built and tested locally" predates that.
+- **`20261009000100` (local, not applied):**
+  - Class powers need an active teacher: a demoted or suspended owner or co-teacher loses roster, code, archive, removal, co-teachers and delete.
+  - A suspended student is visible to nobody, and a suspended caller to no one, self included.
+  - A suspended profile is read-only.
+  - Test `100`, 45 assertions.
+  - It is the only pending file; run `supabase/preflight/20261009_before_push.sql` first.
+- **Display mods (`agent-bar`, `flow-map`):**
+  - Source lives in its own repo, `~/claude-mods`, not here. They are read-only observers: no command, no file, no network. They need Claude Code 2.1.287+ in a terminal, or the desktop app.
+  - They load at user level from `CLAUDE_CODE_PLUGIN_DIRS` in `~/.claude/settings.json` `env`.
+  - **Off switch:** delete that `env` entry (or one of its two paths) and start a new session.
+  - In a session that loaded them through hot reload, delete the two links in `~/.claude/dev-mods/<session id>/`.
+  - `~/claude-mods/README.md` lists exactly what they read.
+- **The privacy page is a promise about the database** (`/privacy`,
+  `src/frontend/content/privacy.js`): every statement lists the files it was
+  checked against, and `tests/privacy-copy.test.mjs` keeps those files real. An
+  access change updates that file, `faq.js` and `supabase/SECURITY.md` in the
+  same commit. `DATA_REQUEST_CONTACT` is empty (section hidden) until the owner
+  fills it in.
+- **Backups:** `scripts/backup-production.sh <label>` (human-run) writes to
+  `~/mindful-backups`, refuses the repo, `/` and `$HOME`, and prunes folders
+  whose name is 29+ days old. The privacy page promises "up to 30 days after you
+  delete", so the hourly `--prune-only` cron in `MIGRATIONS.md` has to be
+  installed, and dashboard backup/PITR retention must be 30 days or less.
+  `/api/report` no longer takes `subjectUserId`: a reading is about the caller.
 - **Consent governs all figure access** (`20260925000100`): teachers and
   administrators both need the student's `share_with_teachers`. Teacher reads
   carry no habit names and no times of day anywhere (`20260926000100` made the
@@ -185,5 +212,42 @@ disabled for this repo (`docs/ecc.md`). CLAUDE.md is self-contained;
 AGENT_RULES.md slimmed, its archive now in `docs/archive/`. Commits are local
 at the end of each task; pushing stays with the human.
 
-Still to do: Phase C (calendar reminder, removing Three.js, mobile tap targets,
-light-theme contrast, Settings.jsx formatting).
+**2026-10-02 — design pass.** A scripted sweep (`npm run sweep`: every route,
+scenario, theme and seven widths) found the defects; four batches and two
+follow-ups fixed them, each verified, re-swept and reviewed. Against the first
+sweep: overflow 12 → 0, overlaps 6 → 0, text contrast failures 8 → 0, field
+borders under 3:1 14 → 0, undocumented literals outside the tokens 49 → 0.
+
+- New tokens `--target` (44px) and `--offset-sm`; light `--muted` darkened to
+  about 5.5:1. Touch targets are 44px in the touch block of
+  `23-responsive.css`, mirrored in JavaScript by `useTouchLayout.js`.
+- The dock is sticky inside `.page-body`, which ends before the colophon, so it
+  never covers the support line (checked at every width). On phones the ✉
+  button is hidden; "Get in touch" lives in the colophon.
+- On touch the habit calendar's cells are display-only, with the same
+  information under "Read the calendar as a list".
+- Reduced motion now reaches `<html>` (smooth scrolling stopped). The share
+  image's accent word is italic (`scripts/render-og-image.mjs`).
+- The support line's lines are 44px tall on touch, so each number has a full
+  44×44 tap area. No copy changed anywhere.
+- Left as decided: 24px chart handles, one heading widow, the desktop ✉ over
+  content mid-scroll. Undecided: C3 (hatched disabled buttons), C4 (n/5 scores
+  hidden on phones), C6 (empty states as margin notes), the custom-ink swatch;
+  previews in `sweep-out/c-previews/` (gitignored, local only). C5 rejected:
+  a red mark for an unlogged entry conflicts with the no-guilt principle.
+- Inline text links under 44px are left as WCAG allows; the 404 page's "Read
+  the marginalia" is queued as a follow-up.
+
+Pushed and smoke-tested on production signed out: every route loads, protected
+routes go to `/login`, the support line is on every page, the live headers pass.
+
+Still to do: Phase C (calendar reminder, removing Three.js, Settings.jsx
+formatting).
+
+**2026-10-07/09 — competitor-gap work, Stage 3.** Streaks removed everywhere
+(`tests/no-streaks.test.mjs`). `/privacy` added and three wrong FAQ answers
+fixed. `subjectUserId` removed from `/api/report`. A backup script with 30-day
+retention. Next: a migration so a demoted or suspended class owner loses class
+access (H2/F5), deactivated students are invisible to teachers and admins, and
+suspended users cannot edit their profile (H6). After that come the classroom
+lane and items 7, 6, 5, 4, 3 and 2.

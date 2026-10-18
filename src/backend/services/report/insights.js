@@ -129,19 +129,6 @@ function halvesTrend(sortedRows, valueOf, unit) {
   }
 }
 
-function loggingStreak(dateSet) {
-  let streak = 0
-  let cursor = todayISO()
-  // Today not being logged yet shouldn't zero an intact streak — the same
-  // concession the habit register makes.
-  if (!dateSet.has(cursor)) cursor = shiftISO(cursor, -1)
-  while (dateSet.has(cursor)) {
-    streak += 1
-    cursor = shiftISO(cursor, -1)
-  }
-  return streak
-}
-
 // Collapses entries to one value per local calendar day: the mean of that day's
 // scores. A mood can change within a day and can be logged more than once;
 // counting every entry would let five marks on one bad day outweigh four
@@ -226,7 +213,6 @@ function analyseMoods(moods) {
     spanDays: span,
     daysCovered: dateSet.size,
     coverage: round(dateSet.size / span, 2),
-    streak: loggingStreak(dateSet),
     notes: rows.filter((r) => r.note && r.note.trim()).length,
     trend: halvesTrend(days, (d) => d.score, 'up'),
     distribution: MOOD_SCORES.map((score) => ({
@@ -267,7 +253,6 @@ function analyseHabits(habits, habitLogs) {
     return {
       number: index + 1,
       name: habit.name,
-      streak: loggingStreak(dates),
       total: dates.size,
       recent: recent.length,
       windowDays: denominator,
@@ -287,7 +272,6 @@ function analyseHabits(habits, habitLogs) {
     strongest: ranked[0] ?? null,
     weakest: ranked.length > 1 ? ranked[ranked.length - 1] : null,
     overallRate: overall,
-    longestStreak: list.reduce((best, h) => (h.streak > best ? h.streak : best), 0),
   }
 }
 

@@ -73,7 +73,7 @@ export function setHabitDone({ habitId, userId, date, done }) {
  * Retire a habit.
  *
  * Archives rather than deletes, so the habit_logs rows behind it survive and
- * past streaks stay truthful in the heatmap and the report.
+ * past days stay truthful in the heatmap and the report.
  */
 export function archiveHabit(habitId) {
   return supabase.from(TABLES.habits).update({ archived: true }).eq('id', habitId)

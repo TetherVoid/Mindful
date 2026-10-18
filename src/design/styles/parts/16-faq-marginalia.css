@@ -62,3 +62,13 @@
   border-left: var(--stroke) solid var(--accent);
   margin-left: var(--space-1);
 }
+
+/* The privacy page: plain statements, one per paragraph, at reading measure. */
+.privacy-fact {
+  margin: 0 0 var(--space-4);
+  max-width: 62ch;
+}
+
+.privacy-fact:last-child {
+  margin-bottom: 0;
+}

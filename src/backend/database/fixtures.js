@@ -152,13 +152,13 @@ function buildScenario(name) {
       created_at: daysAgo(heavy ? 200 : 30).toISOString(),
     })
 
-    // Each habit gets its own stickiness, so streaks differ and the heatmap
+    // Each habit gets its own stickiness, so the rows differ and the heatmap
     // has contrast instead of a uniform block.
     const stickiness = 0.5 + h * 0.12
     const span = heavy ? 170 : 26
     for (let d = span; d >= 0; d--) {
       // Habit 0 is deliberately unbroken to the present, so there's always one
-      // long streak to look at; habit 2 is deliberately broken today.
+      // long run on the calendar; habit 2 is deliberately unticked today.
       const forced = h === 0 && d < 18
       const skipToday = h === 2 && d === 0
       if (skipToday) continue

@@ -156,15 +156,33 @@ This push needs no backup — the project is empty, so there is nothing to lose.
 Every later change to Mumbai does, once it holds real accounts.
 
 ```bash
-# `db dump` defaults to SCHEMA ONLY. A plain dump gives you a perfect copy of
-# the structure and none of the journals. Take all three.
-supabase db dump --linked -f backup-schema.sql
-supabase db dump --linked --data-only -f backup-data.sql
-supabase db dump --linked --data-only --schema auth -f backup-auth-data.sql
+# Schema, data and auth dumps into ~/mindful-backups/<timestamp>-<label>/
+# (mode 700/600, never inside this repository), then deletes every backup
+# folder it made whose name is 29 or more days old.
+scripts/backup-production.sh pre-<migration>
 ```
 
+Take one at least weekly as well, and prune **hourly**, so the 30 days hold in a
+week nobody takes a backup. Cron on a Mac skips runs while the laptop sleeps and
+does not catch up, so hourly means a sleeping laptop prunes within the hour after
+it wakes. With cron (`crontab -e`; the path is this checkout):
+
+```
+15 * * * * /Users/aarushc./Mindful/scripts/backup-production.sh --prune-only
+```
+
+Check it is running: `crontab -l`, then after the next quarter past, a folder
+with a name 29+ days old is gone. Keep `~/mindful-backups` out of any
+cloud-synced folder (iCloud Drive, Dropbox), or the copies there outlive it.
+
+The 30 days are a promise on the privacy page
+(`src/frontend/content/privacy.js`): keep no dumps anywhere else, and don't
+raise `DELETE_AFTER_DAYS` without changing that copy in the same commit.
+`backup-*.sql` is gitignored in case a dump is ever written here by hand.
+
 These are a convenience, not the safety net. Dashboard -> Database -> Backups,
-or PITR, is the safety net.
+or PITR, is the safety net — and its retention counts towards the same 30-day
+promise, so check it before relying on that sentence.
 
 ### What the Seoul project's three users would have needed
 
