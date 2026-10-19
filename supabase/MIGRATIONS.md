@@ -168,7 +168,7 @@ does not catch up, so hourly means a sleeping laptop prunes within the hour afte
 it wakes. With cron (`crontab -e`; the path is this checkout):
 
 ```
-15 * * * * /Users/aarushc./Mindful/scripts/backup-production.sh --prune-only
+15 * * * * /path/to/Mindful/scripts/backup-production.sh --prune-only
 ```
 
 Check it is running: `crontab -l`, then after the next quarter past, a folder
